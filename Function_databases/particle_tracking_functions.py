@@ -226,9 +226,9 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 
 		   	# if j > 9:
 		   	# 	print 'here'
-		   	# 	plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
-		   	# 		overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-		   	# 		overall_groups, overall_radius_bins)
+		   	# 	# plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
+		   	# 	# 	overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
+		   	# 	# 	overall_groups, overall_radius_bins)
 		   	# 	raise ValueError('did 9 gals at least')
 
 
@@ -709,24 +709,26 @@ def plots_for_each_line(ions, gal_mass, col_dense, i, j, k, curr_particle_radii,
 	nH = curr_density*curr_element_fracs['hydrogen']/m_H
 	fig = plt.figure()
 	ax = fig.add_subplot(1,1,1)
-	cbax = ax.scatter(np.log10(nH), np.log10(curr_temperature), s=0.25, c=np.log10(curr_ion_fracs['HydrogenI']))
+	# cbax = ax.scatter(np.log10(nH), np.log10(curr_temperature), s=0.25, c=np.log10(curr_ion_fracs['OxygenVI']))
+	eagle_has_indices = np.where(curr_ion_fracs['OxygenVI'] != 0)[0]
+	cbax = ax.scatter(np.log10(nH[eagle_has_indices]), np.log10(curr_temperature[eagle_has_indices]), s=0.25,cmap='plasma', c=np.log10(curr_ion_fracs['OxygenVI'][eagle_has_indices]/curr_lookup_ion_fracs['OxygenVI'][eagle_has_indices]))
 	cb = fig.colorbar(cbax)
-	cb.set_label('Neutral Fraction of Hydrogen')
-	cb.set_clim([h1_frac_min, h1_frac_max])
+	cb.set_label(r'$f_{OVI}$')
+	# cb.set_clim([h1_frac_min, h1_frac_max])
 	plt.hold(True)
-	ax.scatter(np.log10(nH[will_be_ISM]), np.log10(curr_temperature[will_be_ISM]), s=2.5, \
-		marker='*', c='k', label = 'will be in ISM: #=%d, frac=%.1e' % (np.size(will_be_ISM), float(np.size(will_be_ISM))/(np.size(curr_z0_time_since_ISM))))
-	ax.scatter(np.log10(nH[were_ISM_recently]), np.log10(curr_temperature[were_ISM_recently]), s=2.5, \
-		marker='*', c='r', label = 'were in ISM: #=%d, frac=%.1e' % (np.size(were_ISM_recently), float(np.size(were_ISM_recently))/(np.size(curr_z0_time_since_ISM))))
-	ax.scatter(np.log10(nH[were_and_will_be_ISM]), np.log10(curr_temperature[were_and_will_be_ISM]), s=2.5, \
-		marker='*', c='g', label = 'both: #=%d, frac=%.1e' % (np.size(were_and_will_be_ISM), float(np.size(were_and_will_be_ISM))/(np.size(curr_z0_time_since_ISM))))
+	# ax.scatter(np.log10(nH[will_be_ISM]), np.log10(curr_temperature[will_be_ISM]), s=2.5, \
+	# 	marker='*', c='k', label = 'will be in ISM: #=%d, frac=%.1e' % (np.size(will_be_ISM), float(np.size(will_be_ISM))/(np.size(curr_z0_time_since_ISM))))
+	# ax.scatter(np.log10(nH[were_ISM_recently]), np.log10(curr_temperature[were_ISM_recently]), s=2.5, \
+	# 	marker='*', c='r', label = 'were in ISM: #=%d, frac=%.1e' % (np.size(were_ISM_recently), float(np.size(were_ISM_recently))/(np.size(curr_z0_time_since_ISM))))
+	# ax.scatter(np.log10(nH[were_and_will_be_ISM]), np.log10(curr_temperature[were_and_will_be_ISM]), s=2.5, \
+	# 	marker='*', c='g', label = 'both: #=%d, frac=%.1e' % (np.size(were_and_will_be_ISM), float(np.size(were_and_will_be_ISM))/(np.size(curr_z0_time_since_ISM))))
 	ax.set(ylim = [T_min, T_max], xlim = [nH_min, nH_max])
 	ax.set(title=r'$n_{H}$ vs T: b=%.0f, $M_{Halo}$=%.1f, N=%.1f' % (impact_param, np.log10(gal_mass), col_dense))
 	ax.set(xlabel=r'$n_H$')
 	ax.set(ylabel='T (K)')
 	ax.legend(loc='lower right')
 	plt.hold(True)
-	fig.savefig('particle_id_files_%s/n_H_T_%s.pdf' % (list_for_all_id_data[i][2*(j+1)-1], k), bbox_inches='tight')
+	fig.savefig('particle_id_files_%s/n_H_T_O_weight_%s.pdf' % (list_for_all_id_data[i][2*(j+1)-1], k), bbox_inches='tight')
 	plt.close(fig)
 
 	# nH_close = nH[close_indices]
@@ -851,18 +853,9 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	f_OVI_min = -6.0
 
 	### If I want to filter plots by where they're close
-	print np.shape(overall_temperature)
-	print np.shape(overall_lookup_ion_fracs['HydrogenI'])
-	print np.shape(overall_element_fracs['hydrogen'])
-	print ''
 	[overall_z0_time_since_ISM, overall_time_since_ISM, overall_particle_radii, overall_density, overall_temperature, overall_lookup_ion_fracs['HydrogenI'], overall_element_fracs['hydrogen'], overall_groups, overall_radius_bins] \
 	= return_where_close(radius=500., radii=overall_particle_radii, arrays_to_filter=[overall_z0_time_since_ISM, overall_time_since_ISM, \
 		overall_particle_radii, overall_density, overall_temperature, overall_lookup_ion_fracs['HydrogenI'], overall_element_fracs['hydrogen'], overall_groups, overall_radius_bins])
-
-	print np.shape(overall_temperature)
-	print np.shape(overall_lookup_ion_fracs['HydrogenI'])
-	print np.shape(overall_element_fracs['hydrogen'])
-	print ''
 
 	### get indices for past and future ISM interaction
 	overall_will_be_ISM, overall_were_ISM, overall_were_and_will_be_ISM = track_ISM(overall_z0_time_since_ISM, overall_time_since_ISM)
@@ -894,6 +887,9 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	fig = plt.figure()
 	ax = fig.gca()
 	ax.bar(all_bar_x_vals, all_bar_heights, color='k')
+	print 'hist heights'
+	print all_bar_x_vals
+	print ''
 	plt.hold(True)
 
 	for group_identifier in range(3):
@@ -917,10 +913,6 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 					height_were, height_will = [np.where(height_were==0, 1, height_were), np.where(height_will==0, 1, height_will)]
 					height_were, height_will = [np.log10(height_were), np.log10(height_will)] # move to log space
 					were_max, will_max = [np.max(np.max(height_were)), np.max(np.max(height_will))] # Get the max height, if not > 10 pts this will cause issues for levels in plot
-					print 'maxes'
-					print were_max
-					print will_max
-					print ''
 					were_bool, will_bool = [True if were_max > -10. else False, True if will_max > -10. else False] # so we don't contour if this is <= 1 (log10(10)=1)
 
 				n_t_fig = plt.figure()
@@ -947,6 +939,8 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 			curr_bar_heights = np.array([curr_frac_will, curr_frac_were, curr_frac_both, curr_num_parts/num_parts])
 			curr_bar_heights = np.where(curr_bar_heights == 0., 1.0e-4, curr_bar_heights)
 			ax.bar(curr_bar_xvals, curr_bar_heights, color=colors[group_identifier], edgecolor = 'k', linestyle=edge_styles[radius_bin_identifier])
+			print curr_bar_heights
+			print ''
 
 	plt.hold(False)
 	ax.set_title('Origin and Fate of Gas Particles: # of Particles=%.1e' % (num_parts))

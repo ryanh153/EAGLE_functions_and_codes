@@ -19,7 +19,6 @@ import time
 parsec = 3.0857e18 # cm
 G = 6.674e-8
 M_sol = 1.98855e33 # g
-secs_per_year = 3.15e7
 kB = 1.380648e-16
 
 ### Atom Constants
@@ -40,61 +39,51 @@ atom_mass_array = np.asarray([H_atom_mass,He_atom_mass,C_atom_mass,Fe_atom_mass,
 
 ### functions
 
-def get_snap_files(snap_directory, particles_included_keyword):
+def get_snap_files(snap_directory):
 	glob_snap_directory = str(snap_directory) # makes directory a string so it can be passed to glob (python function)
 	if glob_snap_directory[-1] != '/': # checks is directory passed included a '\' character and then makes sure it only looks at .hdf5 files
 		glob_snap_directory += '/'
 
 	snap_files = glob.glob(glob_snap_directory+"*hdf5") # list of snap files in the directory
-	snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+str(particles_included_keyword[0:4])+'shot'+str(particles_included_keyword[4::])+'/'+str(particles_included_keyword)+'*')])
-	snap_files = np.concatenate([snap_files, glob.glob(glob_snap_directory+'groups_'+str(particles_included_keyword[-12::])+'/*hdf5')])
+	snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+"*/*hdf5")])
 	return snap_files
 
-def read_attribute(snap_files,array_name,attribute,include_file_keyword=""): # Extracts the atrribute from the snap filess passed
+def read_attribute(snap_files,array_name,attribute,include_file_keyword="",exclude_file_keyword=""): # Extracts the atrribute from the snap filess passed
 	# file type is a keyword that is in the file name. Ex: subfind, group, ioneq. If none it searches all files in the directory
 	#snap_files = glob.glob(glob_snap_directory)
 	attr = None
+	print 'before'
+	print snap_files
 	if include_file_keyword == "":
 		for file in snap_files:
 			h5py_file = h5py.File(file,'r')
 		 	attr = h5py_file[array_name].attrs[attribute]
 			break # only extracts attribute from one file (becuase they're the same)
 	else:
+		print 'at right part'
+		print snap_files
 		for file in snap_files:
+			print ''
+			print file
+			print ''
 			if include_file_keyword in file:
 				h5py_file = h5py.File(file,'r')
 				attr = h5py_file[array_name].attrs[attribute]
-				break # only extracts once, attribute the same for all elements/files in array
+				break # only extracts
 	if(attr == None):
-		print 'file keyword'
-		print include_file_keyword
-		print ''
-		print 'array name is'
-		print array_name
-		print ''
-		print 'file names'
-		print snap_files
-		print ''
-		print 'attribute'
-		print attribute
-		print''
-		h5py_file = h5py.File(snap_files[0],'r')
-		print h5py_file[array_name]
-		print h5py_file[array_name].attrs.keys()
-		print ''
+		print 'in val err'
 		raise ValueError("No particles found. Most likely no files matching file flags/included keywords")
 	return attr
 
-def read_array(snap_files,array_name,include_file_keyword="",column=None, get_scaling_conversions=True): # extracts arrays of parameters
+def read_array(snap_files,array_name,include_file_keyword="",exclude_file_keyword="",column=None): # extracts arrays of parameters
 	# file type is a keyword that is in the file name. Ex: subfind, group, ioneq. If none it searches all files in the directory
 	#snap_files = glob.glob(glob_snap_directory)
 	iteration = 0
-	if get_scaling_conversions:
-		h_scale_exponent = read_attribute(snap_files,array_name,'h-scale-exponent',include_file_keyword=include_file_keyword)
-		a_exponent = read_attribute(snap_files,array_name,'aexp-scale-exponent',include_file_keyword=include_file_keyword)
-		cgs_conversion = read_attribute(snap_files,array_name,'CGSConversionFactor',include_file_keyword=include_file_keyword)
-		hubble_param = read_attribute(snap_files,'Header','HubbleParam',include_file_keyword=include_file_keyword)
-		expansion_factor = read_attribute(snap_files,'Header','ExpansionFactor',include_file_keyword=include_file_keyword)
+	h_scale_exponent = read_attribute(snap_files,array_name,'h-scale-exponent',include_file_keyword=include_file_keyword)
+	a_exponent = read_attribute(snap_files,array_name,'aexp-scale-exponent',include_file_keyword=include_file_keyword)
+	cgs_conversion = read_attribute(snap_files,array_name,'CGSConversionFactor',include_file_keyword=include_file_keyword)
+	hubble_param = read_attribute(snap_files,'Header','HubbleParam',include_file_keyword=include_file_keyword)
+	expansion_factor = read_attribute(snap_files,'Header','ExpansionFactor',include_file_keyword=include_file_keyword)
 
 	if include_file_keyword == "":
 		for file in snap_files: # iterates over files
@@ -104,9 +93,7 @@ def read_array(snap_files,array_name,include_file_keyword="",column=None, get_sc
 			else:
 				array = np.asarray(h5py_file[array_name])
 
-			if get_scaling_conversions:
-				array = np.asarray((array)*(hubble_param**h_scale_exponent)*(expansion_factor**a_exponent)*(cgs_conversion)) # converts to mks units
-
+			array = np.asarray((array)*(hubble_param**h_scale_exponent)*(expansion_factor**a_exponent)*(cgs_conversion)) # converts to mks units
 			if iteration > 0: # attaches arrays from all files together
 				final_array = np.concatenate((final_array,array))
 			else: 
@@ -121,8 +108,7 @@ def read_array(snap_files,array_name,include_file_keyword="",column=None, get_sc
 				else:
 					array = np.asarray(h5py_file[array_name])
 
-				if get_scaling_conversions:
-					array = np.asarray((array)*(hubble_param**h_scale_exponent)*(expansion_factor**a_exponent)*(cgs_conversion)) # converts to mks units
+				array = np.asarray((array)*(hubble_param**h_scale_exponent)*(expansion_factor**a_exponent)*(cgs_conversion)) # converts to mks units
 				if iteration > 0: # attaches arrays from all files together
 					final_array = np.concatenate((final_array,array))
 				else: 
@@ -306,7 +292,7 @@ def get_virial_ratios_at_radii(radii, gas_mass_in_R, DM_mass_in_R, star_mass_in_
 
 def get_basic_props(snap_directory, R_in_vir, group_number, particles_included_keyword, group_included_keyword,subfind_included_keyword):
 	# create array of files
-	snap_files = get_snap_files(snap_directory, particles_included_keyword)
+	snap_files = get_snap_files(snap_directory)
 
 	# pull out simulation parameters that are constant for all snapshots
 	box_size = read_attribute(snap_files,'Header','BoxSize',include_file_keyword=particles_included_keyword)
@@ -317,6 +303,8 @@ def get_basic_props(snap_directory, R_in_vir, group_number, particles_included_k
 	# Ben's code I'm trying
 	arr_start = time.time()
 	gal_M200s = read_array(snap_files, "Subhalo/Mass", include_file_keyword=subfind_included_keyword)
+	print 'reading an array takes'
+	print time.time()-arr_start
 	gal_R200s = read_array(snap_files,"FOF/Group_R_Crit200",include_file_keyword=subfind_included_keyword)
 	gal_coords = read_array(snap_files, "Subhalo/CentreOfPotential", include_file_keyword=subfind_included_keyword)
 	gal_velocities = read_array(snap_files, "Subhalo/Velocity", include_file_keyword = subfind_included_keyword)
@@ -328,7 +316,7 @@ def get_basic_props(snap_directory, R_in_vir, group_number, particles_included_k
 	SFR_30kpc = read_array(snap_files, "Subhalo/ApertureMeasurements/SFR/030kpc", include_file_keyword=subfind_included_keyword)
 
 	# can have multiple subhalos with same ID (if their virial radii overlap, we want the most massive one)
-	index = np.where((GrpIDs == float(group_number)) & (SubIDs == 0))[0] # picks out most massive galaxy in the designated group
+	index = np.where((GrpIDs == group_number) & (SubIDs == 0))[0] # picks out most massive galaxy in the designated group
 	first_subhalo_ID = np.size(GrpIDs[np.where(GrpIDs < group_number)])
 
 	# get the properties of our galaxy
@@ -348,7 +336,7 @@ def get_basic_props(snap_directory, R_in_vir, group_number, particles_included_k
 def get_gas_props(snap_directory, radius, group_number, particles_included_keyword, group_included_keyword,subfind_included_keyword,
 	              box_size, expansion_factor, hubble_param, gal_coords, gal_velocity):
 	# create array of files
-	snap_files = get_snap_files(snap_directory, particles_included_keyword)
+	snap_files = get_snap_files(snap_directory)
 
 	# get necessary gas properties
 	gas_coords = read_array(snap_files,'PartType0/Coordinates',include_file_keyword=particles_included_keyword)
@@ -417,7 +405,7 @@ def get_gas_props(snap_directory, radius, group_number, particles_included_keywo
 def get_gas_props_for_spectra_runs(snap_directory, radius, group_number, particles_included_keyword, group_included_keyword,subfind_included_keyword,
 	              box_size, expansion_factor, hubble_param, gal_coords, gal_velocity):
 	# create array of files
-	snap_files = get_snap_files(snap_directory, particles_included_keyword)
+	snap_files = get_snap_files(snap_directory)
 
 	# get necessary gas properties
 	gas_coords = read_array(snap_files,'PartType0/Coordinates',include_file_keyword=particles_included_keyword)
@@ -443,7 +431,7 @@ def get_DM_props(snap_directory, radius, group_number, particles_included_keywor
 	              box_size, expansion_factor, hubble_param, gal_coords, gal_velocity):
 
 	# create array of files
-	snap_files = get_snap_files(snap_directory, particles_included_keyword)
+	snap_files = get_snap_files(snap_directory)
 
 	# get necessary DM properties
 	DM_coords = read_array(snap_files,'PartType1/Coordinates',include_file_keyword=particles_included_keyword)
@@ -470,7 +458,7 @@ def get_star_props(snap_directory, radius, group_number, particles_included_keyw
 	              box_size, expansion_factor, hubble_param, gal_coords, gal_velocity):
 
 	# create array of files
-	snap_files = get_snap_files(snap_directory, particles_included_keyword)
+	snap_files = get_snap_files(snap_directory)
 
 	# get necessary DM properties
 	star_coords = read_array(snap_files,'PartType4/Coordinates',include_file_keyword=particles_included_keyword)
@@ -683,14 +671,12 @@ def create_gal_data(file_name, arr_size, snap_directory, file_keyword, group_num
 	box_size *= (1.e3)/hubble_param*expansion_factor # have to adjust becuase it's drawn from header so not put in physical by CGSConversion
 	gal_coords /= 1.e3*parsec
 	gal_velocity /= 1.e5
-	if gas_sigma_radial != None:
-		gas_sigma_radial /= 1.e5
-		gas_sigma_theta /= 1.e5
-		gas_sigma_phi /= 1.e5
-	if DM_sigma_radial != None:
-		DM_sigma_radial /= 1.e5
-		DM_sigma_theta /= 1.e5
-		DM_sigma_phi /= 1.e5
+	gas_sigma_radial /= 1.e5
+	gas_sigma_theta /= 1.e5
+	gas_sigma_phi /= 1.e5
+	DM_sigma_radial /= 1.e5
+	DM_sigma_theta /= 1.e5
+	DM_sigma_phi /= 1.e5
 
 	with h5py.File(file_name,'w') as hf:
 		GalaxyProperties = hf.create_group('GalaxyProperties')
@@ -710,15 +696,11 @@ def create_gal_data(file_name, arr_size, snap_directory, file_keyword, group_num
 		gal_R200 = GalaxyProperties.create_dataset('gal_R200', (1,), maxshape= (None,), data = virial_radius)
 		gal_R200.attrs['units'] = 'kiloparsecs'
 
-		gal_stellar_mass_hdf5 = GalaxyProperties.create_dataset('gal_stellar_mass', (1,), maxshape=(None,), data = gal_stellar_mass)
-		gal_stellar_mass_hdf5.attrs['units'] = 'solar masses'
+		gal_stellar_mass = GalaxyProperties.create_dataset('gal_stellar_mass', (1,), maxshape=(None,), data = gal_stellar_mass)
+		gal_stellar_mass.attrs['units'] = 'solar masses'
 
-		log10_smass = GalaxyProperties.create_dataset('log10_smass', (1,), maxshape=(None,), data = np.log10(gal_stellar_mass))
-
-		gal_SFR_hdf5 = GalaxyProperties.create_dataset('gal_SFR', (1,), maxshape=(None,), data = gal_SFR*(secs_per_year/M_sol))
-		gal_SFR_hdf5.attrs['units'] = 'M_sol/yr'
-
-		log10_sSFR = GalaxyProperties.create_dataset('log10_sSFR', (1,), maxshape=(None,), data = np.log10((gal_SFR*(secs_per_year/M_sol))/gal_stellar_mass))
+		gal_SFR = GalaxyProperties.create_dataset('gal_SFR', (1,), maxshape=(None,), data = gal_SFR)
+		gal_SFR.attrs['units'] = 'g/s'
 
 		box_size = GalaxyProperties.create_dataset('box_size', (1,), maxshape= (None,), data = box_size)
 		box_size.attrs['units'] = 'kiloparsecs'
@@ -946,6 +928,7 @@ def plot_virial_for_multiple_gals_by_mass(data_directory, mass_bins, mass_colors
 						gal_mass = np.log10(np.array(GalaxyProperties.get('gal_stellar_mass')))
 					else:
 						gal_mass = np.log10(np.array(GalaxyProperties.get('gal_mass')))
+					print gal_mass
 					gal_R200 = np.array(GalaxyProperties.get('gal_R200'))
 					if (gal_mass < mass_bins[j+1]) & (gal_mass > mass_bins[j]):
 						for i in range(0,np.size(radii)):
@@ -966,9 +949,10 @@ def plot_virial_for_multiple_gals_by_mass(data_directory, mass_bins, mass_colors
 								else:
 									final_radii = np.array(radii[i])
 			except:
+				print file
 				print 'no virial data'
 		
-		radii_bins = np.linspace(np.min(final_radii), np.max(final_radii), 50.0)
+		radii_bins = np.linspace(np.min(final_radii), np.max(final_radii), 20.0)
 		plot_radii = np.zeros(np.size(radii_bins)-1)
 		plot_gas_virial_ratio = np.zeros(np.size(radii_bins)-1)
 		plot_DM_virial_ratio = np.zeros(np.size(radii_bins)-1)
@@ -1004,7 +988,7 @@ def get_output_files(data_directory):
 	data_files = glob.glob(data_directory + '*/output_*.hdf5')
 	return data_files
 
-def plot_energy_sources_for_multiple_gals_by_mass_gas_ratios(data_directory, mass_bins, mass_colors, virial_bool, stellar_mass_bool, energy_values_bool):
+def plot_energy_sources_for_multiple_gals_by_mass(data_directory, mass_bins, mass_colors, virial_bool, stellar_mass_bool, energy_values_bool):
 	data_files = get_output_files(data_directory)
 	plotted_once = False
 
@@ -1049,6 +1033,7 @@ def plot_energy_sources_for_multiple_gals_by_mass_gas_ratios(data_directory, mas
 								else:
 									final_radii = np.array(radii[i])
 			except:
+				print file
 				print 'no virial data'
 		
 		radii_bins = np.linspace(np.min(final_radii), np.max(final_radii), 50.0)
@@ -1066,16 +1051,16 @@ def plot_energy_sources_for_multiple_gals_by_mass_gas_ratios(data_directory, mas
 				plt.semilogy(plot_radii, plot_gas_T_KE, mass_colors[j]+'-', label = 'gas KE (T)')
 				plt.semilogy(plot_radii, plot_gas_bulk_KE, mass_colors[j]+'+', label = 'gas KE (bulk)')
 				plt.semilogy(plot_radii, plot_DM_bulk_KE, mass_colors[j]+'-.', label = 'DM KE (bulk)')
-				plt.semilogy(plot_radii, plot_gas_T_KE, mass_colors[j]+'-', label = '%.1f-%.1f log10(M/M_sol)' %(mass_bins[j], mass_bins[j+1]))
+				plt.semilogy(plot_radii, plot_gas_T_KE, mass_colors[j]+'-', label = '%.1f-%.1fkc:(n=%d)' %(mass_bins[j], mass_bins[j+1], num_in_bin))
 				plotted_once = True
 			else:
-				plt.semilogy(plot_radii, plot_gas_T_KE, mass_colors[j]+'-', label = '%.1f-%.1fk log10(M/M_sol)' %(mass_bins[j], mass_bins[j+1]))
+				plt.semilogy(plot_radii, plot_gas_T_KE, mass_colors[j]+'-', label = '%.1f-%.1fkc:(n=%d)' %(mass_bins[j], mass_bins[j+1], num_in_bin))
 				plt.semilogy(plot_radii, plot_gas_bulk_KE, mass_colors[j]+'+')#, label = 'DM %d-%dkpc:(n=%d)' %(mass_bins[j], mass_bins[j+1], num_in_bin))
 				plt.semilogy(plot_radii, plot_DM_bulk_KE, mass_colors[j]+'-.')#, label = 'DM %d-%dkpc:(n=%d)' %(mass_bins[j], mass_bins[j+1], num_in_bin))
 		else:
-			plt.plot(plot_radii, plot_gas_T_KE/plot_gas_bulk_KE, mass_colors[j]+'-', label = '%.1f-%.1f log10(M/M_sol)' %(mass_bins[j], mass_bins[j+1]))
-	plt.legend(loc='upper center')
-	plt.ylabel('Ratio of Energies in Gas Particles (T/Bulk KE)')
+			plt.plot(plot_radii, plot_gas_T_KE/plot_gas_bulk_KE, mass_colors[j]+'-', label = '%.1f-%.1fkc:(n=%d)' %(mass_bins[j], mass_bins[j+1], num_in_bin))
+	plt.legend(loc='top')
+	plt.ylabel('KE per unit mass')
 	
 	if energy_values_bool:
 		plt.title('KE Energy Sources vs Radius')
@@ -1095,394 +1080,21 @@ def plot_energy_sources_for_multiple_gals_by_mass_gas_ratios(data_directory, mas
 			plt.savefig('multi_gal_gas_energy_ratio_R_vir.png')
 		else:
 			plt.xlabel('radius (kpc)')
-			plt.savefig('multi_gal_gas_energy_ratio_kpc.png')
+			plt.savefig('multi_gal_energy_ratio_kpc.png')
 	plt.close()
-
-def plot_energy_sources_for_multiple_gals_by_mass_bulk_ratios(data_directory, mass_bins, mass_colors, virial_bool, stellar_mass_bool, energy_values_bool):
-	data_files = get_output_files(data_directory)
-	plotted_once = False
-
-	for j in range(0,np.size(mass_bins)-1):
-		num_in_bin = 0
-		final_gas_T_KE = np.array([])
-		final_gas_bulk_KE = np.array([])
-		final_DM_bulk_KE = np.array([])
-		final_radii = np.array([])
-		for file in data_files:
-			try:
-				with h5py.File(file) as hf:
-					GalaxyProperties = hf.get('GalaxyProperties')
-					radii = np.array(GalaxyProperties.get('radius_of_output'))
-					gas_T_KE = np.array(GalaxyProperties.get('gas_T_KE'))
-					gas_bulk_KE = np.array(GalaxyProperties.get('gas_KE_in_radii'))
-					DM_bulk_KE = np.array(GalaxyProperties.get('DM_KE_in_radii'))
-					gal_R200 = np.array(GalaxyProperties.get('gal_R200'))
-					if stellar_mass_bool:
-						gal_mass = np.log10(np.array(GalaxyProperties.get('gal_stellar_mass')))
-					else:
-						gal_mass = np.log10(np.array(GalaxyProperties.get('gal_mass')))
-
-					if (gal_mass < mass_bins[j+1]) & (gal_mass > mass_bins[j]):
-						for i in range(0,np.size(radii)):
-							if np.size(final_gas_T_KE > 0):
-								num_in_bin += 1
-								final_gas_T_KE = np.append(final_gas_T_KE,gas_T_KE[i])
-								final_gas_bulk_KE = np.append(final_gas_bulk_KE,gas_bulk_KE[i])
-								final_DM_bulk_KE = np.append(final_DM_bulk_KE,DM_bulk_KE[i])
-								if virial_bool:
-									final_radii = np.append(final_radii,radii[i]/gal_R200)
-								else:
-									final_radii = np.append(final_radii,radii[i])
-							else: 
-								num_in_bin += 1
-								final_gas_T_KE = np.array(gas_T_KE[i])
-								final_gas_bulk_KE = np.array(gas_bulk_KE[i])
-								final_DM_bulk_KE = np.array(DM_bulk_KE[i])
-								if virial_bool:
-									final_radii = np.array(radii[i]/gal_R200)
-								else:
-									final_radii = np.array(radii[i])
-			except:
-				print 'no virial data'
-		
-		radii_bins = np.linspace(np.min(final_radii), np.max(final_radii), 50.0)
-		plot_radii = np.zeros(np.size(radii_bins)-1)
-		plot_gas_T_KE = np.zeros(np.size(radii_bins)-1)
-		plot_gas_bulk_KE = np.zeros(np.size(radii_bins)-1)
-		plot_DM_bulk_KE = np.zeros(np.size(radii_bins)-1)
-		for i in range(0,np.size(radii_bins)-1):
-			plot_gas_T_KE[i] = np.mean(final_gas_T_KE[np.where((final_radii>radii_bins[i]) & (final_radii<radii_bins[i+1]))[0]])
-			plot_gas_bulk_KE[i] = np.mean(final_gas_bulk_KE[np.where((final_radii>radii_bins[i]) & (final_radii<radii_bins[i+1]))[0]])
-			plot_DM_bulk_KE[i] = np.mean(final_DM_bulk_KE[np.where((final_radii>radii_bins[i]) & (final_radii<radii_bins[i+1]))[0]])
-			plot_radii[i] = np.mean([radii_bins[i],radii_bins[i+1]])
-		if energy_values_bool:
-			if plotted_once==False:
-				plt.semilogy(plot_radii, plot_gas_T_KE, mass_colors[j]+'-', label = 'gas KE (T)')
-				plt.semilogy(plot_radii, plot_gas_bulk_KE, mass_colors[j]+'+', label = 'gas KE (bulk)')
-				plt.semilogy(plot_radii, plot_DM_bulk_KE, mass_colors[j]+'-.', label = 'DM KE (bulk)')
-				plt.semilogy(plot_radii, plot_gas_T_KE, mass_colors[j]+'-', label = '%.1f-%.1f log10(M/M_sol)' %(mass_bins[j], mass_bins[j+1]))
-				plotted_once = True
-			else:
-				plt.semilogy(plot_radii, plot_gas_T_KE, mass_colors[j]+'-', label = '%.1f-%.1f log10(M/M_sol)' %(mass_bins[j], mass_bins[j+1]))
-				plt.semilogy(plot_radii, plot_gas_bulk_KE, mass_colors[j]+'+')#, label = 'DM %d-%dkpc:(n=%d)' %(mass_bins[j], mass_bins[j+1], num_in_bin))
-				plt.semilogy(plot_radii, plot_DM_bulk_KE, mass_colors[j]+'-.')#, label = 'DM %d-%dkpc:(n=%d)' %(mass_bins[j], mass_bins[j+1], num_in_bin))
-		else:
-			plt.plot(plot_radii, plot_gas_bulk_KE/plot_DM_bulk_KE, mass_colors[j]+'-', label = '%.1f-%.1f log10(M/M_sol)' %(mass_bins[j], mass_bins[j+1]))
-	plt.legend(loc='upper center')
-	plt.ylabel('Ratio of Bulk KE (gas/DM)')
-	
-	if energy_values_bool:
-		plt.title('KE Energy Sources vs Radius')
-		plt.ylabel('KE per unit mass')
-		plt.ylim(ymin=10.0**12.8,ymax=1.e16)
-		if virial_bool:
-			plt.xlabel('radius (virial radii)')
-			plt.savefig('multi_gal_energy_R_vir.png')
-		else:
-			plt.xlabel('radius (kpc)')
-			plt.savefig('multi_gal_energy_kpc.png')
-	else:
-		plt.title('gas/DM bulk KE ratio vs Radius')
-		plt.ylabel('gas T KE/gas bulk KE')
-		if virial_bool:
-			plt.xlabel('radius (virial radii)')
-			plt.savefig('multi_gal_gas_DM_bulk_energy_ratio_R_vir.png')
-		else:
-			plt.xlabel('radius (kpc)')
-			plt.savefig('multi_gal_gas_DM_bulk_energy_ratio_kpc.png')
-	plt.close()
-
-
-def plot_energy_sources_for_multiple_gals_by_mass_gas_to_DM(data_directory, mass_bins, mass_colors, virial_bool, stellar_mass_bool, energy_values_bool):
-	data_files = get_output_files(data_directory)
-	plotted_once = False
-
-	for j in range(0,np.size(mass_bins)-1):
-		num_in_bin = 0
-		final_gas_T_KE = np.array([])
-		final_gas_bulk_KE = np.array([])
-		final_DM_bulk_KE = np.array([])
-		final_radii = np.array([])
-		for file in data_files:
-			try:
-				with h5py.File(file) as hf:
-					GalaxyProperties = hf.get('GalaxyProperties')
-					radii = np.array(GalaxyProperties.get('radius_of_output'))
-					gas_T_KE = np.array(GalaxyProperties.get('gas_T_KE'))
-					gas_bulk_KE = np.array(GalaxyProperties.get('gas_KE_in_radii'))
-					DM_bulk_KE = np.array(GalaxyProperties.get('DM_KE_in_radii'))
-					gal_R200 = np.array(GalaxyProperties.get('gal_R200'))
-					if stellar_mass_bool:
-						gal_mass = np.log10(np.array(GalaxyProperties.get('gal_stellar_mass')))
-					else:
-						gal_mass = np.log10(np.array(GalaxyProperties.get('gal_mass')))
-
-					if (gal_mass < mass_bins[j+1]) & (gal_mass > mass_bins[j]):
-						for i in range(0,np.size(radii)):
-							if np.size(final_gas_T_KE > 0):
-								num_in_bin += 1
-								final_gas_T_KE = np.append(final_gas_T_KE,gas_T_KE[i])
-								final_gas_bulk_KE = np.append(final_gas_bulk_KE,gas_bulk_KE[i])
-								final_DM_bulk_KE = np.append(final_DM_bulk_KE,DM_bulk_KE[i])
-								if virial_bool:
-									final_radii = np.append(final_radii,radii[i]/gal_R200)
-								else:
-									final_radii = np.append(final_radii,radii[i])
-							else: 
-								num_in_bin += 1
-								final_gas_T_KE = np.array(gas_T_KE[i])
-								final_gas_bulk_KE = np.array(gas_bulk_KE[i])
-								final_DM_bulk_KE = np.array(DM_bulk_KE[i])
-								if virial_bool:
-									final_radii = np.array(radii[i]/gal_R200)
-								else:
-									final_radii = np.array(radii[i])
-			except:
-				print 'no virial data'
-		
-		radii_bins = np.linspace(np.min(final_radii), np.max(final_radii), 50.0)
-		plot_radii = np.zeros(np.size(radii_bins)-1)
-		plot_gas_T_KE = np.zeros(np.size(radii_bins)-1)
-		plot_gas_bulk_KE = np.zeros(np.size(radii_bins)-1)
-		plot_DM_bulk_KE = np.zeros(np.size(radii_bins)-1)
-		for i in range(0,np.size(radii_bins)-1):
-			plot_gas_T_KE[i] = np.mean(final_gas_T_KE[np.where((final_radii>radii_bins[i]) & (final_radii<radii_bins[i+1]))[0]])
-			plot_gas_bulk_KE[i] = np.mean(final_gas_bulk_KE[np.where((final_radii>radii_bins[i]) & (final_radii<radii_bins[i+1]))[0]])
-			plot_DM_bulk_KE[i] = np.mean(final_DM_bulk_KE[np.where((final_radii>radii_bins[i]) & (final_radii<radii_bins[i+1]))[0]])
-			plot_radii[i] = np.mean([radii_bins[i],radii_bins[i+1]])
-		if energy_values_bool:
-			if plotted_once==False:
-				plt.semilogy(plot_radii, plot_gas_T_KE, mass_colors[j]+'-', label = 'gas KE (T)')
-				plt.semilogy(plot_radii, plot_gas_bulk_KE, mass_colors[j]+'+', label = 'gas KE (bulk)')
-				plt.semilogy(plot_radii, plot_DM_bulk_KE, mass_colors[j]+'-.', label = 'DM KE (bulk)')
-				plt.semilogy(plot_radii, plot_gas_T_KE, mass_colors[j]+'-', label = '%.1f-%.1f log10(M/M_sol)' %(mass_bins[j], mass_bins[j+1]))
-				plotted_once = True
-			else:
-				plt.semilogy(plot_radii, plot_gas_T_KE, mass_colors[j]+'-', label = '%.1f-%.1f log10(M/M_sol)' %(mass_bins[j], mass_bins[j+1]))
-				plt.semilogy(plot_radii, plot_gas_bulk_KE, mass_colors[j]+'+')#, label = 'DM %d-%dkpc:(n=%d)' %(mass_bins[j], mass_bins[j+1], num_in_bin))
-				plt.semilogy(plot_radii, plot_DM_bulk_KE, mass_colors[j]+'-.')#, label = 'DM %d-%dkpc:(n=%d)' %(mass_bins[j], mass_bins[j+1], num_in_bin))
-		else:
-			plt.plot(plot_radii, (plot_gas_T_KE+plot_gas_bulk_KE)/plot_DM_bulk_KE, mass_colors[j]+'-', label = '%.1f-%.1f log10(M/M_sol)' %(mass_bins[j], mass_bins[j+1]))
-	plt.legend(loc='upper center')
-	plt.ylabel('Ratio of Total Energy (gas/DM)')
-	
-	if energy_values_bool:
-		plt.title('KE Energy Sources vs Radius')
-		plt.ylabel('KE per unit mass')
-		plt.ylim(ymin=10.0**12.8,ymax=1.e16)
-		if virial_bool:
-			plt.xlabel('radius (virial radii)')
-			plt.savefig('multi_gal_energy_R_vir.png')
-		else:
-			plt.xlabel('radius (kpc)')
-			plt.savefig('multi_gal_energy_kpc.png')
-	else:
-		plt.title('gas/DM Energy ratio vs Radius')
-		plt.ylabel('gas T KE/gas bulk KE')
-		if virial_bool:
-			plt.xlabel('radius (virial radii)')
-			plt.savefig('multi_gal_gas_DM_energy_ratio_R_vir.png')
-		else:
-			plt.xlabel('radius (kpc)')
-			plt.savefig('multi_gal_gas_DM_energy_ratio_kpc.png')
-	plt.close()
-
-def plot_energy_sources_for_multiple_gals_by_mass_gas_T_to_DM(data_directory, mass_bins, mass_colors, virial_bool, stellar_mass_bool, energy_values_bool):
-	data_files = get_output_files(data_directory)
-	plotted_once = False
-
-	for j in range(0,np.size(mass_bins)-1):
-		num_in_bin = 0
-		final_gas_T_KE = np.array([])
-		final_gas_bulk_KE = np.array([])
-		final_DM_bulk_KE = np.array([])
-		final_radii = np.array([])
-		for file in data_files:
-			try:
-				with h5py.File(file) as hf:
-					GalaxyProperties = hf.get('GalaxyProperties')
-					radii = np.array(GalaxyProperties.get('radius_of_output'))
-					gas_T_KE = np.array(GalaxyProperties.get('gas_T_KE'))
-					gas_bulk_KE = np.array(GalaxyProperties.get('gas_KE_in_radii'))
-					DM_bulk_KE = np.array(GalaxyProperties.get('DM_KE_in_radii'))
-					gal_R200 = np.array(GalaxyProperties.get('gal_R200'))
-					if stellar_mass_bool:
-						gal_mass = np.log10(np.array(GalaxyProperties.get('gal_stellar_mass')))
-					else:
-						gal_mass = np.log10(np.array(GalaxyProperties.get('gal_mass')))
-
-					if (gal_mass < mass_bins[j+1]) & (gal_mass > mass_bins[j]):
-						for i in range(0,np.size(radii)):
-							if np.size(final_gas_T_KE > 0):
-								num_in_bin += 1
-								final_gas_T_KE = np.append(final_gas_T_KE,gas_T_KE[i])
-								final_gas_bulk_KE = np.append(final_gas_bulk_KE,gas_bulk_KE[i])
-								final_DM_bulk_KE = np.append(final_DM_bulk_KE,DM_bulk_KE[i])
-								if virial_bool:
-									final_radii = np.append(final_radii,radii[i]/gal_R200)
-								else:
-									final_radii = np.append(final_radii,radii[i])
-							else: 
-								num_in_bin += 1
-								final_gas_T_KE = np.array(gas_T_KE[i])
-								final_gas_bulk_KE = np.array(gas_bulk_KE[i])
-								final_DM_bulk_KE = np.array(DM_bulk_KE[i])
-								if virial_bool:
-									final_radii = np.array(radii[i]/gal_R200)
-								else:
-									final_radii = np.array(radii[i])
-			except:
-				print 'no virial data'
-		
-		radii_bins = np.linspace(np.min(final_radii), np.max(final_radii), 50.0)
-		plot_radii = np.zeros(np.size(radii_bins)-1)
-		plot_gas_T_KE = np.zeros(np.size(radii_bins)-1)
-		plot_gas_bulk_KE = np.zeros(np.size(radii_bins)-1)
-		plot_DM_bulk_KE = np.zeros(np.size(radii_bins)-1)
-		for i in range(0,np.size(radii_bins)-1):
-			plot_gas_T_KE[i] = np.mean(final_gas_T_KE[np.where((final_radii>radii_bins[i]) & (final_radii<radii_bins[i+1]))[0]])
-			plot_gas_bulk_KE[i] = np.mean(final_gas_bulk_KE[np.where((final_radii>radii_bins[i]) & (final_radii<radii_bins[i+1]))[0]])
-			plot_DM_bulk_KE[i] = np.mean(final_DM_bulk_KE[np.where((final_radii>radii_bins[i]) & (final_radii<radii_bins[i+1]))[0]])
-			plot_radii[i] = np.mean([radii_bins[i],radii_bins[i+1]])
-		if energy_values_bool:
-			if plotted_once==False:
-				plt.semilogy(plot_radii, plot_gas_T_KE, mass_colors[j]+'-', label = 'gas KE (T)')
-				plt.semilogy(plot_radii, plot_gas_bulk_KE, mass_colors[j]+'+', label = 'gas KE (bulk)')
-				plt.semilogy(plot_radii, plot_DM_bulk_KE, mass_colors[j]+'-.', label = 'DM KE (bulk)')
-				plt.semilogy(plot_radii, plot_gas_T_KE, mass_colors[j]+'-', label = '%.1f-%.1f log10(M/M_sol)' %(mass_bins[j], mass_bins[j+1]))
-				plotted_once = True
-			else:
-				plt.semilogy(plot_radii, plot_gas_T_KE, mass_colors[j]+'-', label = '%.1f-%.1f log10(M/M_sol)' %(mass_bins[j], mass_bins[j+1]))
-				plt.semilogy(plot_radii, plot_gas_bulk_KE, mass_colors[j]+'+')#, label = 'DM %d-%dkpc:(n=%d)' %(mass_bins[j], mass_bins[j+1], num_in_bin))
-				plt.semilogy(plot_radii, plot_DM_bulk_KE, mass_colors[j]+'-.')#, label = 'DM %d-%dkpc:(n=%d)' %(mass_bins[j], mass_bins[j+1], num_in_bin))
-		else:
-			plt.plot(plot_radii, (plot_gas_T_KE)/plot_DM_bulk_KE, mass_colors[j]+'-', label = '%.1f-%.1f log10(M/M_sol)' %(mass_bins[j], mass_bins[j+1]))
-	plt.legend(loc='upper center')
-	plt.ylabel('Ratio of Thermal Energy in Gas to Bulk KE in DM')
-	
-	if energy_values_bool:
-		plt.title('KE Energy Sources vs Radius')
-		plt.ylabel('KE per unit mass')
-		plt.ylim(ymin=10.0**12.8,ymax=1.e16)
-		if virial_bool:
-			plt.xlabel('radius (virial radii)')
-			plt.savefig('multi_gal_energy_R_vir.png')
-		else:
-			plt.xlabel('radius (kpc)')
-			plt.savefig('multi_gal_energy_kpc.png')
-	else:
-		plt.title('gas T vs DM bulk KE Energy ratio vs Radius')
-		plt.ylabel('gas T KE/gas bulk KE')
-		if virial_bool:
-			plt.xlabel('radius (virial radii)')
-			plt.savefig('multi_gal_gas_T_DM_energy_ratio_R_vir.png')
-		else:
-			plt.xlabel('radius (kpc)')
-			plt.savefig('multi_gal_gas_T_DM_energy_ratio_kpc.png')
-	plt.close()
-
 
 def edit_text(file, new_file_name, keywords, replacements):
-	with open(file,'r') as input:
-		with open(new_file_name, 'w') as output:
-			for line in input:
-				iteration = 0
-				for word in keywords:
-					if (word in line) and (line[0] != '%'): # looks for first call of word, but not a comment! 
-						output.write(replacements[iteration] + '\n')
-						break
-					iteration += 1
-					if iteration >= np.size(keywords):
-						output.write(line)
-
-def gas_mass_in_annular_rings(gal_directory, group_number, radii, particles_included_keyword, subfind_included_keyword):
-	mass_in_ann = np.zeros(np.size(radii)-1)
-	neut_mass_in_ann = np.zeros(np.size(radii)-1)
-	cum_mass = np.zeros(np.size(radii)-1)
-
-	snap_files = get_snap_files(gal_directory, particles_included_keyword)
-	GrpIDs = read_array(snap_files,"Subhalo/GroupNumber", include_file_keyword=subfind_included_keyword)
-	SubIDs = read_array(snap_files, "Subhalo/SubGroupNumber", include_file_keyword=subfind_included_keyword)
-	index = np.where((GrpIDs == float(group_number)) & (SubIDs == 0))[0] # picks out most massive galaxy in the designated group
-	H_frac = read_array(snap_files, array_name='PartType0/ElementAbundance/Hydrogen',include_file_keyword=particles_included_keyword)
-	try:
-		HI = read_array(snap_files, array_name='PartType0/ChemicalAbundances/HydrogenI', include_file_keyword=particles_included_keyword, get_scaling_conversions=False)
-	except:
-		HI = np.zeros(np.size(H_frac))
-		print 'missing ChemicalAbundances in %s with tag %s' % (gal_directory, particles_included_keyword)
-	part_mass = read_array(snap_files, array_name='PartType0/Mass', include_file_keyword=particles_included_keyword)
-	gas_coords = read_array(snap_files, array_name='PartType0/Coordinates',include_file_keyword=particles_included_keyword)
-	gal_coords = read_array(snap_files, "Subhalo/CentreOfPotential", include_file_keyword=subfind_included_keyword)[index][0]
-	temperature = read_array(snap_files,'PartType0/Temperature', include_file_keyword=particles_included_keyword, get_scaling_conversions=False)
-	box_size = read_attribute(snap_files,'Header','BoxSize',include_file_keyword=particles_included_keyword)
-	expansion_factor = read_attribute(snap_files,'Header','ExpansionFactor',include_file_keyword=particles_included_keyword)
-	hubble_param = read_attribute(snap_files,'Header','HubbleParam',include_file_keyword=particles_included_keyword)
-
-	gas_coords = gal_centered_coords(gas_coords,gal_coords,box_size,expansion_factor,hubble_param)
-	temp_cut_indices = np.argwhere(temperature<=1.e5)[:,0]
-
-	for i in range(np.size(mass_in_ann)):
-		part_mass_ann = particles_btwn_radii(part_mass[temp_cut_indices], gas_coords[temp_cut_indices], radii[i], radii[i+1])
-		H_frac_ann = particles_btwn_radii(H_frac[temp_cut_indices], gas_coords[temp_cut_indices], radii[i], radii[i+1])
-		HI_ann = particles_btwn_radii(HI[temp_cut_indices], gas_coords[temp_cut_indices], radii[i], radii[i+1])
-		neut_mass_in_ann[i] = np.sum(part_mass_ann*H_frac_ann*HI_ann)/M_sol
-		mass_in_ann[i] = np.sum(part_mass_ann*H_frac_ann)/M_sol
-
-	return mass_in_ann, neut_mass_in_ann
-
-def actual_cumulative_mass_for_EAGLE_gals(directory_with_sim_gals):
-
-	min_mass, max_mass = 5., 15.
-	# radii = np.arange(0.0,651.,5.)*parsec*1.e3
-	radii = np.arange(20.,170.,10.)*parsec*1.e3
-	plot_radii = radii[::-1]+5.
-	ann_gas_mass_all_gals = []
-	neut_ann_gas_mass_all_gals = []
-	halo_masses = []
-	stellar_masses = []
-	sSFRs = []
-	R200s = []
-
-	gal_hdf5_files = glob.glob(directory_with_sim_gals+'*/output*')
-	for  i, file in enumerate(gal_hdf5_files):
-		with h5py.File(file, 'r') as hf:
-			galaxy_properties = hf.get('GalaxyProperties')
-			gal_mass =  np.log10(np.array(galaxy_properties.get('gal_mass')))[0]
-			stellar_mass = np.log10(np.array(galaxy_properties.get('gal_stellar_mass')))[0]
-			sSFR = np.array(galaxy_properties.get('log10_sSFR'))[0]
-			R200 = np.array(galaxy_properties.get('gal_R200'))[0]
-			file_keyword = np.array(galaxy_properties.get('file_keyword'))[0][-12::]
-			snap_directory = np.array(galaxy_properties.get('snap_directory'))[0]
-			group_number = np.array(galaxy_properties.get('group_number'))[0]
-
-		if ((gal_mass > min_mass) & (gal_mass <= max_mass)):
-			particles_included_keyword = 'snap_noneq_'+file_keyword
-			subfind_included_keyword = 'eagle_subfind_tab_'+file_keyword
-			temp_mass, temp_neut_mass = gas_mass_in_annular_rings(snap_directory, group_number, radii, particles_included_keyword, subfind_included_keyword)
-			ann_gas_mass_all_gals.append(temp_mass), neut_ann_gas_mass_all_gals.append(temp_neut_mass)
-			halo_masses.append(gal_mass)
-			stellar_masses.append(stellar_mass)
-			sSFRs.append(sSFR)
-			R200s.append(R200)
-		else:
-			continue
-
-	print '20-160kpc All Gals sim cum masses'
-	print ann_gas_mass_all_gals
-	print ''
-	print neut_ann_gas_mass_all_gals
-	print ''
-	print halo_masses
-	print ''
-	print stellar_masses
-	print ''
-	print sSFRs
-	print ''
-	print R200s
-	print ''
-
-
-
+        with open(file,'r') as input:
+                with open(new_file_name, 'w') as output:
+                        for line in input:
+                                iter = 0
+                                for word in keywords:
+                                     	if (word in line) and ('%' not in line): # looks for first call of word, but not a comment!                           
+                                                output.write(replacements[iter] + '\n')
+                                                break
+                                        iter += 1
+					if iter >= np.size(keywords):
+                        output.write(line)
 
 
 

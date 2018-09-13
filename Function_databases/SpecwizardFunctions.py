@@ -680,12 +680,12 @@ def create_mult_los_per_radius_text(filename, snap_directory, group_number, part
 
 		for i in range(0,np.size(radii)):
 			for j in range(0,points_per_radius):
-				radius = radii[i]*kpc
+				radius = radii[i]*1.e3*parsec
 				theta = (j*2.0*np.pi)/(points_per_radius)
 
 				x,y,z = negative_coords_check(gal_coords,axis,box_size,radius,theta)
 				file.write("%.6f %.6f %.6f %d\n" % (x,y,z,int(axis)))
-				file.close()
+		file.close()
 
 ### Given a max and min radius picks a random radius and angle from given axis
 def create_one_los_text_random(filename, snap_directory, group_number, particles_included_keyword, group_included_keyword, 

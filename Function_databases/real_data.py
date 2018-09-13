@@ -400,7 +400,7 @@ def get_rid_of_bad_data(AGN_bool, cos_smass_data, cos_ssfr_data, cos_radii_data,
   return cos_smass_data, cos_ssfr_data, cos_radii_data, cos_id_arr, cos_h1_equ_widths, cos_h1_equ_widths_radii, cos_h1_cols, cos_h1_cols_radii, cos_si3_equ_widths, cos_si3_equ_widths_radii, cos_si3_cols, cos_si3_cols_radii, cos_o6_cols, cos_o6_cols_radii, cos_o6_equ_widths, cos_o6_equ_widths_radii, cos_AGN
 
 
-def cos_where_matched_in_EAGLE(AGN_bool, where_matched_bools, cos_smass_data, cos_ssfr_data, cos_radii_data, cos_id_arr, cos_h1_equ_widths, cos_h1_equ_widths_radii, cos_h1_cols, cos_h1_cols_radii, cos_si3_equ_widths, cos_si3_equ_widths_radii, cos_si3_cols, cos_si3_cols_radii, cos_o6_cols, cos_o6_cols_radii, cos_o6_equ_widths, cos_o6_equ_widths_radii, cos_c4_cols, cos_c4_cols_radii, cos_c4_equ_widths, cos_c4_equ_widths_radii, cos_AGN):
+def cos_where_matched_in_EAGLE(AGN_bool, proch_bool, proch_ids, where_matched_bools, cos_smass_data, cos_ssfr_data, cos_radii_data, cos_id_arr, cos_h1_equ_widths, cos_h1_equ_widths_radii, cos_h1_cols, cos_h1_cols_radii, cos_si3_equ_widths, cos_si3_equ_widths_radii, cos_si3_cols, cos_si3_cols_radii, cos_o6_cols, cos_o6_cols_radii, cos_o6_equ_widths, cos_o6_equ_widths_radii, cos_c4_cols, cos_c4_cols_radii, cos_c4_equ_widths, cos_c4_equ_widths_radii, cos_AGN):
   perma_cos_ssfr_data = cos_ssfr_data
 
   if AGN_bool == False:
@@ -412,6 +412,16 @@ def cos_where_matched_in_EAGLE(AGN_bool, where_matched_bools, cos_smass_data, co
     cos_o6_equ_widths_indices = np.argwhere(((cos_o6_equ_widths > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000)))[:,0]
     cos_c4_cols_indices = np.argwhere(((cos_c4_cols > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000)))[:,0]
     cos_c4_equ_widths_indices = np.argwhere(((cos_c4_equ_widths > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000)))[:,0]
+
+  if proch_bool:
+    cos_h1_cols_indices = np.argwhere(((cos_h1_cols > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000) & (np.in1d(cos_id_arr,proch_ids))))[:,0]
+    cos_h1_equ_widths_indices = np.argwhere(((cos_h1_equ_widths > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000) & (np.in1d(cos_id_arr,proch_ids))))[:,0]
+    cos_si3_cols_indices = np.argwhere(((cos_si3_cols > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000) & (np.in1d(cos_id_arr,proch_ids))))[:,0]
+    cos_si3_equ_widths_indices = np.argwhere(((cos_si3_equ_widths > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000) & (np.in1d(cos_id_arr,proch_ids))))[:,0]
+    cos_o6_cols_indices = np.argwhere(((cos_o6_cols > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000) & (np.in1d(cos_id_arr,proch_ids))))[:,0]
+    cos_o6_equ_widths_indices = np.argwhere(((cos_o6_equ_widths > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000) & (np.in1d(cos_id_arr,proch_ids))))[:,0]
+    cos_c4_cols_indices = np.argwhere(((cos_c4_cols > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000) & (np.in1d(cos_id_arr,proch_ids))))[:,0]
+    cos_c4_equ_widths_indices = np.argwhere(((cos_c4_equ_widths > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000) & (np.in1d(cos_id_arr,proch_ids))))[:,0]
 
     # cos_smass_data = cos_smass_data[((cos_h1_equ_widths > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000))]
     # cos_ssfr_data = cos_ssfr_data[((cos_h1_equ_widths > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000))]
@@ -439,32 +449,41 @@ def cos_where_matched_in_EAGLE(AGN_bool, where_matched_bools, cos_smass_data, co
     # cos_c4_cols = cos_c4_cols[((cos_c4_cols > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000))]
 
   else:
-    num_real_gals = int(np.size(cos_smass_data)/2.0)
-    cos_smass_data = cos_smass_data[((cos_h1_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_ssfr_data = cos_ssfr_data[((cos_h1_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_radii_data = cos_radii_data[((cos_h1_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_id_arr = cos_id_arr[((cos_h1_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_AGN = cos_AGN[((cos_h1_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    cos_h1_cols_indices = np.argwhere(((cos_h1_cols > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000)))[:,0]
+    cos_h1_equ_widths_indices = np.argwhere(((cos_h1_equ_widths > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000)))[:,0]
+    cos_si3_cols_indices = np.argwhere(((cos_si3_cols > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000)))[:,0]
+    cos_si3_equ_widths_indices = np.argwhere(((cos_si3_equ_widths > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000)))[:,0]
+    cos_o6_cols_indices = np.argwhere(((cos_o6_cols > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000)))[:,0]
+    cos_o6_equ_widths_indices = np.argwhere(((cos_o6_equ_widths > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000)))[:,0]
+    cos_c4_cols_indices = np.argwhere(((cos_c4_cols > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000)))[:,0]
+    cos_c4_equ_widths_indices = np.argwhere(((cos_c4_equ_widths > 0.) & (where_matched_bools == True) & (perma_cos_ssfr_data != 1000)))[:,0]
 
-    cos_h1_equ_widths_radii = cos_h1_equ_widths_radii[((cos_h1_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_h1_equ_widths = cos_h1_equ_widths[((cos_h1_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_h1_cols_radii = cos_h1_cols_radii[((cos_h1_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_h1_cols = cos_h1_cols[((cos_h1_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # num_real_gals = int(np.size(cos_smass_data)/2.0)
+    # cos_smass_data = cos_smass_data[((cos_h1_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_ssfr_data = cos_ssfr_data[((cos_h1_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_radii_data = cos_radii_data[((cos_h1_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_id_arr = cos_id_arr[((cos_h1_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_AGN = cos_AGN[((cos_h1_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
 
-    cos_si3_equ_widths_radii = cos_si3_equ_widths_radii[((cos_si3_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_si3_equ_widths = cos_si3_equ_widths[((cos_si3_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_si3_cols_radii = cos_si3_cols_radii[((cos_si3_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_si3_cols = cos_si3_cols[((cos_si3_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_h1_equ_widths_radii = cos_h1_equ_widths_radii[((cos_h1_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_h1_equ_widths = cos_h1_equ_widths[((cos_h1_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_h1_cols_radii = cos_h1_cols_radii[((cos_h1_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_h1_cols = cos_h1_cols[((cos_h1_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
 
-    cos_o6_equ_widths_radii = cos_o6_equ_widths_radii[((cos_o6_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_o6_equ_widths = cos_o6_equ_widths[((cos_o6_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_o6_cols_radii = cos_o6_cols_radii[((cos_o6_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_o6_cols = cos_o6_cols[((cos_o6_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))] 
+    # cos_si3_equ_widths_radii = cos_si3_equ_widths_radii[((cos_si3_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_si3_equ_widths = cos_si3_equ_widths[((cos_si3_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_si3_cols_radii = cos_si3_cols_radii[((cos_si3_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_si3_cols = cos_si3_cols[((cos_si3_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
 
-    cos_c4_equ_widths_radii = cos_c4_equ_widths_radii[((cos_c4_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_c4_equ_widths = cos_c4_equ_widths[((cos_c4_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_c4_cols_radii = cos_c4_cols_radii[((cos_c4_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
-    cos_c4_cols = cos_c4_cols[((cos_c4_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))] 
+    # cos_o6_equ_widths_radii = cos_o6_equ_widths_radii[((cos_o6_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_o6_equ_widths = cos_o6_equ_widths[((cos_o6_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_o6_cols_radii = cos_o6_cols_radii[((cos_o6_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_o6_cols = cos_o6_cols[((cos_o6_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))] 
+
+    # cos_c4_equ_widths_radii = cos_c4_equ_widths_radii[((cos_c4_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_c4_equ_widths = cos_c4_equ_widths[((cos_c4_equ_widths > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_c4_cols_radii = cos_c4_cols_radii[((cos_c4_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))]
+    # cos_c4_cols = cos_c4_cols[((cos_c4_cols > 0.) & (where_matched_bools[0:num_real_gals] == True) & (perma_cos_ssfr_data[0:num_real_gals] != 1000))] 
 
   return cos_h1_cols_indices, cos_h1_equ_widths_indices, cos_si3_cols_indices, cos_si3_equ_widths_indices, cos_o6_cols_indices, cos_o6_equ_widths_indices, cos_c4_cols_indices, cos_c4_equ_widths_indices 
   # return cos_smass_data, cos_ssfr_data, cos_radii_data, cos_id_arr, cos_h1_equ_widths, cos_h1_equ_widths_radii, cos_h1_cols, cos_h1_cols_radii, cos_si3_equ_widths, cos_si3_equ_widths_radii, cos_si3_cols, cos_si3_cols_radii, cos_o6_cols, cos_o6_cols_radii, cos_o6_equ_widths, cos_o6_equ_widths_radii, cos_c4_cols, cos_c4_cols_radii, cos_c4_equ_widths, cos_c4_equ_widths_radii, cos_AGN
