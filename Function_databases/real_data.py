@@ -1,11 +1,17 @@
 import numpy as np
 import h5py
 
-AGN_path = '/cosma/home/dp004/dc-oppe1/zooms/data/COS-AGN/COS-AGN.hdf5'
-dwarfs_path = '/gpfs/data/analyse/rhorton/opp_research/snapshots/COS-Dwarfs.hdf5'
-GASS_path = '/cosma/home/dp004/dc-oppe1/zooms/data/COS-GASS/COS-GASS.hdf5'
-GTO_path = '/cosma/home/dp004/dc-oppe1/zooms/data/COS-GTO/COS-GTO.hdf5'
-halos_path = '/gpfs/data/analyse/rhorton/opp_research/snapshots/COS-Halos.hdf5'
+# AGN_path = '/cosma/home/dp004/dc-oppe1/zooms/data/COS-AGN/COS-AGN.hdf5'
+# dwarfs_path = '/gpfs/data/analyse/rhorton/opp_research/snapshots/COS-Dwarfs.hdf5'
+# GASS_path = '/cosma/home/dp004/dc-oppe1/zooms/data/COS-GASS/COS-GASS.hdf5'
+# GTO_path = '/cosma/home/dp004/dc-oppe1/zooms/data/COS-GTO/COS-GTO.hdf5'
+# halos_path = '/gpfs/data/analyse/rhorton/opp_research/snapshots/COS-Halos.hdf5'
+
+AGN_path = '/projects/ryho3446/snapshots/COS-AGN.hdf5'
+dwarfs_path = '/projects/ryho3446/snapshots/COS-Dwarfs.hdf5'
+GASS_path = '/projects/ryho3446/snapshots/COS-GASS.hdf5'
+GTO_path = '/projects/ryho3446/snapshots/COS-GTO.hdf5'
+halos_path = '/projects/ryho3446/snapshots/COS-Halos.hdf5'
 
 num_AGN = 21
 num_dwarfs = 43
@@ -488,3 +494,4 @@ def cos_where_matched_in_EAGLE(AGN_bool, proch_bool, proch_ids, where_matched_bo
   return cos_h1_cols_indices, cos_h1_equ_widths_indices, cos_si3_cols_indices, cos_si3_equ_widths_indices, cos_o6_cols_indices, cos_o6_equ_widths_indices, cos_c4_cols_indices, cos_c4_equ_widths_indices 
   # return cos_smass_data, cos_ssfr_data, cos_radii_data, cos_id_arr, cos_h1_equ_widths, cos_h1_equ_widths_radii, cos_h1_cols, cos_h1_cols_radii, cos_si3_equ_widths, cos_si3_equ_widths_radii, cos_si3_cols, cos_si3_cols_radii, cos_o6_cols, cos_o6_cols_radii, cos_o6_equ_widths, cos_o6_equ_widths_radii, cos_c4_cols, cos_c4_cols_radii, cos_c4_equ_widths, cos_c4_equ_widths_radii, cos_AGN
 
+  

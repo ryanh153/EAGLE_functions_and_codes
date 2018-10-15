@@ -85,7 +85,7 @@ def get_all_id_data(folders_for_recreation_calls):
 
 			for j in range(0,num_particle_id_folders):
 				list_for_all_id_data[i][2*(j+1)-1] = get_gal_id_from_folder_name(particle_id_folders[j])
-				list_for_all_id_data[i][2*(j+1)] = np.size(glob.glob(str(particle_id_folders[j]) + '/eagle_particles_hit*'))
+				list_for_all_id_data[i][2*(j+1)] = np.size(glob.glob(str(particle_id_folders[j]) + '/eagle_particles_hit*.txt'))
 
 	return list_for_all_id_data
 
@@ -112,6 +112,10 @@ def get_gal_id_from_folder_name(folder):
 
 
 def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lookup_file, new_lines=False):
+	not_files = 0
+	files = 0
+	on_first = True # are we still waiting to start our array concatenation 
+
 	for i in range(0,len(list_for_all_id_data)):
 
 		for j in range(0,(len(list_for_all_id_data[i])-1)/2):
@@ -171,9 +175,13 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 				else:
 
 					if os.path.isfile(particles_hit_file[0:-4]+'.hdf5') == False:
-						print 'not a file'
+						# print 'not a file'
+						# print particles_hit_file[0:-4]+'.hdf5'
+						# print ''
+						not_files += 1
 						continue
 
+					files += 1
 					curr_gas_ids, curr_gas_coords, curr_density, curr_gas_vel, curr_metallicity, curr_particle_mass, curr_smoothing_length, curr_temperature, \
 					curr_time_since_ISM, gal_coords, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_coords, curr_z0_vel, curr_z0_time_since_ISM, \
 					z0_gal_coords = \
@@ -197,18 +205,24 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 						curr_ion = curr_spec.get('h1') # replace that soon
 						col_dense = np.array(curr_ion.get('LogTotalIonColumnDensity'))
 
+					### Possible filters
+					if ((col_dense <= 1.5) or (col_dense > 200.5)): # column density filter
+						continue
+
 					# plots_for_each_line(ions, gal_mass, col_dense, i, j, k, curr_particle_radii, impact_param, curr_ion_fracs, curr_lookup_ion_fracs, list_for_all_id_data, curr_density, \
 					# curr_temperature, element_masses, elements, curr_element_fracs, curr_time_since_ISM, curr_z0_time_since_ISM, redshift, indices_recent_SF, \
 					# frac_currently_SF, frac_never_SF, num_particles_hit, curr_z0_particle_radii, z0_frac_never_SF, z0_frac_currently_SF, frac_SF_recently)
 
 					curr_group, curr_radius_bin = get_bins_for_line(gal_smass, gal_sSFR, gal_R200, impact_param)
 
-					if ((i==0) & (j==0) and (k==0)):
+					if on_first:
 						overall_gas_ids, overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 		   				overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, \
 		   				overall_z0_time_since_ISM, overall_groups, overall_radius_bins \
 		   				= create_overall_arrays(curr_gas_ids, curr_particle_radii, curr_density, curr_gas_vel, curr_metallicity, curr_particle_mass, curr_smoothing_length, curr_temperature, \
 						curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, curr_group, curr_radius_bin)
+
+						on_first = False
 
 					else:
 						overall_gas_ids, overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
@@ -233,6 +247,10 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 
 
 	## All lines have now been read in and arrays of data for all particles hit in all sightlines accumulated
+	print 'failed and found totals are'
+	print not_files
+	print files
+	print ''
 	if new_lines == False:
 
 		plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
@@ -703,7 +721,7 @@ def plots_for_each_line(ions, gal_mass, col_dense, i, j, k, curr_particle_radii,
 
 	### Star forming in data stuff, z=0.205 is 2.504 Gyr before present, 2.504 Gry before z=0.205 was z=0.489
 	### z=0 -> 1.0, z=0.205 -> a = 0.830, z=0.489 -> a=0.672
-	will_be_ISM, were_ISM_recently, were_and_will_be_ISM = track_ISM(curr_z0_time_since_ISM, curr_time_since_ISM)
+	will_be_ISM, new_accretion, recycled_accretion, were_ISM_recently, were_and_will_be_ISM = track_ISM(curr_z0_time_since_ISM, curr_time_since_ISM)
 
 	### testing plots H
 	nH = curr_density*curr_element_fracs['hydrogen']/m_H
@@ -858,7 +876,7 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 		overall_particle_radii, overall_density, overall_temperature, overall_lookup_ion_fracs['HydrogenI'], overall_element_fracs['hydrogen'], overall_groups, overall_radius_bins])
 
 	### get indices for past and future ISM interaction
-	overall_will_be_ISM, overall_were_ISM, overall_were_and_will_be_ISM = track_ISM(overall_z0_time_since_ISM, overall_time_since_ISM)
+	overall_will_be_ISM, overall_new_accretion, overall_recycled_accretion, overall_were_ISM, overall_were_and_will_be_ISM = track_ISM(overall_z0_time_since_ISM, overall_time_since_ISM)
 
 	### get number of particles and extract nH
 	num_parts = float(np.size(overall_particle_radii))
@@ -887,20 +905,18 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	fig = plt.figure()
 	ax = fig.gca()
 	ax.bar(all_bar_x_vals, all_bar_heights, color='k')
-	print 'hist heights'
-	print all_bar_x_vals
-	print ''
 	plt.hold(True)
 
-	for group_identifier in range(3):
+	for group_identifier in range(3): # this is low mass, active, passive
 		curr_group_indices = np.where(overall_groups == group_identifier)
-		for radius_bin_identifier in range(3):
+		for radius_bin_identifier in range(3): # this is within 0.5, 0.5-1, and >1. R_vir
 			curr_radius_indices = np.where(overall_radius_bins == radius_bin_identifier)
 
 			curr_indices = np.intersect1d(curr_group_indices, curr_radius_indices)
 			curr_num_parts = float(np.size(curr_indices))
-			curr_will, curr_were, curr_both = track_ISM(overall_z0_time_since_ISM[curr_indices], overall_time_since_ISM[curr_indices])
-			curr_frac_will, curr_frac_were, curr_frac_both = np.array([np.size(curr_will), np.size(curr_were), np.size(curr_both)])/curr_num_parts
+			curr_will, curr_new, curr_recycled, curr_were, curr_both = track_ISM(overall_z0_time_since_ISM[curr_indices], overall_time_since_ISM[curr_indices])
+
+			curr_frac_will, curr_frac_new, curr_frac_recycled, curr_frac_were, curr_frac_both = np.array([np.size(curr_will), np.size(curr_new), np.size(curr_recycled), np.size(curr_were), np.size(curr_both)])/curr_num_parts
 			
 			if curr_num_parts != 0.0:
 				curr_nH, curr_T = [overall_nH[curr_indices], overall_temperature[curr_indices]]
@@ -937,14 +953,15 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 
 			curr_bar_xvals = all_bar_x_vals + radius_bin_identifier+1 + (group_identifier)*3
 			curr_bar_heights = np.array([curr_frac_will, curr_frac_were, curr_frac_both, curr_num_parts/num_parts])
-			curr_bar_heights = np.where(curr_bar_heights == 0., 1.0e-4, curr_bar_heights)
+			curr_bar_xvals = np.concatenate((curr_bar_xvals, [curr_bar_xvals[0]]))
+			curr_bar_heights = np.concatenate((curr_bar_heights, [curr_frac_new]))
+			curr_bar_heights = np.where(curr_bar_heights <= 1.0e-5, 1.0e-5, curr_bar_heights)
+
 			ax.bar(curr_bar_xvals, curr_bar_heights, color=colors[group_identifier], edgecolor = 'k', linestyle=edge_styles[radius_bin_identifier])
-			print curr_bar_heights
-			print ''
 
 	plt.hold(False)
 	ax.set_title('Origin and Fate of Gas Particles: # of Particles=%.1e' % (num_parts))
-	ax.set_ylim(ymin = 1.e-4)
+	ax.set_ylim(ymin = 1.e-5)
 	plt.xticks([0.5, 5, 10.5, 15, 20.5, 25, 30.5, 35, 40.5], ['','Will Be On ISM','', 'Were On ISM','', 'Both','', 'Frac in Group',''])
 	ax.axvline(0.5, color='k', linewidth=0.5)
 	ax.axvline(10.5, color='k', linewidth=0.5)
@@ -1093,11 +1110,14 @@ def track_ISM(z0_time_since_ISM, time_since_ISM):
 	is_a_star_indices = np.where((z0_time_since_ISM > 0.))[0]
 	will_be_ISM = np.concatenate((will_be_ISM, is_a_star_indices))
 
+	new_accretion = np.where(time_since_ISM[will_be_ISM] == 0)
+	recycled_accretion = np.where(time_since_ISM[will_be_ISM] < 0)
+
 	were_ISM_recently = np.where(((time_since_ISM <= -0.672) & (time_since_ISM > -0.830) & (time_since_ISM < 0.)))[0] 
 
 	were_and_will_be_ISM = np.intersect1d(will_be_ISM, were_ISM_recently)
 
-	return will_be_ISM, were_ISM_recently, were_and_will_be_ISM
+	return will_be_ISM, new_accretion, recycled_accretion, were_ISM_recently, were_and_will_be_ISM
 
 
 def get_bins_for_line(gal_smass, gal_sSFR, gal_R200, impact_param):

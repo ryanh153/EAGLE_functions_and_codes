@@ -1395,7 +1395,7 @@ def edit_text(file, new_file_name, keywords, replacements):
 					if iteration >= np.size(keywords):
 						output.write(line)
 
-def gas_mass_in_annular_rings(gal_directory, group_number, radii, particles_included_keyword, subfind_included_keyword):
+def gas_mass_in_annular_rings(gal_directory, group_number, radii, virial_radii_bool, R200, particles_included_keyword, subfind_included_keyword):
 	mass_in_ann = np.zeros(np.size(radii)-1)
 	neut_mass_in_ann = np.zeros(np.size(radii)-1)
 	cum_mass = np.zeros(np.size(radii)-1)
@@ -1419,6 +1419,8 @@ def gas_mass_in_annular_rings(gal_directory, group_number, radii, particles_incl
 	hubble_param = read_attribute(snap_files,'Header','HubbleParam',include_file_keyword=particles_included_keyword)
 
 	gas_coords = gal_centered_coords(gas_coords,gal_coords,box_size,expansion_factor,hubble_param)
+	if virial_radii_bool:
+		gas_coords /= R200
 	temp_cut_indices = np.argwhere(temperature<=1.e5)[:,0]
 
 	for i in range(np.size(mass_in_ann)):
@@ -1430,12 +1432,14 @@ def gas_mass_in_annular_rings(gal_directory, group_number, radii, particles_incl
 
 	return mass_in_ann, neut_mass_in_ann
 
-def actual_cumulative_mass_for_EAGLE_gals(directory_with_sim_gals):
+def actual_cumulative_mass_for_EAGLE_gals(directory_with_sim_gals, virial_radii_bool):
 
 	min_mass, max_mass = 5., 15.
-	# radii = np.arange(0.0,651.,5.)*parsec*1.e3
-	radii = np.arange(20.,170.,10.)*parsec*1.e3
-	plot_radii = radii[::-1]+5.
+	if virial_radii_bool:
+		radii = np.arange(0.05,1.05,0.05)
+	else:
+		# radii = np.arange(0.0,651.,5.)*parsec*1.e3
+		radii = np.arange(20.,170.,10.)*parsec*1.e3
 	ann_gas_mass_all_gals = []
 	neut_ann_gas_mass_all_gals = []
 	halo_masses = []
@@ -1458,7 +1462,7 @@ def actual_cumulative_mass_for_EAGLE_gals(directory_with_sim_gals):
 		if ((gal_mass > min_mass) & (gal_mass <= max_mass)):
 			particles_included_keyword = 'snap_noneq_'+file_keyword
 			subfind_included_keyword = 'eagle_subfind_tab_'+file_keyword
-			temp_mass, temp_neut_mass = gas_mass_in_annular_rings(snap_directory, group_number, radii, particles_included_keyword, subfind_included_keyword)
+			temp_mass, temp_neut_mass = gas_mass_in_annular_rings(snap_directory, group_number, radii, virial_radii_bool, R200, particles_included_keyword, subfind_included_keyword)
 			ann_gas_mass_all_gals.append(temp_mass), neut_ann_gas_mass_all_gals.append(temp_neut_mass)
 			halo_masses.append(gal_mass)
 			stellar_masses.append(stellar_mass)
