@@ -48,10 +48,6 @@ def convolve_spectra_with_COS_LSF(input_x, input_flux, rest_wavelength, redshift
 	else:
 		lsf_delta_x = (np.abs(lsf[0,0]-lsf[1,0])*angstroms_per_pixel)
 
-	print 'lsf velocity per pixel'
-	print lsf_delta_x
-	print ''
-
 	number_of_input_points = int(input_total_x_range/lsf_delta_x)
 	resampled_input_flux, resampled_input_vel = signal.resample(1.-input_flux, number_of_input_points, input_vel)
 

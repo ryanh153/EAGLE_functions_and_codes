@@ -23,8 +23,10 @@ import sys
 # simulated_ang = lsf_functions.vel_to_ang(simulated_vel, rest_wavelength, redshift)
 # simulated_flux = data['flux']
 
+plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['legend.fontsize'], plt.rcParams['xtick.labelsize'], plt.rcParams['ytick.labelsize'] = 18., 18., 16., 16, 16
+
 ### Reading from .txt file (my own format)
-eagle_input = np.loadtxt('h1_Spectrum0_0.7_R_vir.txt', delimiter=' ')
+eagle_input = np.loadtxt('/Users/ryanhorton1/Documents/bitbucket/opp_research/snapshots/scripts/COS_PSF/h1_Spectrum0_0.7_R_vir.txt', delimiter=' ')
 indices = np.argsort(eagle_input[:,0])
 simulated_vel = eagle_input[:,0][indices]
 rest_wavelength = 1216.
@@ -46,7 +48,7 @@ redshift = 0.205 # the redshift of the line (so the observed wavelength can be c
 vel_kms = True # default: True if false, assume the x input is in angstroms
 
 ### Pick specifics of COS LSF
-directory_with_COS_LSF = './'
+directory_with_COS_LSF = '/Users/ryanhorton1/Documents/bitbucket/opp_research/snapshots/scripts/COS_PSF/'
 chan = None # default: None Specifies the channel. IF None it selects based on OBSERVED wavelength (<=1450 -> G130M, else -> G160M). Other inputs will return error!
 
 convolved_vel, convolved_wavelengths, convolved_flux=lsf_functions.convolve_spectra_with_COS_LSF(simulated_vel, simulated_flux, rest_wavelength, redshift, vel_kms=vel_kms, chan=chan, directory_with_COS_LSF=directory_with_COS_LSF)
@@ -115,7 +117,8 @@ noisy_flux = lsf_functions.add_noise(binned_vel, binned_flux, rest_wavelength, r
 ### std = 20
 ### num_sigma_in_gauss = 3
 
-noisy_vel, noisy_ang, noisy_flux = lsf_functions.do_it_all(simulated_vel, simulated_flux, rest_wavelength, redshift, pix_per_bin, snr, cos_lsf_bool=True, correlated_pixels = correlated_pixels, vel_kms=True, chan=None, std=None, num_sigma_in_gauss=None)
+noisy_vel, noisy_ang, noisy_flux = lsf_functions.do_it_all(simulated_vel, simulated_flux, rest_wavelength, redshift, pix_per_bin, snr, cos_lsf_bool=True, correlated_pixels = correlated_pixels, vel_kms=True, chan=None, std=None,
+															 num_sigma_in_gauss=None, directory_with_COS_LSF = '/Users/ryanhorton1/Documents/bitbucket/opp_research/snapshots/scripts/COS_PSF/')
 
 ############################################################
 ### Examples of plots

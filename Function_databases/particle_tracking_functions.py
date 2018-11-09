@@ -182,6 +182,8 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 						continue
 
 					files += 1
+					# if files > 10:
+					# 	raise ValueError('done after 10')
 					curr_gas_ids, curr_gas_coords, curr_density, curr_gas_vel, curr_metallicity, curr_particle_mass, curr_smoothing_length, curr_temperature, \
 					curr_time_since_ISM, gal_coords, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_coords, curr_z0_vel, curr_z0_time_since_ISM, \
 					z0_gal_coords = \
@@ -209,9 +211,9 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 					if ((col_dense <= 1.5) or (col_dense > 200.5)): # column density filter
 						continue
 
-					# plots_for_each_line(ions, gal_mass, col_dense, i, j, k, curr_particle_radii, impact_param, curr_ion_fracs, curr_lookup_ion_fracs, list_for_all_id_data, curr_density, \
-					# curr_temperature, element_masses, elements, curr_element_fracs, curr_time_since_ISM, curr_z0_time_since_ISM, redshift, indices_recent_SF, \
-					# frac_currently_SF, frac_never_SF, num_particles_hit, curr_z0_particle_radii, z0_frac_never_SF, z0_frac_currently_SF, frac_SF_recently)
+					plots_for_each_line(ions, gal_mass, col_dense, i, j, k, curr_particle_radii, impact_param, curr_ion_fracs, curr_lookup_ion_fracs, list_for_all_id_data, curr_density, \
+					curr_temperature, element_masses, elements, curr_element_fracs, curr_time_since_ISM, curr_z0_time_since_ISM, redshift, indices_recent_SF, \
+					frac_currently_SF, frac_never_SF, num_particles_hit, curr_z0_particle_radii, z0_frac_never_SF, z0_frac_currently_SF, frac_SF_recently)
 
 					curr_group, curr_radius_bin = get_bins_for_line(gal_smass, gal_sSFR, gal_R200, impact_param)
 
@@ -709,15 +711,18 @@ def plots_for_each_line(ions, gal_mass, col_dense, i, j, k, curr_particle_radii,
 	# num_grid_pts = 30.
 
 	T_max = 8.0
-	T_min = 2.8
-	nH_max = -1.0
+	T_min = 2.5
+	nH_max = 0.0
 	nH_min = -8.5
-	h1_frac_max = -1.0
-	h1_frac_min = -9.0
+	h1_frac_max = -2.0
+	h1_frac_min = -8.0
 	n_C_max = -7.0
 	n_C_min = -21.0
 	n_O_max = -6.0
 	n_O_min = -20.0
+
+	### plotting params
+	plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['legend.fontsize'], plt.rcParams['xtick.labelsize'],  plt.rcParams['ytick.labelsize'] = 16., 20., 13., 14., 14.
 
 	### Star forming in data stuff, z=0.205 is 2.504 Gyr before present, 2.504 Gry before z=0.205 was z=0.489
 	### z=0 -> 1.0, z=0.205 -> a = 0.830, z=0.489 -> a=0.672
@@ -725,28 +730,26 @@ def plots_for_each_line(ions, gal_mass, col_dense, i, j, k, curr_particle_radii,
 
 	### testing plots H
 	nH = curr_density*curr_element_fracs['hydrogen']/m_H
-	fig = plt.figure()
-	ax = fig.add_subplot(1,1,1)
-	# cbax = ax.scatter(np.log10(nH), np.log10(curr_temperature), s=0.25, c=np.log10(curr_ion_fracs['OxygenVI']))
-	eagle_has_indices = np.where(curr_ion_fracs['OxygenVI'] != 0)[0]
-	cbax = ax.scatter(np.log10(nH[eagle_has_indices]), np.log10(curr_temperature[eagle_has_indices]), s=0.25,cmap='plasma', c=np.log10(curr_ion_fracs['OxygenVI'][eagle_has_indices]/curr_lookup_ion_fracs['OxygenVI'][eagle_has_indices]))
-	cb = fig.colorbar(cbax)
-	cb.set_label(r'$f_{OVI}$')
-	# cb.set_clim([h1_frac_min, h1_frac_max])
+	fig, ax = plt.subplots(1,1)
+	cbax = ax.scatter(np.log10(nH), np.log10(curr_temperature), s=0.25, c=np.log10(curr_ion_fracs['HydrogenI']), vmin = h1_frac_min, vmax = h1_frac_max)
 	plt.hold(True)
-	# ax.scatter(np.log10(nH[will_be_ISM]), np.log10(curr_temperature[will_be_ISM]), s=2.5, \
-	# 	marker='*', c='k', label = 'will be in ISM: #=%d, frac=%.1e' % (np.size(will_be_ISM), float(np.size(will_be_ISM))/(np.size(curr_z0_time_since_ISM))))
-	# ax.scatter(np.log10(nH[were_ISM_recently]), np.log10(curr_temperature[were_ISM_recently]), s=2.5, \
-	# 	marker='*', c='r', label = 'were in ISM: #=%d, frac=%.1e' % (np.size(were_ISM_recently), float(np.size(were_ISM_recently))/(np.size(curr_z0_time_since_ISM))))
-	# ax.scatter(np.log10(nH[were_and_will_be_ISM]), np.log10(curr_temperature[were_and_will_be_ISM]), s=2.5, \
-	# 	marker='*', c='g', label = 'both: #=%d, frac=%.1e' % (np.size(were_and_will_be_ISM), float(np.size(were_and_will_be_ISM))/(np.size(curr_z0_time_since_ISM))))
+	cb = fig.colorbar(cbax, extend='both')
+	cb.set_label(r'$f_{HI}$')
+	ax.scatter(np.log10(nH[will_be_ISM]), np.log10(curr_temperature[will_be_ISM]), s=2.5, \
+		marker='*', c='k', label = 'Future Accretion')
+	ax.scatter(np.log10(nH[were_ISM_recently]), np.log10(curr_temperature[were_ISM_recently]), s=2.5, \
+		marker='*', c='r', label = 'Previous ISM')
+	ax.scatter(np.log10(nH[were_and_will_be_ISM]), np.log10(curr_temperature[were_and_will_be_ISM]), s=2.5, \
+		marker='*', c='g', label = 'Recycling Gas')
 	ax.set(ylim = [T_min, T_max], xlim = [nH_min, nH_max])
-	ax.set(title=r'$n_{H}$ vs T: b=%.0f, $M_{Halo}$=%.1f, N=%.1f' % (impact_param, np.log10(gal_mass), col_dense))
-	ax.set(xlabel=r'$n_H$')
-	ax.set(ylabel='T (K)')
-	ax.legend(loc='lower right')
-	plt.hold(True)
-	fig.savefig('particle_id_files_%s/n_H_T_O_weight_%s.pdf' % (list_for_all_id_data[i][2*(j+1)-1], k), bbox_inches='tight')
+	ax.set(title=r'$n_{H}$ vs T')
+	ax.text(0.5,0.03, r'b=%.0f, $M_{Halo}$=%.1f, $N_{HI}$=%.1f' % (impact_param, np.log10(gal_mass), col_dense), horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, fontsize=14)
+	ax.set(xlabel=r'$log_{10}(n_H) \, {\rm cm^{-3}}$')
+	ax.set(ylabel=r'l$og_{10}(T) \, {\rm K}$')
+	ax.legend(loc='upper left', borderpad=0.1, handletextpad=0.01)
+	plt.hold(False)
+	subprocess.call('mkdir particle_id_files_%s' % (list_for_all_id_data[i][2*(j+1)-1]),shell=True)
+	fig.savefig('particle_id_files_%s/n_H_T_H_weight_%s.pdf' % (list_for_all_id_data[i][2*(j+1)-1], k), bbox_inches='tight')
 	plt.close(fig)
 
 	# nH_close = nH[close_indices]
@@ -861,14 +864,17 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	
 	### set bounds
 	close_indices = np.where(overall_particle_radii < 500.)
-	T_max = 7.5
+	T_max = 8.
 	T_min = 2.5
-	nH_max = -1.
+	nH_max = 0.
 	nH_min = -8.5
 	f_HI_max = -1.
 	f_HI_min = -7.0
 	f_OVI_max = 0.0
 	f_OVI_min = -6.0
+
+	### plotting params
+	plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['legend.fontsize'], plt.rcParams['xtick.labelsize'],  plt.rcParams['ytick.labelsize'] = 17., 17., 13., 14., 16.
 
 	### If I want to filter plots by where they're close
 	[overall_z0_time_since_ISM, overall_time_since_ISM, overall_particle_radii, overall_density, overall_temperature, overall_lookup_ion_fracs['HydrogenI'], overall_element_fracs['hydrogen'], overall_groups, overall_radius_bins] \
@@ -885,14 +891,14 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 
 	num_levels = 2 # really number of levels minus one becuase of how contour handles this value
 	hist_bins = 50 # for the 2d hists this is the number of bins PER AXIS (ex: hist_bins=10 -> 10 x 10 grid)
-	all_bar_x_vals = np.array([1,11,21,31])
-	all_bar_heights = np.array([frac_will_be_ISM, frac_were_ISM, frac_both, 1.0])
+	all_bar_x_vals = np.array([1,11,21])
+	all_bar_heights = np.array([frac_will_be_ISM, frac_were_ISM, frac_both])
 	all_bar_heights = np.where(all_bar_heights == 0., 1.0e-4, all_bar_heights)
 
 	colors = np.array(['g','b','r'])
 	color_labels = ['Low Mass', 'Active', 'Passive']
 	edge_styles = np.array(['-', '--', ':'])
-	edge_labels = [r'r$\leq$0.5 $R_{vir}$', r'0.5 $R_{vir}$<r$\leq$1.0 $R_{vir}$', r'r > 1.0 $R_{vir}$']
+	edge_labels = [r'$r/R_{vir}$ $\leq$ 0.5', r'0.5 < $r/R_{vir}$ $\leq$ 1.0', r'$r/R_{vir}$ > 1.0']
 	filename_edgle_labels = ['low_r', 'mid_r', 'high_r']
 	patches_list1 = [mpatches.Patch(color='k', label = 'All')]
 	patches_list2 = []
@@ -920,7 +926,7 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 			
 			if curr_num_parts != 0.0:
 				curr_nH, curr_T = [overall_nH[curr_indices], overall_temperature[curr_indices]]
-				height, xedges, yedges = np.histogram2d(np.log10(curr_nH), np.log10(curr_T), range=[[nH_min, nH_max], [T_min, T_max]], bins=hist_bins, weights = overall_lookup_ion_fracs['HydrogenI'][curr_indices])
+				height, xedges, yedges = np.histogram2d(np.log10(curr_nH), np.log10(curr_T), range=[[nH_min, nH_max], [T_min, T_max]], bins=hist_bins) #, weights = overall_lookup_ion_fracs['HydrogenI'][curr_indices])
 				height = np.log10(height)
 				if curr_frac_were != 0.0:
 					height_were, xedges_were, yedges_were = np.histogram2d(np.log10(curr_nH[curr_were]), np.log10(curr_T[curr_were]), range=[[nH_min, nH_max], [T_min, T_max]], bins=hist_bins)
@@ -944,15 +950,16 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 					plt.hold(False)
 
 				cb = n_t_fig.colorbar(image)
-				cb.set_label(r'$log_{10}(N_{points})$')
+				cb.set_label(r'$log_{10}(N_{particles})$') # \times f_{HI})$')
 				n_t_ax.set_title(r'$n_{H}$ vs T: %s %s' % (color_labels[group_identifier], edge_labels[radius_bin_identifier]))
 				n_t_ax.set_xlabel(r'$log_{10}(n_H)$ $cm^{-3}$')
 				n_t_ax.set_ylabel(r'$log_{10}(T)$ K')
+				plt.tight_layout()
 				n_t_fig.savefig('n_t_hist_%s_%s.pdf' % (color_labels[group_identifier], filename_edgle_labels[radius_bin_identifier]))
 				plt.close(n_t_fig)
 
 			curr_bar_xvals = all_bar_x_vals + radius_bin_identifier+1 + (group_identifier)*3
-			curr_bar_heights = np.array([curr_frac_will, curr_frac_were, curr_frac_both, curr_num_parts/num_parts])
+			curr_bar_heights = np.array([curr_frac_will, curr_frac_were, curr_frac_both])
 			curr_bar_xvals = np.concatenate((curr_bar_xvals, [curr_bar_xvals[0]]))
 			curr_bar_heights = np.concatenate((curr_bar_heights, [curr_frac_new]))
 			curr_bar_heights = np.where(curr_bar_heights <= 1.0e-5, 1.0e-5, curr_bar_heights)
@@ -960,20 +967,21 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 			ax.bar(curr_bar_xvals, curr_bar_heights, color=colors[group_identifier], edgecolor = 'k', linestyle=edge_styles[radius_bin_identifier])
 
 	plt.hold(False)
-	ax.set_title('Origin and Fate of Gas Particles: # of Particles=%.1e' % (num_parts))
-	ax.set_ylim(ymin = 1.e-5)
-	plt.xticks([0.5, 5, 10.5, 15, 20.5, 25, 30.5, 35, 40.5], ['','Will Be On ISM','', 'Were On ISM','', 'Both','', 'Frac in Group',''])
+	ax.set_title(r'Origin and Fate of Gas') #: ${\rm log}_{10}(N_{HI})$ $<$ 16.5')
+	ax.set_ylim(ymin = 1.e-5,ymax=4.0)
+	ax.set_ylabel(r'${\rm log}_{10}(f)$')
+	plt.xticks([0.5, 5, 10.5, 15, 20.5, 25, 30.5], ['','Future Accretion','', 'Previous ISM','', 'Recycling Gas',''])
 	ax.axvline(0.5, color='k', linewidth=0.5)
 	ax.axvline(10.5, color='k', linewidth=0.5)
 	ax.axvline(20.5, color='k', linewidth=0.5)
 	ax.axvline(30.5, color='k', linewidth=0.5)
-	ax.axvline(40.5, color='k', linewidth=0.5)
-	legend1 = plt.legend(loc='upper left', handles = patches_list1)
-	legend2 = plt.legend(loc='upper center', handles = patches_list2)
+	legend1 = plt.legend(loc='upper left', handles = patches_list1) # [0.05,0.68]
+	legend2 = plt.legend(loc='upper right', handles = patches_list2) # [0.53,0.76]
 	ax.add_artist(legend1)
 	ax.add_artist(legend2)
 	ax.set_yscale('log')
-	fig.savefig('ISM_hists.pdf')
+	ax.set_yticklabels(np.log10(ax.get_yticks()).astype(int))
+	fig.savefig('ISM_hists_16p5_up.pdf')
 	plt.close(fig)
 
 	# ### Hydrogen

@@ -14,16 +14,17 @@ import h5py
 import glob
 import warnings
 import time
+from multiprocessing import Pool as pool
 
 ### Constants
-parsec = 3.0857e18 # cm
+parsec_in_cm = 3.0857e18 # cm
 G = 6.674e-8
 M_sol = 1.98855e33 # g
 secs_per_year = 3.15e7
 kB = 1.380648e-16
 
 ### Atom Constants
-atomic_mass_unit = 1.66053904e-24
+atomic_mass_unit = 1.66053904e-24 # g
 #atom masses given in atomic mass units
 H_atom_mass = 1.0
 He_atom_mass = 4.0
@@ -46,7 +47,9 @@ def get_snap_files(snap_directory, particles_included_keyword):
 		glob_snap_directory += '/'
 
 	snap_files = glob.glob(glob_snap_directory+"*hdf5") # list of snap files in the directory
-	snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+str(particles_included_keyword[0:4])+'shot'+str(particles_included_keyword[4::])+'/'+str(particles_included_keyword)+'*')])
+	snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+str(particles_included_keyword[0:4])+'shot'+str(particles_included_keyword[4::])+'*/'+str(particles_included_keyword)+'*')])
+	# in case there are _noneq_ files in a folder without the noneq keyword. It was done apparently before the naming convention was there
+	snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+str(particles_included_keyword[0:4])+'shot'+str(particles_included_keyword[4::])+'*/'+ str(particles_included_keyword[0:4])+'_noneq'+str(particles_included_keyword[4::])+'*')])
 	snap_files = np.concatenate([snap_files, glob.glob(glob_snap_directory+'groups_'+str(particles_included_keyword[-12::])+'/*hdf5')])
 	return snap_files
 
@@ -61,8 +64,16 @@ def read_attribute(snap_files,array_name,attribute,include_file_keyword=""): # E
 			break # only extracts attribute from one file (becuase they're the same)
 	else:
 		for file in snap_files:
-			if include_file_keyword in file:
-				h5py_file = h5py.File(file,'r')
+			if ((include_file_keyword in file) or (include_file_keyword[0:4]+'_noneq'+include_file_keyword[4::] in file)): # if noneq file in folder w/o
+				try:
+					h5py_file = h5py.File(file,'r')
+				except:
+					print file
+					print h5py_file
+					print array_name
+					print attribute
+					print ''
+					raise ValueError('Could not find attribute in this file even though the keyword matched.')
 				attr = h5py_file[array_name].attrs[attribute]
 				break # only extracts once, attribute the same for all elements/files in array
 	if(attr == None):
@@ -114,7 +125,7 @@ def read_array(snap_files,array_name,include_file_keyword="",column=None, get_sc
 			iteration += 1
 	else:
 		for file in snap_files: # iterates over files
-			if include_file_keyword in file:
+			if ((include_file_keyword in file) or (include_file_keyword[0:4]+'_noneq'+include_file_keyword[4::] in file)): # in noneq file in folder w/o
 				h5py_file = h5py.File(file,'r')
 				if column != None:
 					array = np.asarray(h5py_file[array_name])[:,column] # opens the array for one of the files
@@ -129,7 +140,10 @@ def read_array(snap_files,array_name,include_file_keyword="",column=None, get_sc
 					final_array = array
 				iteration += 1
 
-	return final_array
+	try:
+		return final_array
+	except:
+		raise ValueError("no files found matching keyword in read array")
 
 
 def gal_centered_coords(coords,gal_coords,box_size,expansion_factor,hubble_param): # centers coordinates on galaxy
@@ -492,16 +506,89 @@ def get_star_props(snap_directory, radius, group_number, particles_included_keyw
 
 	return star_coords_in_R, star_distance_in_R, star_mass_in_R, star_velocity_in_R, star_speed_in_R
 
+def get_props_for_coldens(species, snap_directory, group_number, particles_included_keyword, group_included_keyword, subfind_included_keyword):
+	# create array of files
+	snap_files = get_snap_files(snap_directory, particles_included_keyword)
+	# because particle included keyword is different in rotated snapshots have to grab the groups_ files seperately
+	snap_files = np.concatenate((snap_files, get_snap_files(snap_directory, group_included_keyword)))
+
+	p = pool(12)
+
+	gas_coords_test = read_array(snap_files, 'PartType0/Coordinates', include_file_keyword=particles_included_keyword)
+	gas_coords_x_result = p.apply_async(read_array, [snap_files, 'PartType0/Coordinates'], {'include_file_keyword':particles_included_keyword, 'column':0})
+	gas_coords_y_result = p.apply_async(read_array, [snap_files, 'PartType0/Coordinates'], {'include_file_keyword':particles_included_keyword, 'column':1})
+	gas_coords_z_result = p.apply_async(read_array, [snap_files, 'PartType0/Coordinates'], {'include_file_keyword':particles_included_keyword, 'column':2})
+
+	smoothing_length_result = p.apply_async(read_array, [snap_files, 'PartType0/SmoothingLength'], {'include_file_keyword':particles_included_keyword})
+	particle_mass_result = p.apply_async(read_array, [snap_files, 'PartType0/Mass'], {'include_file_keyword':particles_included_keyword})
+	density_result = p.apply_async(read_array, [snap_files, 'PartType0/Density'], {'include_file_keyword':particles_included_keyword})
+	GrpIDs_result = p.apply_async(read_array, [snap_files, "Subhalo/GroupNumber"], {'include_file_keyword':subfind_included_keyword})
+	SubIDs_result = p.apply_async(read_array, [snap_files, "Subhalo/SubGroupNumber"], {'include_file_keyword':subfind_included_keyword})
+	gal_coords_result = p.apply_async(read_array, [snap_files, "Subhalo/CentreOfPotential"], {'include_file_keyword':subfind_included_keyword}) # map center
+
+	if species.lower() == 'h1':
+		element_mass_frac_result = p.apply_async(read_array, [snap_files, 'PartType0/ElementAbundance/Hydrogen'], {'include_file_keyword':particles_included_keyword})
+		ion_fracs_result = p.apply_async(read_array, [snap_files, 'PartType0/ChemicalAbundances/HydrogenI'], {'include_file_keyword':particles_included_keyword, 'get_scaling_conversions':False})
+	else:
+		raise ValueError('We are only dealing with HI right now, species should be h1')
+
+	p.close()
+
+	gas_coords_x = gas_coords_x_result.get()
+	gas_coords_y = gas_coords_y_result.get()
+	gas_coords_z = gas_coords_z_result.get()
+	gas_coords = np.column_stack((gas_coords_x, gas_coords_y, gas_coords_z))
+
+	smoothing_length = smoothing_length_result.get()
+	particle_mass = particle_mass_result.get()
+	element_mass_frac = element_mass_frac_result.get()
+	ion_fracs = ion_fracs_result.get() # really the number density of the ion relative to nH fixed in if statement
+
+	if species.lower() == 'h1':
+		density = density_result.get()
+		nH = density*element_mass_frac/atomic_mass_unit # number density of all hydrogen (HI and HII)
+		ion_fracs = (ion_fracs*nH*atomic_mass_unit)/(element_mass_frac*density) # now it's the fraction of the element that is the ion (N_ion/N_element)
+		ion_fracs[np.where(element_mass_frac == 0.0)] = 0 # makes sure the ion mass is zero wherever there is none of the element. Otherwise get div by zero
+	else:
+		raise ValueError('We are only dealing with HI right now, species should be h1')
+
+	element_mass = particle_mass*element_mass_frac
+	ion_mass = particle_mass*element_mass_frac*ion_fracs
+	GrpIDs = GrpIDs_result.get()
+	SubIDs = SubIDs_result.get()
+	index = np.where((GrpIDs == float(group_number)) & (SubIDs == 0))[0] # picks out most massive galaxy in the designated group
+	if np.size(index) > 1:
+		index = index[0]
+	gal_coords = gal_coords_result.get()[index] # map center
+	print gal_coords
+	print ''
+
+	box_size = read_attribute(snap_files,'Header','BoxSize',include_file_keyword=particles_included_keyword)
+
+	# TODO move distances to Mpcs and masses to solar masses. Also check that all outputs are there.
+	gas_coords/=(parsec_in_cm*1.e6) # Mpcs!!!
+	smoothing_length/=(parsec_in_cm*1.e6) # Mpcs!!!
+	gal_coords/=(parsec_in_cm*1.e6) # Mpcs!!!
+	box_size/=1. # box_size is an attribute and so it is already in Mpcs!
+	element_mass/=(M_sol) # solar masses
+	ion_mass/=(M_sol) # solar masses
+
+
+	return gas_coords, smoothing_length, element_mass, ion_mass, gal_coords, box_size
+
+
+
+
 def plot_velocity_dispersions(gas_speed_in_R, gas_distance_in_R, DM_speed_in_R, DM_distance_in_R, radius, gal_R200, group_number):
 	# set plotting limits so they're the same for both plots (for comparison purposes)
 	ymax = np.max([np.max(DM_speed_in_R),np.max(gas_speed_in_R)])
 	ymin = np.min([np.min(DM_speed_in_R),np.min(gas_speed_in_R)])
 
-	xmax = np.max([np.max(DM_distance_in_R),np.max(gas_distance_in_R)])/(1000.*parsec)
-	xmin = np.min([np.min(DM_distance_in_R),np.min(gas_distance_in_R)])/(1000.*parsec)
+	xmax = np.max([np.max(DM_distance_in_R),np.max(gas_distance_in_R)])/(1000.*parsec_in_cm)
+	xmin = np.min([np.min(DM_distance_in_R),np.min(gas_distance_in_R)])/(1000.*parsec_in_cm)
 
 	# make DM dispersion plot
-	plt.hist2d(DM_distance_in_R/(1000.*parsec),DM_speed_in_R,bins=125, norm = matplotlib.colors.LogNorm()) # dark matter
+	plt.hist2d(DM_distance_in_R/(1000.*parsec_in_cm),DM_speed_in_R,bins=125, norm = matplotlib.colors.LogNorm()) # dark matter
 	plt.colorbar()
 	plt.ylim([ymin,ymax])
 	plt.xlim([xmin,xmax])
@@ -513,7 +600,7 @@ def plot_velocity_dispersions(gas_speed_in_R, gas_distance_in_R, DM_speed_in_R, 
 	plt.close()
 
 	# make gas dispersion plot
-	plt.hist2d(gas_distance_in_R/(1000.*parsec),gas_speed_in_R,bins=125, norm = matplotlib.colors.LogNorm()) # dark matter
+	plt.hist2d(gas_distance_in_R/(1000.*parsec_in_cm),gas_speed_in_R,bins=125, norm = matplotlib.colors.LogNorm()) # dark matter
 	plt.colorbar()
 	plt.ylim ([ymin,ymax])
 	plt.xlim([xmin,xmax])
@@ -549,7 +636,7 @@ def spherical_velocity_plots(gas_velocity_sph_in_R, gas_distance_in_R, DM_veloci
 	plt.hist2d(gas_distance_radial,gas_velocity_radial,bins=125, norm = matplotlib.colors.LogNorm())
 	plt.ylim([ymin,ymax])
 	plt.xlim([xmin,xmax])
-	plt.title("Gas v_rad to %.1e kpc (%.0f)" % (radius/(1000.*parsec), group_number))
+	plt.title("Gas v_rad to %.1e kpc (%.0f)" % (radius/(1000.*parsec_in_cm), group_number))
 	plt.xlabel("Distance from Center of Potential (cm)")
 	plt.ylabel("Speed (cm/s)")
 	title = "Gas Radial Velocity within %.1e virial radii (%.0f).png" % (radius/gal_R200, group_number)
@@ -559,7 +646,7 @@ def spherical_velocity_plots(gas_velocity_sph_in_R, gas_distance_in_R, DM_veloci
 	plt.hist2d(gas_distance_theta,gas_velocity_theta,bins=125, norm = matplotlib.colors.LogNorm())
 	plt.ylim([ymin,ymax])
 	plt.xlim([xmin,xmax])
-	plt.title("Gas v_theta to %.1e kpc (%.0f)" % (radius/(1000.*parsec), group_number))
+	plt.title("Gas v_theta to %.1e kpc (%.0f)" % (radius/(1000.*parsec_in_cm), group_number))
 	plt.xlabel("Distance from Center of Potential (cm)")
 	plt.ylabel("Speed (cm/s)")
 	title = "Gas Theta Velocity within %.1e virial radii (%.0f).png" % (radius/gal_R200, group_number)
@@ -569,7 +656,7 @@ def spherical_velocity_plots(gas_velocity_sph_in_R, gas_distance_in_R, DM_veloci
 	plt.hist2d(gas_distance_phi,gas_velocity_phi,bins=125, norm = matplotlib.colors.LogNorm())
 	plt.ylim([ymin,ymax])
 	plt.xlim([xmin,xmax])
-	plt.title("Gas v_phi to %.1e kpc (%.0f)" % (radius/(1000.*parsec), group_number))
+	plt.title("Gas v_phi to %.1e kpc (%.0f)" % (radius/(1000.*parsec_in_cm), group_number))
 	plt.xlabel("Distance from Center of Potential (cm)")
 	plt.ylabel("Speed (cm/s)")
 	title = "Gas Phi Velocity within %.1e virial radii (%.0f).png" % (radius/gal_R200, group_number)
@@ -580,7 +667,7 @@ def spherical_velocity_plots(gas_velocity_sph_in_R, gas_distance_in_R, DM_veloci
 	plt.hist2d(DM_distance_radial,DM_velocity_radial,bins=125, norm = matplotlib.colors.LogNorm())
 	plt.ylim([ymin,ymax])
 	plt.xlim([xmin,xmax])
-	plt.title("DM v_rad to %.1e kpc (%.0f)" % (radius/(1000.*parsec), group_number))
+	plt.title("DM v_rad to %.1e kpc (%.0f)" % (radius/(1000.*parsec_in_cm), group_number))
 	plt.xlabel("Distance from Center of Potential (cm)")
 	plt.ylabel("Speed (cm/s)")
 	title = "DM Radial Velocity within %.1e virial radii (%.0f).png" % (radius/gal_R200, group_number)
@@ -590,7 +677,7 @@ def spherical_velocity_plots(gas_velocity_sph_in_R, gas_distance_in_R, DM_veloci
 	plt.hist2d(DM_distance_theta,DM_velocity_theta,bins=125, norm = matplotlib.colors.LogNorm())
 	plt.ylim([ymin,ymax])
 	plt.xlim([xmin,xmax])
-	plt.title("DM v_theta to %.1e kpc (%.0f)" % (radius/(1000.*parsec), group_number))
+	plt.title("DM v_theta to %.1e kpc (%.0f)" % (radius/(1000.*parsec_in_cm), group_number))
 	plt.xlabel("Distance from Center of Potential (cm)")
 	plt.ylabel("Speed (cm/s)")
 	title = "DM Theta Velocity within %.1e virial radii (%.0f).png" % (radius/gal_R200, group_number)
@@ -600,7 +687,7 @@ def spherical_velocity_plots(gas_velocity_sph_in_R, gas_distance_in_R, DM_veloci
 	plt.hist2d(DM_distance_phi,DM_velocity_phi,bins=125, norm = matplotlib.colors.LogNorm())
 	plt.ylim([ymin,ymax])
 	plt.xlim([xmin,xmax])
-	plt.title("DM v_phi to %.1e kpc (%.0f)" % (radius/(1000.*parsec), group_number))
+	plt.title("DM v_phi to %.1e kpc (%.0f)" % (radius/(1000.*parsec_in_cm), group_number))
 	plt.xlabel("Distance from Center of Potential (cm)")
 	plt.ylabel("Speed (cm/s)")
 	title = "DM Phi Velocity within %.1e virial radii (%.0f).png" % (radius/gal_R200, group_number)
@@ -676,12 +763,12 @@ def create_gal_data(file_name, arr_size, snap_directory, file_keyword, group_num
 	             DM_virial_LHS=None, DM_KE_in_radii=None, DM_virial_ratio=None):
 
 	# convert to units of hdf5 file
-	radius_of_output /= 1.e3*parsec
+	radius_of_output /= 1.e3*parsec_in_cm
 	gal_mass /= M_sol
-	virial_radius /= 1.e3*parsec
+	virial_radius /= 1.e3*parsec_in_cm
 	gal_stellar_mass /= M_sol
 	box_size *= (1.e3)/hubble_param*expansion_factor # have to adjust becuase it's drawn from header so not put in physical by CGSConversion
-	gal_coords /= 1.e3*parsec
+	gal_coords /= 1.e3*parsec_in_cm
 	gal_velocity /= 1.e5
 	if gas_sigma_radial != None:
 		gas_sigma_radial /= 1.e5
@@ -1438,8 +1525,8 @@ def actual_cumulative_mass_for_EAGLE_gals(directory_with_sim_gals, virial_radii_
 	if virial_radii_bool:
 		radii = np.arange(0.05,1.05,0.05)
 	else:
-		# radii = np.arange(0.0,651.,5.)*parsec*1.e3
-		radii = np.arange(20.,170.,10.)*parsec*1.e3
+		# radii = np.arange(0.0,651.,5.)*parsec_in_cm*1.e3
+		radii = np.arange(20.,170.,10.)*parsec_in_cm*1.e3
 	ann_gas_mass_all_gals = []
 	neut_ann_gas_mass_all_gals = []
 	halo_masses = []
@@ -1471,7 +1558,7 @@ def actual_cumulative_mass_for_EAGLE_gals(directory_with_sim_gals, virial_radii_
 		else:
 			continue
 
-	print '20-160kpc All Gals sim cum masses'
+	print 'To vir in virial units All Gals sim cum masses'
 	print ann_gas_mass_all_gals
 	print ''
 	print neut_ann_gas_mass_all_gals
