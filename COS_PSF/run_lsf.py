@@ -164,28 +164,28 @@ def make_plot(x,y, filename, title=None, color='b',step_bool=False, ylabel=None,
 	plt.savefig(filename, bbox_inches='tight')
 	plt.close()
 
-make_plot(simulated_vel, simulated_flux, 'simulated_line_vel.pdf', title='Simulated HI Spectra Relative to the Velocity of the Galaxy', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=1.5, xlabel='Velocity (km/s)', xmin=-600, xmax=600,
-	      x_ticks = np.arange(-600, 600, 200), y_ticks = np.arange(0.,1.5,0.5), relative_labels_bool=False, aspect_ratio=1./4., grid_bool=True)
+make_plot(simulated_vel, simulated_flux, 'simulated_line_vel.pdf', title='Simulated HI Spectra Relative to the Velocity of the Galaxy', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=1.5, xlabel='Velocity (km/s)', xmin=-400, xmax=400,
+	      x_ticks = np.arange(-400, 400, 200), y_ticks = np.arange(0.,1.5,0.5), relative_labels_bool=False, aspect_ratio=1./4., grid_bool=True)
 
-# make_plot(convolved_vel, convolved_flux, 'convolved_line_vel.pdf', color='b', step_bool=True, ymin=-0.1, ymax=1.5, xmin=-600, xmax=600,
-# 	      x_ticks = np.arange(-600, 600, 200), y_ticks = np.arange(0.,1.5,0.5), relative_labels_bool=False, aspect_ratio=1./5., grid_bool=True)
+# make_plot(convolved_vel, convolved_flux, 'convolved_line_vel.pdf', color='b', step_bool=True, ymin=-0.1, ymax=1.5, xmin=-400, xmax=400,
+# 	      x_ticks = np.arange(-400, 400, 200), y_ticks = np.arange(0.,1.5,0.5), relative_labels_bool=False, aspect_ratio=1./5., grid_bool=True)
 
-# make_plot(binned_vel, binned_flux, 'binned_line_vel.pdf', color='b', step_bool=True, ymin=-0.1, ymax=1.5, xmin=-600, xmax=600,
-# 	      x_ticks = np.arange(-600, 600, 200), y_ticks = np.arange(0.,1.5,0.5), relative_labels_bool=False, aspect_ratio=1./5., grid_bool=True)
+# make_plot(binned_vel, binned_flux, 'binned_line_vel.pdf', color='b', step_bool=True, ymin=-0.1, ymax=1.5, xmin=-400, xmax=400,
+# 	      x_ticks = np.arange(-400, 400, 200), y_ticks = np.arange(0.,1.5,0.5), relative_labels_bool=False, aspect_ratio=1./5., grid_bool=True)
 
-make_plot(noisy_vel, noisy_flux, 'noisy_line_vel.pdf', title='Convolved HI Spectra with S/N=10', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=1.5, xlabel='Velocity (km/s)', xmin=-600, xmax=600,
-	      x_ticks = np.arange(-600, 600, 200), y_ticks = np.arange(0.,1.5,0.5), relative_labels_bool=False, aspect_ratio=1./4., grid_bool=True)
+make_plot(noisy_vel, noisy_flux, 'noisy_line_vel.pdf', title='Convolved HI Spectra with S/N=10', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=1.5, xlabel='Velocity (km/s)', xmin=-400, xmax=400,
+	      x_ticks = np.arange(-400, 400, 200), y_ticks = np.arange(0.,1.5,0.5), relative_labels_bool=False, aspect_ratio=1./4., grid_bool=True)
 
 make_plot(simulated_ang, simulated_flux, 'simulated_line_ang.pdf', title='Simulated HI Spectra', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=1.5, xlabel='Wavelength (Angstroms)', xmin=1463, xmax=1467,
 	      x_ticks = np.arange(1463, 1467, 1), y_ticks = np.arange(0.,1.5,0.5), relative_labels_bool=False, aspect_ratio=1./4., grid_bool=True)
 
-make_plot(convolved_wavelengths, convolved_flux, 'convolved_line_ang.pdf', title='Normalized FLux vs Wavelength', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=1.5, xlabel='Wavelength (Angstroms)', xmin=1463, xmax=1467,
+make_plot(convolved_wavelengths, convolved_flux, 'convolved_line_ang.pdf', title='Normalized Flux vs Wavelength', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=1.5, xlabel='Wavelength (Angstroms)', xmin=1463, xmax=1467,
 	      x_ticks = np.arange(1463, 1467, 1), y_ticks = np.arange(0.,1.5,0.5), relative_labels_bool=False, aspect_ratio=1./4., grid_bool=True)
 
 # make_plot(gauss_wavelengths, gauss_flux, 'gauss_line_ang.pdf', color='b', step_bool=True, ymin=-0.1, ymax=1.5, xmin=1463, xmax=1467,
 # 	      x_ticks = np.arange(1463, 1468, 1), y_ticks = np.arange(0.,1.5,0.5), relative_labels_bool=False, aspect_ratio=1./4., grid_bool=True)
 
-make_plot(binned_wavelengths, binned_flux, 'binned_line_ang.pdf', title='Normalized FLux vs Wavelength', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=1.5, xlabel='Wavelength (Angstroms)', xmin=1463, xmax=1467,
+make_plot(binned_wavelengths, binned_flux, 'binned_line_ang.pdf', title='Normalized Flux vs Wavelength', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=1.5, xlabel='Wavelength (Angstroms)', xmin=1463, xmax=1467,
 	      x_ticks = np.arange(1463, 1467, 1), y_ticks = np.arange(0.,1.5,0.5), relative_labels_bool=False, aspect_ratio=1./4., grid_bool=True)
 
 make_plot(noisy_ang, noisy_flux, 'noisy_line_ang.pdf', title='Convolved HI Spectra with S/N=10', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=1.5, xlabel='Wavelength (Angstroms)', xmin=1463, xmax=1467,

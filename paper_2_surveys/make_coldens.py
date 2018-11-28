@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from scipy import ndimage
 
 ### libraries from .py files that have to be in the same locations
 import EagleFunctions
@@ -15,7 +16,7 @@ import coldens
 
 ### Constants 
 parsec_in_cm = 3.0857e18 # cm
-M_sol = 0.398855e33 # g
+M_sol = 1.99e33 # g
 h = 0.6777
 
 ### Directories for galaxies we are using 
@@ -37,9 +38,12 @@ plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['le
 def coldens_plot(fig_name, Lx, Ly, coldens_map, ion, axis, vmin, vmax):  #ion and axis are strings
 	# currently  coldens.py returns the column density values in linear space. Assume this (so log the map)
 	coldens_map = np.log10(coldens_map)
+	coldens_map = ndimage.rotate(coldens_map, 90.) # to bring the angles in line with my angle convention
 
 	fig, ax = plt.subplots(1)
 	im = ax.imshow(coldens_map.transpose(), extent = (-0.5*Lx, 0.5*Lx, -0.5*Ly, 0.5*Ly), aspect = 'auto', cmap='inferno', vmin=vmin, vmax=vmax, origin="lower", interpolation="nearest")
+	ax.plot([0,0.5*Lx], [0,0], "w-", lw=2)
+	ax.plot([0,(0.5*Lx)/np.sqrt(2.)], [0,(0.5*Ly)/np.sqrt(2.)], "w-", lw=2)
 	cb = fig.colorbar(im)
 	cb.set_clim(vmin, vmax)
 	cb.set_label(r"$N_{%s}$ ${\rm cm^{-2}}$" % (ion), fontsize = plt.rcParams["axes.labelsize"])

@@ -1607,7 +1607,7 @@ def make_equ_width_contour_plots(ion, radii, virial_radii, equ_widths, smasses, 
 	upper_ssfr = np.array([-5., -5., -11.])
 	lower_ssfr = np.array([-15., -11., -15.])
 
-	colors = ['m', 'b', 'r']
+	colors = ['g', 'b', 'r']
 	stagger = [0.0, -1.5, 1.5]
 	labels = ['Low Mass', 'Blue', 'Red']
 	fit_objects = [[],[],[]]
@@ -1651,7 +1651,7 @@ def make_equ_width_contour_plots(ion, radii, virial_radii, equ_widths, smasses, 
 				eagle_params, eagle_errs = np.polyfit(curr_radii, curr_equ_widths, 1 ,cov=True)
 				eagle_fit_arr = eagle_params[0]*virial_radii+eagle_params[1]
 			# comma means we only keep the first input, plt.plot returns list (length one for this case but you still want just the element)
-			fit_objects[i], = ax.plot(virial_radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0], color=colors[i], label=r'm=%.1e $\pm$ %.0e' %(eagle_params[0], np.sqrt(eagle_errs[0,0])) + '\n' + r'b=%.1e $\pm$ %.0e' % (eagle_params[1], np.sqrt(eagle_errs[1,1])))
+			fit_objects[i], = ax.plot(virial_radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0], color=colors[i], label=r'm=%.3f $\pm$ %.0e' %(eagle_params[0], np.sqrt(eagle_errs[0,0])) + '\n' + r'b=%.3f $\pm$ %.0e' % (eagle_params[1], np.sqrt(eagle_errs[1,1])))
 
 
 	else:
@@ -3125,7 +3125,7 @@ def mass_estimates(lookup_file, spec_output_file, spectrum, ion, redshift):
 	total_optical_depth = np.sum(optical_depth)
 	tau_to_col_factor = (10.**col_dense)/total_optical_depth
 	col_dense_arr = optical_depth*tau_to_col_factor
-	test_col_dense_arr = optical_depth*tau_to_col_factor
+	col_dens_arr = optical_depth*tau_to_col_factor
 
 	# initialize arrays
 	dense_cords = np.empty(np.size(n_H))
@@ -3180,16 +3180,16 @@ def mass_estimates(lookup_file, spec_output_file, spectrum, ion, redshift):
 		raise ValueError('interpolation failed')
 
 	# get neutral column density array
-	test_H_col_dense_arr = test_col_dense_arr/np.where(optical_depth >= tol, neutral_fractions, 1.)
+	H_col_dense_arr = col_dens_arr/np.where(optical_depth >= tol, neutral_fractions, 1.)
 
 	# get total neutral column 
 	# Can use that part to make a temperature cut at the per pixel level of the sightlines
 	if np.size(optical_depth[optical_depth >= tol]) > 0:
-		test_H_column = np.log10(np.sum(test_H_col_dense_arr))
+		H_column = np.log10(np.sum(H_col_dense_arr))
 	else:
-		test_H_column = col_dense # changing this to zero did not have an effect
+		H_column = col_dense # changing this to zero did not have an effect
 
-	return test_H_column
+	return H_column
 
 
 def find_cord_for_interp(array, left_index, value):
