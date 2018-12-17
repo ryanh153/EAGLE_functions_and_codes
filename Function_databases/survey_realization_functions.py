@@ -1651,7 +1651,7 @@ def make_equ_width_contour_plots(ion, radii, virial_radii, equ_widths, smasses, 
 				eagle_params, eagle_errs = np.polyfit(curr_radii, curr_equ_widths, 1 ,cov=True)
 				eagle_fit_arr = eagle_params[0]*virial_radii+eagle_params[1]
 			# comma means we only keep the first input, plt.plot returns list (length one for this case but you still want just the element)
-			fit_objects[i], = ax.plot(virial_radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0], color=colors[i], label=r'm=%.3f $\pm$ %.0e' %(eagle_params[0], np.sqrt(eagle_errs[0,0])) + '\n' + r'b=%.3f $\pm$ %.0e' % (eagle_params[1], np.sqrt(eagle_errs[1,1])))
+			fit_objects[i], = ax.plot(virial_radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0], color=colors[i], label=r'm=%.2f $\pm$ %.2f' %(round(eagle_params[0]*100.)/100., round(100.*np.sqrt(eagle_errs[0,0]))/100.) + '\n' + r'b=%.2f $\pm$ %.2f' % (round(100.*eagle_params[1])/100., round(100.*np.sqrt(eagle_errs[1,1]))/100.))
 
 
 	else:

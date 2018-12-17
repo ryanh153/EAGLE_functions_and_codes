@@ -101,13 +101,13 @@ lookup_files = '/projects/ryho3446/Ali_Spec_src/IonizationTables/HM01G+C+SSH/'
 # where all that data is put and where created los live. Basically the home for the run you are doing. 
 # don't make it the same for multiple runs and make sure if you're just running plotting stuff it looks in the right place
 
-folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/halos_5rel_1')
-folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/gass_5rel_1'))
-folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/dwarfs_5rel_1'))
+# folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/halos_5rel_1')
+# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/gass_5rel_1'))
+# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/dwarfs_5rel_1'))
 
-# folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/dwarfs*')
-# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/gass*'))
-# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/halos*'))
+folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/dwarfs*')
+folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/gass*'))
+folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/halos*'))
 # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarf*'))
 # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
 # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
@@ -148,7 +148,7 @@ kinematics_bool = False # look at properties of individual lines
 pop_str = 'old'
 proch_bool = False
 mean_total_mass_bool = False
-virial_radii_bool = True
+virial_radii_bool = False
 make_realistic_bool = False
 new_lines = False
 equ_widths_bool = True

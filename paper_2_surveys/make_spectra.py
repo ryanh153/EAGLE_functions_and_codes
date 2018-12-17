@@ -2,10 +2,14 @@
 ### Ryan Horton 
 
 ### TODO another file. Make maps of HI and H looking outwards from the center. Want the ability to pick an origin and a direction 
-### and map the gas as a function of solid angle on the sky. Coldens mape with z slice picked carefully to give only above/below is a start. 
+### and map the gas as a function of solid angle on the sky. Coldens map with z slice picked carefully to give only above/below is a start. 
 ### Full options are pick a ray for specwizard to trace or do it myself in eagle. Complicated though because cone grows. Could be really simple
 ### and do mass contained in cone? Divide the 3d space around a point in N solid angle cones. Get mass (HI and H) in each cone out to different 
 ### distances
+
+# TODO collapse number of ponts. Can angles be collapsed by facto 4 (one quadrant) or 2? Look at each ang plot
+# TODO collapse radii? Try larger bins. There are just too many lines. 
+# TODO virialized radii? Probably should...
 
 ### Imports
 import numpy as np
@@ -63,10 +67,11 @@ points_per_file = points_per_radius*np.size(radii)
 axis = np.array([0.,1.,2.])
 axis_letters = np.array(['x', 'y', 'z'])
 angle_off = np.array(['y', 'z', 'x'])
+covering_frac_vals = np.array([14., 16., 18.])
 
 ### For specwizard
 run_specwizard = False
-making_npz_file = True
+making_npz_file = False
 if run_specwizard:
 	print "Running on %s cores. %s sightlines per core" % (str(cores), str(3*np.size(radii)))
 	print ''
@@ -79,23 +84,43 @@ h1_lookup_file = "/cosma/home/analyse/rhorton/Ali_Spec_src/IonizationTables/HM01
 
 ### Check these for errors in data size or related  issues
 bin_stagger = 0.25 # so that we don't count things on both sides of a bin. Ex: some radii at 30 are read as  29.997 and some at 30.012
-radii_step = 15. # Use same start/stop as above
-angle_start, angle_stop, angle_step = 0., 360., 30. # stop not inclusive
+radii_step = 40. # Use same start/stop as above
+angle_start, angle_step, ang_step_2_fold, ang_step_4_fold = 0., 30., 20., 10. # stop not inclusive, end set by which arr used
 ###
 npz_filename = "survey_results.npz"
 make_realistic_bool = True
 directory_with_COS_LSF = "/cosma/home/analyse/rhorton/snapshots/COS_PSF"
 ###
 
-radii_bins_for_data = np.arange(radii_start, radii_stop, radii_step)
+angle_stop, ang_stop_2_fold, ang_stop_4_fold = 360.+angle_step, 180.+ang_step_2_fold, 90.+ang_step_4_fold
 angle_bins_for_data = np.arange(angle_start, angle_stop, angle_step)
-plot_radii = np.arange(radii_start+radii_step*0.5, radii_stop-radii_step*0.5, radii_step)
+ang_bins_2_fold_for_data = np.arange(angle_start, ang_stop_2_fold, ang_step_2_fold)
+ang_bins_4_fold_for_data = np.arange(angle_start, ang_stop_4_fold, ang_step_4_fold)
 plot_angles = np.arange(angle_start+angle_step*0.5, angle_stop-angle_step*0.5, angle_step)
-radii_plot_stagger = np.linspace((-1.*radii_step)/4., (radii_step)/4., np.size(plot_angles))
+plot_ang_2_fold = np.arange(angle_start+ang_step_2_fold*0.5, ang_stop_2_fold-ang_step_2_fold*0.5, ang_step_2_fold)
+plot_ang_4_fold = np.arange(angle_start+ang_step_4_fold*0.5, ang_stop_4_fold-ang_step_4_fold*0.5, ang_step_4_fold)
+
+radii_bins_for_data = np.arange(radii_start, radii_stop+radii_step, radii_step)
+plot_radii = np.arange(radii_start+radii_step*0.5, radii_stop+radii_step*0.5, radii_step)
+
 angle_plot_stagger = np.linspace((-1.*angle_step)/4., (angle_step)/4., np.size(plot_radii))
+radii_plot_stagger = np.linspace((-1.*radii_step)/4., (radii_step)/4., np.size(plot_angles))
+radii_plot_stagger = np.linspace((-1.*radii_step)/4., (radii_step)/4., np.size(plot_ang_2_fold))
+radii_plot_stagger = np.linspace((-1.*radii_step)/4., (radii_step)/4., np.size(plot_ang_4_fold))
 
 ### plotting params
 plt.rcParams["axes.labelsize"], plt.rcParams["axes.titlesize"], plt.rcParams["legend.fontsize"], plt.rcParams["xtick.labelsize"],  plt.rcParams["ytick.labelsize"] = 14., 18., 12., 12., 12.
+
+### plot bools
+col_rad, col_ang  = True, True
+H_col_rad, H_col_ang = True, True
+W_rad, W_ang = True, True
+vel_rad, vel_ang = True, True
+ann_mass_rad, ann_mass_ang = True, True
+H_ann_mass_rad, H_ann_mass_ang = True, True
+cum_mass, H_cum_mass = True, True
+cover_rad, cover_ang = True, True
+
 
 ### Given an array of radii and a number of points per radius (and an axis) creates los in cricles around given axis at equally spaced angles
 def create_mult_los_per_radius_text(filename, snap_files, gal_coords, box_size, points_per_radius, radii, axis, center=False): # for axis 0=x, 1=y, 2=z, center means put a line through the galaxy's center
@@ -655,27 +680,27 @@ else:
 	npz_file["arr_1"], npz_file["arr_2"], npz_file["arr_3"], npz_file["arr_4"], npz_file["arr_5"], npz_file["arr_6"], npz_file["arr_7"], npz_file["arr_8"], npz_file["arr_9"], npz_file["arr_10"], npz_file["arr_11"], npz_file["arr_12"], npz_file["arr_13"], npz_file["arr_14"]
 	expected_per_bin = (np.size(col_dens_arr))/(np.size(axis)*(np.size(radii_bins_for_data)-1)*(np.size(angle_bins_for_data)-1))
 
+# map angles to degrees from disk of galaxy, 2 fold if we care about which side (vel for example) 4 fold otherwise
+ang_arr_2_fold = np.where(angle_arr >= 180., 180.-(angle_arr%180.), angle_arr)
+ang_arr_4_fold = np.where(ang_arr_2_fold >= 90., 90.-(ang_arr_2_fold%90.), ang_arr_2_fold)
 
-### plots, what do we want to know about these sightlines? 
-# DONE col dens vs impact parameter and axis
-# make the structure you'll want later here. 
-# store data by: galaxy, axis, angular bin, radial bin
-# want to be able to set the parameters for the later to tailor how many are in each bin. 
-# right now have angular resolution of 7.5 degrees and radial resolution of 10 kpc so start with 15 and 30. 6 pts per bin. 
-# DONE same for equ widths
-# DONE vs centroid velocity
-# DONE mass in each radii/angle bin. Done the same way as before
-# DONE cummulative mass going out for each angle bin. Probes cylindrical symmetry pretty directly
-# TODO do what can be done with total hydrogen to show differences: col and mass plots (only?)
-# TODO covering fraction at a few values for col plots
+dir_size, axis_size, radii_size, angle_size, ang_2_fold_size, ang_4_fold_size = np.size(dirs), np.size(axis), np.size(radii_bins_for_data)-1, np.size(angle_bins_for_data)-1, np.size(ang_bins_2_fold_for_data)-1, np.size(ang_bins_4_fold_for_data)-1
+# 4 fold stuff
+col_data, col_top, col_bot = np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size))
+H_col_data, H_col_top,  H_col_bot =  np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size))
+W_data, W_top, W_bot = np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size))
+mass_data, mass_top,  mass_bot =  np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size))
+cum_mass_data, cum_mass_top,  cum_mass_bot =  np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size))
+H_mass_data, H_mass_top,  H_mass_bot =  np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size))
+H_cum_mass_data, H_cum_mass_top,  H_cum_mass_bot =  np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size))
+# 2 fold stuff
+vel_data, vel_top,  vel_bot =  np.zeros((dir_size,axis_size, radii_size, ang_2_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_2_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_2_fold_size))
 
-dir_size, axis_size, radii_size, angle_size = np.size(dirs), np.size(axis), np.size(radii_bins_for_data)-1, np.size(angle_bins_for_data)-1
-col_data, col_top, col_bot = np.zeros((dir_size,axis_size, radii_size, angle_size)), np.zeros((dir_size,axis_size, radii_size, angle_size)), np.zeros((dir_size,axis_size, radii_size, angle_size))
-H_col_data, H_col_top,  H_col_bot =  np.zeros((dir_size,axis_size, radii_size, angle_size)), np.zeros((dir_size,axis_size, radii_size, angle_size)), np.zeros((dir_size,axis_size, radii_size, angle_size))
-W_data, W_top, W_bot = np.zeros((dir_size,axis_size, radii_size, angle_size)), np.zeros((dir_size,axis_size, radii_size, angle_size)), np.zeros((dir_size,axis_size, radii_size, angle_size))
-vel_data, vel_top,  vel_bot =  np.zeros((dir_size,axis_size, radii_size, angle_size)), np.zeros((dir_size,axis_size, radii_size, angle_size)), np.zeros((dir_size,axis_size, radii_size, angle_size))
-mass_data, mass_top,  mass_bot =  np.zeros((dir_size,axis_size, radii_size, angle_size)), np.zeros((dir_size,axis_size, radii_size, angle_size)), np.zeros((dir_size,axis_size, radii_size, angle_size))
-cum_mass_data, cum_mass_top,  cum_mass_bot =  np.zeros((dir_size,axis_size, radii_size, angle_size)), np.zeros((dir_size,axis_size, radii_size, angle_size)), np.zeros((dir_size,axis_size, radii_size, angle_size))
+for i in range(np.size(covering_frac_vals)):
+	if covering_frac_vals[i] != np.array([14., 16., 18.])[i]:
+		raise ValueError("you changed the covering frac vals in the headers but didn not alter the way the arrays are made in main! Sorry for this not happening automatically...")
+covering_fracs = [np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size))]
+
 
 for gal_index in range(0,np.size(dirs)):
 	for axis_index in range(0,np.size(axis)):
@@ -685,219 +710,354 @@ for gal_index in range(0,np.size(dirs)):
 
 				curr_indices = np.where(((axis_arr == axis[axis_index]) & (radii_arr > radii_bins_for_data[radii_index]-bin_stagger) & (radii_arr < radii_bins_for_data[radii_index+1]-bin_stagger) & 
 										(angle_arr > angle_bins_for_data[angle_index]-bin_stagger) & (angle_arr < angle_bins_for_data[angle_index+1]-bin_stagger)))
-
+				if angle_index < ang_2_fold_size: # put quantities here that map to two quadrants (2 fold)
+					ang_2_fold_ind = np.where(((axis_arr == axis[axis_index]) & (radii_arr > radii_bins_for_data[radii_index]-bin_stagger) & (radii_arr < radii_bins_for_data[radii_index+1]-bin_stagger) & 
+										(ang_arr_2_fold > ang_bins_2_fold_for_data[angle_index]-bin_stagger) & (ang_arr_2_fold < ang_bins_2_fold_for_data[angle_index+1]-bin_stagger)))
+				if angle_index < ang_4_fold_size: # put quantities here that map to one quadrant (4 fold)
+					ang_4_fold_ind = np.where(((axis_arr == axis[axis_index]) & (radii_arr > radii_bins_for_data[radii_index]-bin_stagger) & (radii_arr < radii_bins_for_data[radii_index+1]-bin_stagger) & 
+										(ang_arr_4_fold > ang_bins_4_fold_for_data[angle_index]-bin_stagger) & (ang_arr_4_fold < ang_bins_4_fold_for_data[angle_index+1]-bin_stagger)))
+				
 				# shouldn't need to move in and of logspace for madian/percentiles because they don't take into account all values. Just the order, which is unchanged by log10
-				col_data[data_indices], col_top[data_indices], col_bot[data_indices] = np.median(col_dens_arr[curr_indices]), np.percentile(col_dens_arr[curr_indices], 84.), np.percentile(col_dens_arr[curr_indices], 16.)
-				H_col_data[data_indices], H_col_top[data_indices], H_col_bot[data_indices] = np.median(H_col_dens_arr[curr_indices]), np.percentile(H_col_dens_arr[curr_indices], 84.), np.percentile(H_col_dens_arr[curr_indices], 16.)
-				W_data[data_indices], W_top[data_indices], W_bot[data_indices] = np.median(W_arr[curr_indices]), np.percentile(W_arr[curr_indices], 84.), np.percentile(W_arr[curr_indices], 16.)
-				vel_data[data_indices], vel_top[data_indices], vel_bot[data_indices] = np.median(line_centroid_vel_arr[curr_indices]), np.percentile(line_centroid_vel_arr[curr_indices], 84.), np.percentile(line_centroid_vel_arr[curr_indices], 16.)
-				# get mass by taking into account each line. Getter value/error from remove one sampling
-				area = np.pi*(radii_bins_for_data[radii_index+1]**2.-radii_bins_for_data[radii_index]**2.)*((angle_bins_for_data[angle_index+1]-angle_bins_for_data[angle_index])/360.)*(parsec_in_cm*1.e3)**2.
-				num_lines, curr_cols, mass_ests = np.size(curr_indices), col_dens_arr[curr_indices], np.zeros(np.size(curr_indices))
-				for rem_line in range(num_lines):
-					cols = np.power(np.zeros(num_lines-1)+10.,np.concatenate((curr_cols[0:rem_line], curr_cols[rem_line+1:])))
-					mass_ests[rem_line] = (np.sum(cols)*area)*(m_H/M_sol)
+				if angle_index < ang_4_fold_size: # put quantities here that map to one quadrant (4 fold)
+					col_data[data_indices], col_top[data_indices], col_bot[data_indices] = np.median(col_dens_arr[ang_4_fold_ind]), np.percentile(col_dens_arr[ang_4_fold_ind], 84.), np.percentile(col_dens_arr[ang_4_fold_ind], 16.)
+					H_col_data[data_indices], H_col_top[data_indices], H_col_bot[data_indices] = np.median(H_col_dens_arr[ang_4_fold_ind]), np.percentile(H_col_dens_arr[ang_4_fold_ind], 84.), np.percentile(H_col_dens_arr[ang_4_fold_ind], 16.)
+					W_data[data_indices], W_top[data_indices], W_bot[data_indices] = np.median(W_arr[ang_4_fold_ind]), np.percentile(W_arr[ang_4_fold_ind], 84.), np.percentile(W_arr[ang_4_fold_ind], 16.)
 
-				mass_data[data_indices], mass_top[data_indices], mass_bot[data_indices] = np.median(mass_ests), np.percentile(mass_ests, 84.), np.percentile(mass_ests, 16.)
-				cum_mass_data[data_indices] = np.sum(mass_data[0:radii_index+1])
-				cum_mass_top[data_indices], cum_mass_bot[data_indices] = cum_mass_data[data_indices]+np.sqrt(np.sum((mass_top-mass_data)**2.)), cum_mass_data[data_indices]-np.sqrt(np.sum((mass_bot-mass_data)**2.))
+					area = np.pi*(radii_bins_for_data[radii_index+1]**2.-radii_bins_for_data[radii_index]**2.)*((angle_bins_for_data[angle_index+1]-angle_bins_for_data[angle_index])/360.)*(parsec_in_cm*1.e3)**2.
+					num_lines, curr_cols, H_curr_cols, mass_ests, H_mass_ests = np.size(ang_4_fold_ind), col_dens_arr[ang_4_fold_ind], H_col_dens_arr[ang_4_fold_ind], np.zeros(np.size(ang_4_fold_ind)), np.zeros(np.size(ang_4_fold_ind))
+					# get mass by taking into account each line. Getter value/error from remove one sampling
+					for rem_line in range(num_lines): # remove one line at a time
+						cols = np.power(np.zeros(num_lines-1)+10.,np.concatenate((curr_cols[0:rem_line], curr_cols[rem_line+1:])))
+						H_cols = np.power(np.zeros(num_lines-1)+10., np.concatenate((H_curr_cols[0:rem_line], H_curr_cols[rem_line+1:])))
+						mass_ests[rem_line] = (np.sum(cols)*area)*(m_H/M_sol)
+						H_mass_ests[rem_line] = (np.sum(H_cols)*area)*(m_H/M_sol)
+
+					mass_data[data_indices], mass_top[data_indices], mass_bot[data_indices] = np.median(mass_ests), np.percentile(mass_ests, 84.), np.percentile(mass_ests, 16.)
+					H_mass_data[data_indices], H_mass_top[data_indices], H_mass_bot[data_indices] = np.median(H_mass_ests), np.percentile(H_mass_ests, 84.), np.percentile(H_mass_ests, 16.)
+
+					cum_mass_data[data_indices] = np.sum(mass_data[gal_index, axis_index, 0:radii_index+1, angle_index])
+					cum_mass_top[data_indices] = cum_mass_data[data_indices]+np.sqrt(np.sum((mass_top[gal_index, axis_index, 0:radii_index+1, angle_index]-mass_data[gal_index, axis_index, 0:radii_index+1, angle_index])**2.))
+					cum_mass_bot[data_indices] = cum_mass_data[data_indices]-np.sqrt(np.sum((mass_bot[gal_index, axis_index, 0:radii_index+1, angle_index]-mass_data[gal_index, axis_index, 0:radii_index+1, angle_index])**2.))
+					H_cum_mass_data[data_indices] = np.sum(H_mass_data[gal_index, axis_index, 0:radii_index+1, angle_index])
+					H_cum_mass_top[data_indices] = H_cum_mass_data[data_indices]+np.sqrt(np.sum((H_mass_top[gal_index, axis_index, 0:radii_index+1, angle_index]-H_mass_data[gal_index, axis_index, 0:radii_index+1, angle_index])**2.))
+					H_cum_mass_bot[data_indices] = H_cum_mass_data[data_indices]-np.sqrt(np.sum((H_mass_bot[gal_index, axis_index, 0:radii_index+1, angle_index]-H_mass_data[gal_index, axis_index, 0:radii_index+1, angle_index])**2.))
+
+					for i in range(np.size(covering_frac_vals)):
+						covering_fracs[i][data_indices] = float(np.size(np.where(col_dens_arr[ang_4_fold_ind] > covering_frac_vals[i])))/np.size(ang_4_fold_ind)
+
+				if angle_index < ang_2_fold_size:
+					vel_data[data_indices], vel_top[data_indices], vel_bot[data_indices] = np.median(line_centroid_vel_arr[ang_2_fold_ind]), np.percentile(line_centroid_vel_arr[ang_2_fold_ind], 84.), np.percentile(line_centroid_vel_arr[ang_2_fold_ind], 16.)
+
+
 
 if np.size(col_data[np.where(col_data == 0.0)]) > 0:
-	print "Some regions of col_data cube likely not filled."
+	print "Some regions of col_data (4 fold) cube likely not filled."
 	print "%d zero elements" % (np.size(col_data[np.where(col_data == 0.0)]))
 	print ''
 	print "at indices"
 	print ''
 	print np.where(col_data == 0.0)
 
-# ### col vs radii
-# for gal_index in range(np.size(dirs)):
-# 	for axis_index in range(np.size(axis)):
-# 		fig, ax = plt.subplots(1)
-# 		ax.hold(True)
-# 		for angle_index in range(np.size(plot_angles)):
-# 			ax.errorbar(plot_radii+radii_plot_stagger[angle_index], col_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
-# 						yerr=[col_data[gal_index, axis_index,:,angle_index] - col_bot[gal_index, axis_index,:,angle_index], col_top[gal_index, axis_index,:,angle_index] - col_data[gal_index, axis_index,:,angle_index]])
-# 		ax.hold(False)
-# 		ax.legend(ncol=2, loc="upper right")
-# 		ax.set_ylim([13.,21.])
-# 		ax.set_xlabel("Impact Parameter (kpc)")
-# 		ax.set_ylabel(r"${\rm log_{10}}(N_{HI})$  ${\rm cm^{-2}}$")
-# 		ax.set_title(r"$N_{HI}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
-# 		fig.savefig('binned_columns_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
-# 		plt.close(fig)
+### Plots ###
 
-# ### col vs angle
-# for gal_index in range(np.size(dirs)):
-# 	for axis_index in range(np.size(axis)):
-# 		fig, ax = plt.subplots(1)
-# 		ax.hold(True)
-# 		for radius_index in range(np.size(plot_radii)):
-# 			ax.errorbar(plot_angles+angle_plot_stagger[radius_index], col_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
-# 						yerr = [col_data[gal_index, axis_index, radius_index, :] - col_bot[gal_index, axis_index, radius_index, :], col_top[gal_index, axis_index, radius_index, :] - col_data[gal_index, axis_index, radius_index, :]])
-# 		ax.hold(False)
-# 		ax.legend(ncol=4, loc="upper center")
-# 		ax.set_ylim([13.,21.])
-# 		ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
-# 		ax.set_ylabel(r"${\rm log_{10}}(N_{HI})$  ${\rm cm^{-2}}$")
-# 		ax.set_title(r"$N_{HI}$ vs $\theta$: Axis=%s" % (axis_letters[axis_index]))
-# 		fig.savefig('binned_columns_angle_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
-# 		plt.close(fig)
-
-### total H col vs radii
-for gal_index in range(np.size(dirs)):
-	for axis_index in range(np.size(axis)):
-		fig, ax = plt.subplots(1)
-		ax.hold(True)
-		for angle_index in range(np.size(plot_angles)):
-			ax.errorbar(plot_radii+radii_plot_stagger[angle_index], H_col_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
-						yerr=[H_col_data[gal_index, axis_index,:,angle_index] - H_col_bot[gal_index, axis_index,:,angle_index], H_col_top[gal_index, axis_index,:,angle_index] - H_col_data[gal_index, axis_index,:,angle_index]])
-		ax.hold(False)
-		ax.legend(ncol=2, loc="upper right")
-		# ax.set_ylim([13.,21.])
-		ax.set_xlabel("Impact Parameter (kpc)")
-		ax.set_ylabel(r"${\rm log_{10}}(N_{H})$  ${\rm cm^{-2}}$")
-		ax.set_title(r"$N_{H}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
-		fig.savefig('binned_H_columns_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
-		plt.close(fig)
+### col vs radii
+if col_rad:
+	for gal_index in range(np.size(dirs)):
+		for axis_index in range(np.size(axis)):
+			fig, ax = plt.subplots(1)
+			ax.hold(True)
+			for angle_index in range(np.size(plot_ang_4_fold)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], col_data[gal_index, axis_index,:,angle_index], label = str(plot_ang_4_fold[angle_index]),
+							yerr=[col_data[gal_index, axis_index,:,angle_index] - col_bot[gal_index, axis_index,:,angle_index], col_top[gal_index, axis_index,:,angle_index] - col_data[gal_index, axis_index,:,angle_index]])
+			ax.hold(False)
+			ax.legend(ncol=2, loc="upper right")
+			ax.set_ylim([13.,21.])
+			ax.set_xlabel("Impact Parameter (kpc)")
+			ax.set_ylabel(r"${\rm log_{10}}(N_{HI})$  ${\rm cm^{-2}}$")
+			ax.set_title(r"$N_{HI}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
+			fig.savefig('binned_columns_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
+			plt.close(fig)
 
 ### col vs angle
-for gal_index in range(np.size(dirs)):
-	for axis_index in range(np.size(axis)):
-		fig, ax = plt.subplots(1)
-		ax.hold(True)
-		for radius_index in range(np.size(plot_radii)):
-			ax.errorbar(plot_angles+angle_plot_stagger[radius_index], H_col_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
-						yerr = [H_col_data[gal_index, axis_index, radius_index, :] - H_col_bot[gal_index, axis_index, radius_index, :], H_col_top[gal_index, axis_index, radius_index, :] - H_col_data[gal_index, axis_index, radius_index, :]])
-		ax.hold(False)
-		ax.legend(ncol=4, loc="upper center")
-		# ax.set_ylim([13.,21.])
-		ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
-		ax.set_ylabel(r"${\rm log_{10}}(N_{H})$  ${\rm cm^{-2}}$")
-		ax.set_title(r"$N_{H}$ vs $\theta$: Axis=%s" % (axis_letters[axis_index]))
-		fig.savefig('binned_H_columns_angle_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
-		plt.close(fig)
+if col_ang:
+	for gal_index in range(np.size(dirs)):
+		for axis_index in range(np.size(axis)):
+			fig, ax = plt.subplots(1)
+			ax.hold(True)
+			for radius_index in range(np.size(plot_radii)):
+				ax.errorbar(plot_ang_4_fold+angle_plot_stagger[radius_index], col_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
+							yerr = [col_data[gal_index, axis_index, radius_index, :] - col_bot[gal_index, axis_index, radius_index, :], col_top[gal_index, axis_index, radius_index, :] - col_data[gal_index, axis_index, radius_index, :]])
+			ax.hold(False)
+			ax.legend(ncol=4, loc="upper center")
+			ax.set_ylim([13.,21.])
+			ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
+			ax.set_ylabel(r"${\rm log_{10}}(N_{HI})$  ${\rm cm^{-2}}$")
+			ax.set_title(r"$N_{HI}$ vs $\theta$: Axis=%s" % (axis_letters[axis_index]))
+			fig.savefig('binned_columns_angle_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
+			plt.close(fig)
 
-# ### W vs radii
-# for gal_index in range(np.size(dirs)):
-# 	for axis_index in range(np.size(axis)):
-# 		fig, ax = plt.subplots(1)
-# 		ax.hold(True)
-# 		for angle_index in range(np.size(plot_angles)):
-# 			ax.errorbar(plot_radii+radii_plot_stagger[angle_index], W_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
-# 						yerr=[W_data[gal_index, axis_index,:,angle_index] - W_bot[gal_index, axis_index,:,angle_index], W_top[gal_index, axis_index,:,angle_index] - W_data[gal_index, axis_index,:,angle_index]])
-# 		ax.hold(False)
-# 		ax.legend(ncol=2, loc="upper right")
-# 		# ax.set_ylim([13.,21.])
-# 		ax.set_xlabel("Impact Parameter (kpc)")
-# 		ax.set_ylabel(r"${\rm log_{10}}(N_{HI})$  ${\rm cm^{-2}}$")
-# 		ax.set_title(r"N vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
-# 		fig.savefig('binned_Ws_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
-# 		plt.close(fig)
+### total H col vs radii
+if H_col_rad:
+	for gal_index in range(np.size(dirs)):
+		for axis_index in range(np.size(axis)):
+			fig, ax = plt.subplots(1)
+			ax.hold(True)
+			for angle_index in range(np.size(plot_angles)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], H_col_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
+							yerr=[H_col_data[gal_index, axis_index,:,angle_index] - H_col_bot[gal_index, axis_index,:,angle_index], H_col_top[gal_index, axis_index,:,angle_index] - H_col_data[gal_index, axis_index,:,angle_index]])
+			ax.hold(False)
+			ax.legend(ncol=2, loc="lower left")
+			ax.set_ylim([12.,21.])
+			ax.set_xlabel("Impact Parameter (kpc)")
+			ax.set_ylabel(r"${\rm log_{10}}(N_{H})$  ${\rm cm^{-2}}$")
+			ax.set_title(r"$N_{H}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
+			fig.savefig('binned_H_columns_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
+			plt.close(fig)
 
-# ### W vs angle
-# for gal_index in range(np.size(dirs)):
-# 	for axis_index in range(np.size(axis)):
-# 		fig, ax = plt.subplots(1)
-# 		ax.hold(True)
-# 		for radius_index in range(np.size(plot_radii)):
-# 			ax.errorbar(plot_angles+angle_plot_stagger[radius_index], W_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
-# 						yerr = [W_data[gal_index, axis_index, radius_index, :] - W_bot[gal_index, axis_index, radius_index, :], W_top[gal_index, axis_index, radius_index, :] - W_data[gal_index, axis_index, radius_index, :]])
-# 		ax.hold(False)
-# 		ax.legend(ncol=4, loc="upper center")
-# 		# ax.set_ylim([13.,21.])
-# 		ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
-# 		ax.set_ylabel(r"${\rm log_{10}}(N_{HI})$  ${\rm cm^{-2}}$")
-# 		ax.set_title(r"N vs $\theta$: Axis=%s" % (axis_letters[axis_index]))
-# 		fig.savefig('binned_Ws_angle_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
-# 		plt.close(fig)
+### total H col vs angle
+if H_col_ang:
+	for gal_index in range(np.size(dirs)):
+		for axis_index in range(np.size(axis)):
+			fig, ax = plt.subplots(1)
+			ax.hold(True)
+			for radius_index in range(np.size(plot_radii)):
+				ax.errorbar(plot_angles+angle_plot_stagger[radius_index], H_col_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
+							yerr = [H_col_data[gal_index, axis_index, radius_index, :] - H_col_bot[gal_index, axis_index, radius_index, :], H_col_top[gal_index, axis_index, radius_index, :] - H_col_data[gal_index, axis_index, radius_index, :]])
+			ax.hold(False)
+			ax.legend(ncol=4, loc="lower center")
+			ax.set_ylim([12.,21.])
+			ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
+			ax.set_ylabel(r"${\rm log_{10}}(N_{H})$  ${\rm cm^{-2}}$")
+			ax.set_title(r"$N_{H}$ vs $\theta$: Axis=%s" % (axis_letters[axis_index]))
+			fig.savefig('binned_H_columns_angle_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
+			plt.close(fig)
 
-# ### vel vs radii
-# for gal_index in range(np.size(dirs)):
-# 	for axis_index in range(np.size(axis)):
-# 		fig, ax = plt.subplots(1)
-# 		ax.hold(True)
-# 		for angle_index in range(np.size(plot_angles)):
-# 			ax.errorbar(plot_radii+radii_plot_stagger[angle_index], vel_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
-# 						yerr=[vel_data[gal_index, axis_index,:,angle_index] - vel_bot[gal_index, axis_index,:,angle_index], vel_top[gal_index, axis_index,:,angle_index] - vel_data[gal_index, axis_index,:,angle_index]])
-# 		ax.hold(False)
-# 		ax.legend(ncol=2, loc="upper right")
-# 		# ax.set_ylim([13.,21.])
-# 		ax.set_xlabel("Impact Parameter (kpc)")
-# 		ax.set_ylabel(r"Median $v_{centroid}$  ${\rm km/s}$")
-# 		ax.set_title(r"$v_{centroid}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
-# 		fig.savefig('binned_vels_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
-# 		plt.close(fig)
+### W vs radii
+if W_rad:
+	for gal_index in range(np.size(dirs)):
+		for axis_index in range(np.size(axis)):
+			fig, ax = plt.subplots(1)
+			ax.hold(True)
+			for angle_index in range(np.size(plot_angles)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], W_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
+							yerr=[W_data[gal_index, axis_index,:,angle_index] - W_bot[gal_index, axis_index,:,angle_index], W_top[gal_index, axis_index,:,angle_index] - W_data[gal_index, axis_index,:,angle_index]])
+			ax.hold(False)
+			ax.legend(ncol=2, loc="upper right")
+			ax.set_ylim([0.,1.5])
+			ax.set_xlabel("Impact Parameter (kpc)")
+			ax.set_ylabel(r"${\rm log_{10}}(N_{HI})$  ${\rm cm^{-2}}$")
+			ax.set_title(r"N vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
+			fig.savefig('binned_Ws_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
+			plt.close(fig)
 
-# ### W vs angle
-# for gal_index in range(np.size(dirs)):
-# 	for axis_index in range(np.size(axis)):
-# 		fig, ax = plt.subplots(1)
-# 		ax.hold(True)
-# 		for radius_index in range(np.size(plot_radii)):
-# 			ax.errorbar(plot_angles+angle_plot_stagger[radius_index], vel_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
-# 						yerr = [vel_data[gal_index, axis_index, radius_index, :] - vel_bot[gal_index, axis_index, radius_index, :], vel_top[gal_index, axis_index, radius_index, :] - vel_data[gal_index, axis_index, radius_index, :]])
-# 		ax.hold(False)
-# 		ax.legend(ncol=4, loc="upper center")
-# 		# ax.set_ylim([13.,21.])
-# 		ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
-# 		ax.set_ylabel(r"Median $v_{centroid}$  ${\rm km/s}$")
-# 		ax.set_title(r"$v_{centroid}$ vs $\theta$: Axis=%s" % (axis_letters[axis_index]))
-# 		fig.savefig('binned_vels_angle_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
-# 		plt.close(fig)
+### W vs angle
+if W_ang:
+	for gal_index in range(np.size(dirs)):
+		for axis_index in range(np.size(axis)):
+			fig, ax = plt.subplots(1)
+			ax.hold(True)
+			for radius_index in range(np.size(plot_radii)):
+				ax.errorbar(plot_angles+angle_plot_stagger[radius_index], W_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
+							yerr = [W_data[gal_index, axis_index, radius_index, :] - W_bot[gal_index, axis_index, radius_index, :], W_top[gal_index, axis_index, radius_index, :] - W_data[gal_index, axis_index, radius_index, :]])
+			ax.hold(False)
+			ax.legend(ncol=4, loc="upper center")
+			ax.set_ylim([0.,1.5])
+			ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
+			ax.set_ylabel(r"${\rm log_{10}}(N_{HI})$  ${\rm cm^{-2}}$")
+			ax.set_title(r"N vs $\theta$: Axis=%s" % (axis_letters[axis_index]))
+			fig.savefig('binned_Ws_angle_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
+			plt.close(fig)
 
-# ### mass vs radii
-# for gal_index in range(np.size(dirs)):
-# 	for axis_index in range(np.size(axis)):
-# 		fig, ax = plt.subplots(1)
-# 		ax.hold(True)
-# 		for angle_index in range(np.size(plot_angles)):
-# 			ax.errorbar(plot_radii+radii_plot_stagger[angle_index], mass_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
-# 						yerr=[mass_data[gal_index, axis_index,:,angle_index] - mass_bot[gal_index, axis_index,:,angle_index], mass_top[gal_index, axis_index,:,angle_index] - mass_data[gal_index, axis_index,:,angle_index]])
-# 		ax.hold(False)
-# 		ax.legend(ncol=2, loc="upper right")
-# 		ax.set_yscale("log")
-# 		# ax.set_ylim([13.,21.])
-# 		ax.set_xlabel("Impact Parameter (kpc)")
-# 		ax.set_ylabel(r"$M_{ann}$  $M_{\odot}$")
-# 		ax.set_title(r"$M_{ann}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
-# 		fig.savefig('binned_mass_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
-# 		plt.close(fig)
+### vel vs radii
+if vel_rad:
+	for gal_index in range(np.size(dirs)):
+		for axis_index in range(np.size(axis)):
+			fig, ax = plt.subplots(1)
+			ax.hold(True)
+			for angle_index in range(np.size(plot_angles)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], vel_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
+							yerr=[vel_data[gal_index, axis_index,:,angle_index] - vel_bot[gal_index, axis_index,:,angle_index], vel_top[gal_index, axis_index,:,angle_index] - vel_data[gal_index, axis_index,:,angle_index]])
+			ax.hold(False)
+			ax.legend(ncol=4, loc="upper right")
+			ax.set_ylim([-200.,300.])
+			ax.set_xlabel("Impact Parameter (kpc)")
+			ax.set_ylabel(r"Median $v_{centroid}$  ${\rm km/s}$")
+			ax.set_title(r"$v_{centroid}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
+			fig.savefig('binned_vels_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
+			plt.close(fig)
 
-# ### W vs angle
-# for gal_index in range(np.size(dirs)):
-# 	for axis_index in range(np.size(axis)):
-# 		fig, ax = plt.subplots(1)
-# 		ax.hold(True)
-# 		for radius_index in range(np.size(plot_radii)):
-# 			ax.errorbar(plot_angles+angle_plot_stagger[radius_index], mass_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
-# 						yerr = [mass_data[gal_index, axis_index, radius_index, :] - mass_bot[gal_index, axis_index, radius_index, :], mass_top[gal_index, axis_index, radius_index, :] - mass_data[gal_index, axis_index, radius_index, :]])
-# 		ax.hold(False)
-# 		ax.legend(ncol=4, loc="upper center")
-# 		# ax.set_ylim([13.,21.])
-# 		ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
-# 		ax.set_ylabel(r"$M_{ann}$  $M_{\odot}$")
-# 		ax.set_title(r"$M_{ann}$ vs $\theta$: Axis=%s" % (axis_letters[axis_index]))
-# 		fig.savefig('binned_mass_angle_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
-# 		plt.close(fig)
+### W vs angle
+if vel_ang:
+	for gal_index in range(np.size(dirs)):
+		for axis_index in range(np.size(axis)):
+			fig, ax = plt.subplots(1)
+			ax.hold(True)
+			for radius_index in range(np.size(plot_radii)):
+				ax.errorbar(plot_angles+angle_plot_stagger[radius_index], vel_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
+							yerr = [vel_data[gal_index, axis_index, radius_index, :] - vel_bot[gal_index, axis_index, radius_index, :], vel_top[gal_index, axis_index, radius_index, :] - vel_data[gal_index, axis_index, radius_index, :]])
+			ax.hold(False)
+			ax.legend(ncol=4, loc="upper center")
+			ax.set_ylim([-200.,300.])
+			ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
+			ax.set_ylabel(r"Median $v_{centroid}$  ${\rm km/s}$")
+			ax.set_title(r"$v_{centroid}$ vs $\theta$: Axis=%s" % (axis_letters[axis_index]))
+			fig.savefig('binned_vels_angle_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
+			plt.close(fig)
 
-# ### cumulative mass vs radii
-# for gal_index in range(np.size(dirs)):
-# 	for axis_index in range(np.size(axis)):
-# 		fig, ax = plt.subplots(1)
-# 		ax.hold(True)
-# 		for angle_index in range(np.size(plot_angles)):
-# 			ax.errorbar(plot_radii+radii_plot_stagger[angle_index], cum_mass_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
-# 						yerr=[cum_mass_data[gal_index, axis_index,:,angle_index] - cum_mass_bot[gal_index, axis_index,:,angle_index], cum_mass_top[gal_index, axis_index,:,angle_index] - cum_mass_data[gal_index, axis_index,:,angle_index]])
-# 		ax.hold(False)
-# 		ax.legend(ncol=2, loc="lower right")
-# 		ax.set_yscale("log")
-# 		# ax.set_ylim([13.,21.])
-# 		ax.set_xlabel("Impact Parameter (kpc)")
-# 		ax.set_ylabel(r"$M_{cum}$  $M_{\odot}$")
-# 		ax.set_title(r"$M_{cum}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
-# 		fig.savefig('binned_cum_mass_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
-# 		plt.close(fig)
+### mass vs radii
+if ann_mass_rad:
+	for gal_index in range(np.size(dirs)):
+		for axis_index in range(np.size(axis)):
+			fig, ax = plt.subplots(1)
+			ax.hold(True)
+			for angle_index in range(np.size(plot_angles)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], mass_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
+							yerr=[mass_data[gal_index, axis_index,:,angle_index] - mass_bot[gal_index, axis_index,:,angle_index], mass_top[gal_index, axis_index,:,angle_index] - mass_data[gal_index, axis_index,:,angle_index]])
+			ax.hold(False)
+			ax.legend(ncol=2, loc="upper right")
+			ax.set_yscale("log")
+			ax.set_ylim([10**3.2,10**10.1])
+			ax.set_xlabel("Impact Parameter (kpc)")
+			ax.set_ylabel(r"$M_{HI, ann}$  $M_{\odot}$")
+			ax.set_title(r"$M_{HI, ann}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
+			fig.savefig('binned_mass_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
+			plt.close(fig)
+
+### mass vs angle
+if ann_mass_ang:
+	for gal_index in range(np.size(dirs)):
+		for axis_index in range(np.size(axis)):
+			fig, ax = plt.subplots(1)
+			ax.hold(True)
+			for radius_index in range(np.size(plot_radii)):
+				ax.errorbar(plot_angles+angle_plot_stagger[radius_index], mass_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
+							yerr = [mass_data[gal_index, axis_index, radius_index, :] - mass_bot[gal_index, axis_index, radius_index, :], mass_top[gal_index, axis_index, radius_index, :] - mass_data[gal_index, axis_index, radius_index, :]])
+			ax.hold(False)
+			ax.legend(ncol=4, loc="upper center")
+			ax.set_yscale("log")
+			ax.set_ylim([10**3.2,10**10.1])
+			ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
+			ax.set_ylabel(r"$M_{HI, ann}$  $M_{\odot}$")
+			ax.set_title(r"$M_{HI, ann}$ vs $\theta$: Axis=%s" % (axis_letters[axis_index]))
+			fig.savefig('binned_mass_angle_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
+			plt.close(fig)
+
+### H mass vs radii
+if H_ann_mass_rad:
+	for gal_index in range(np.size(dirs)):
+		for axis_index in range(np.size(axis)):
+			fig, ax = plt.subplots(1)
+			ax.hold(True)
+			for angle_index in range(np.size(plot_angles)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], H_mass_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
+							yerr=[H_mass_data[gal_index, axis_index,:,angle_index] - H_mass_bot[gal_index, axis_index,:,angle_index], H_mass_top[gal_index, axis_index,:,angle_index] - H_mass_data[gal_index, axis_index,:,angle_index]])
+			ax.hold(False)
+			ax.legend(ncol=2, loc="upper right")
+			ax.set_yscale("log")
+			ax.set_ylim([10**8.0,10**10.1])
+			ax.set_xlabel("Impact Parameter (kpc)")
+			ax.set_ylabel(r"$M_{H, ann}$  $M_{\odot}$")
+			ax.set_title(r"$M_{H, ann}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
+			fig.savefig('binned_H_mass_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
+			plt.close(fig)
+
+### mass vs angle
+if H_ann_mass_ang:
+	for gal_index in range(np.size(dirs)):
+		for axis_index in range(np.size(axis)):
+			fig, ax = plt.subplots(1)
+			ax.hold(True)
+			for radius_index in range(np.size(plot_radii)):
+				ax.errorbar(plot_angles+angle_plot_stagger[radius_index], H_mass_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
+							yerr = [H_mass_data[gal_index, axis_index, radius_index, :] - H_mass_bot[gal_index, axis_index, radius_index, :], H_mass_top[gal_index, axis_index, radius_index, :] - H_mass_data[gal_index, axis_index, radius_index, :]])
+			ax.hold(False)
+			ax.legend(ncol=4, loc="upper center")
+			ax.set_yscale("log")
+			ax.set_ylim([10**8.0,10**10.1])
+			ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
+			ax.set_ylabel(r"$M_{H, ann}$  $M_{\odot}$")
+			ax.set_title(r"$M_{H, ann}$ vs $\theta$: Axis=%s" % (axis_letters[axis_index]))
+			fig.savefig('binned_H_mass_angle_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
+			plt.close(fig)
+
+### cumulative HI mass vs radii
+if cum_mass:
+	for gal_index in range(np.size(dirs)):
+		for axis_index in range(np.size(axis)):
+			fig, ax = plt.subplots(1)
+			ax.hold(True)
+			for angle_index in range(np.size(plot_angles)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], cum_mass_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
+							yerr=[cum_mass_data[gal_index, axis_index,:,angle_index] - cum_mass_bot[gal_index, axis_index,:,angle_index], cum_mass_top[gal_index, axis_index,:,angle_index] - cum_mass_data[gal_index, axis_index,:,angle_index]])
+			ax.hold(False)
+			ax.legend(ncol=2, loc="lower right")
+			ax.set_yscale("log")
+			ax.set_ylim([10**5.,10**10.2])
+			ax.set_xlabel("Impact Parameter (kpc)")
+			ax.set_ylabel(r"$M_{HI, cum}$  $M_{\odot}$")
+			ax.set_title(r"$M_{HI, cum}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
+			fig.savefig('binned_cum_mass_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
+			plt.close(fig)
+
+### cumulative H mass vs radii
+if H_cum_mass:
+	for gal_index in range(np.size(dirs)):
+		for axis_index in range(np.size(axis)):
+			fig, ax = plt.subplots(1)
+			ax.hold(True)
+			for angle_index in range(np.size(plot_angles)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], H_cum_mass_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
+							yerr=[H_cum_mass_data[gal_index, axis_index,:,angle_index] - H_cum_mass_bot[gal_index, axis_index,:,angle_index], H_cum_mass_top[gal_index, axis_index,:,angle_index] - H_cum_mass_data[gal_index, axis_index,:,angle_index]])
+			ax.hold(False)
+			ax.legend(ncol=2, loc="lower right")
+			ax.set_yscale("log")
+			ax.set_ylim([10**8.8,10**11.2])
+			ax.set_xlabel("Impact Parameter (kpc)")
+			ax.set_ylabel(r"$M_{H, cum}$  $M_{\odot}$")
+			ax.set_title(r"$M_{H, cum}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
+			fig.savefig('binned_H_cum_mass_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
+			plt.close(fig)
+
+for i in range(np.size(covering_frac_vals)):
+	if covering_frac_vals[i] != np.array([14., 16., 18.])[i]:
+		raise ValueError("you changed the covering frac vals in the headers but didn not alter the way the plots are made/titled! Sorry for this not happening automatically...")
+
+	### covering fracs vs radii
+	if cover_rad:
+		for gal_index in range(np.size(dirs)):
+			for axis_index in range(np.size(axis)):
+				fig, ax = plt.subplots(1)
+				ax.hold(True)
+				for angle_index in range(np.size(plot_angles)):
+					ax.plot(plot_radii+radii_plot_stagger[angle_index], covering_fracs[i][gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]))
+				ax.hold(False)
+				ax.legend(ncol=2, loc="lower right")
+				# ax.set_yscale("log")
+				ax.set_ylim([-0.5,1.05])
+				ax.set_xlabel("Impact Parameter (kpc)")
+				ax.set_ylabel(r"$f_{cover}$ at ${\rm log_{10}(N_{HI})}$=%d" % (covering_frac_vals[i]))
+				ax.set_title(r"$f_{cover}$ at ${\rm log_{10}(N_{HI})}$=%d vs b: Axis=%s, $\theta$ Relative to %s" % (covering_frac_vals[i], axis_letters[axis_index], angle_off[axis_index]))
+				fig.savefig('cover_frac_%s_radius_%s.pdf' % (str(covering_frac_vals[i]), axis_letters[axis_index]), bbox_inches="tight")
+				plt.close(fig)
+
+	### covering fracs vs angle
+	if cover_ang:
+		for gal_index in range(np.size(dirs)):
+			for axis_index in range(np.size(axis)):
+				fig, ax = plt.subplots(1)
+				ax.hold(True)
+				for radius_index in range(np.size(plot_radii)):
+					ax.plot(plot_angles+angle_plot_stagger[radius_index], covering_fracs[i][gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]))
+				ax.hold(False)
+				ax.legend(ncol=4, loc="upper center")
+				# ax.set_yscale("log")
+				ax.set_ylim([-0.5,1.05])
+				ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
+				ax.set_ylabel(r"$f_{cover}$ at ${\rm log_{10}(N_{HI})}$=%d" % (covering_frac_vals[i]))
+				ax.set_title(r"$f_{cover}$ at ${\rm log_{10}(N_{HI})}$=%d vs $\theta$: Axis=%s" % (covering_frac_vals[i], axis_letters[axis_index]))
+				fig.savefig('cover_frac_%s_angle_%s.pdf' % (str(covering_frac_vals[i]), axis_letters[axis_index]), bbox_inches="tight")
+				plt.close(fig)
+
 
 print "Done!"
 
