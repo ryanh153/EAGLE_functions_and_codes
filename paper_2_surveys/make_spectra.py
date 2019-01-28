@@ -11,6 +11,9 @@
 # TODO collapse radii? Try larger bins. There are just too many lines. 
 # TODO virialized radii? Probably should...
 
+# New box to try this scrip on (hopefully nothing breaks)
+# /cosma5/data/dp004/dc-oppe1/data/L034box/data_L034N1034/snapshot_028_z000p000
+
 ### Imports
 import numpy as np
 import matplotlib
@@ -41,25 +44,40 @@ rho_bar_norm = 1.88e-29
 x_H = 0.752
 omega_b = 0.04825
 
-### Infor for galaxies: Directories, group nums, keywords, gal_coords if they are shifted and rotated...
-dirs = ["/cosma5/data/dp004/dc-oppe1/data/Halo_x001/data_002_x001_eagle.NEQ.snap042_acc/"]
-gal_folders = ["snapshot_rot_noneq_047_z000p000_shalo_1_12.28_10.30_1.246/"]
-snap_bases = ["snap_rot_noneq_047_z000p000_shalo_1_12.28_10.30_1.246"]
-designator = ["data_002_x001"]
-keyword_ends = ["047_z000p000"]
-group_numbers =  [1]
-known_gal_coords = [[25./2., 25./2., 25./2.]] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
-particles_included_keyword = ["snap_rot_noneq_" + keyword_end for keyword_end in keyword_ends] # these rotated ones have a different naming convention. May do case by case because only a few gals for this paper
-group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] 
+### Info for galaxies: Directories, group nums, keywords, gal_coords if they are shifted and rotated...
+
+# ### initial test galaxy
+# dirs = ["/cosma5/data/dp004/dc-oppe1/data/Halo_x001/data_002_x001_eagle.NEQ.snap042_acc/"]
+# gal_folders = ["snapshot_rot_noneq_047_z000p000_shalo_1_12.28_10.30_1.246/"]
+# snap_bases = ["snap_rot_noneq_047_z000p000_shalo_1_12.28_10.30_1.246"]
+# designator = ["data_002_x001"]
+# keyword_ends = ["047_z000p000"]
+# group_numbers =  [1]
+# known_gal_coords = [[25./2., 25./2., 25./2.]] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
+# particles_included_keyword = ["snap_rot_noneq_" + keyword_end for keyword_end in keyword_ends] # these rotated ones have a different naming convention. May do case by case because only a few gals for this paper
+# group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] 
+# subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end for keyword_end in keyword_ends]
+# redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
+
+### box ben gave me. Can pick different subhaloes
+dirs = ["/cosma5/data/dp004/dc-oppe1/data/L034box/data_L034N1034/snapshot_028_z000p000/"] # this might actually be one too deep here. Check that if it fails
+gal_folders = ["snapshot_rot_028_z000p000_shalo_11_12.50_10.52_0.859/"]
+snap_bases = ["snap_rot_028_z000p000_shalo_11_12.50_10.52_0.859"]
+designator = ["L034N1034_sh11"]
+keyword_ends = ["028_z000p000"]
+group_numbers =  [11] # is this the same as subhalo number? assume yes and see if it works. 
+known_gal_coords = [[(25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.)]] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
+particles_included_keyword = ["snap_rot_" + keyword_end for keyword_end in keyword_ends] # these rotated ones have a different naming convention. May do case by case because only a few gals for this paper
+group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] # I don't see a groups folder for this box...?
 subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end for keyword_end in keyword_ends]
 redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
 
 ### survey properties
 
 ### Check these for errors in data size or related  issues
-points_per_radius = 72
-radii_start, radii_stop, radii_step = 20., 260., 5 # stop not inclusive
-cores = 12 # max number, use this is points per radius is divisable by 16
+points_per_radius = 96
+radii_start, radii_stop, radii_step = 20., 260., 10. # stop not inclusive
+cores = 16 # max number, use this is points per radius is divisable by 16
 ###
 
 radii =  np.arange(radii_start, radii_stop, radii_step) # kpc
@@ -596,7 +614,6 @@ if run_specwizard:
 			# can not seperatre module loads and specwizard runs. Different calls of os.system() seem to happen in different environments!
 			os.system("module load intel_comp/2018-update2 intel_mpi/2018 hdf5/1.8.20 && mpirun -np %s %s %s" % (str(cores), path_to_specwizard_executable, param_filename)) # make sure all the right modules are installed
 			# if 8 lines per core it's about twice as fast. 1 or 2 lines it is slower by like 10%. Not perfeclty uniform though
-			# os.system("module load intel_comp/2018-update2 intel_mpi/2018 hdf5/1.8.20 && %s %s" % (path_to_specwizard_executable, param_filename)) # make sure all the right modules are installed
 
 			# store files
 			os.system("mv %sspec.%s.0.hdf5 %sspec.%s_axis_%s.hdf5" % (run_output_dir, snap_bases[gal_index], run_output_dir, designator[gal_index], str(ax)))
@@ -707,7 +724,6 @@ for gal_index in range(0,np.size(dirs)):
 		for radii_index in range(0,np.size(radii_bins_for_data)-1):
 			for angle_index in range(0,np.size(angle_bins_for_data)-1):
 				data_indices = (gal_index, axis_index, radii_index, angle_index)
-
 				curr_indices = np.where(((axis_arr == axis[axis_index]) & (radii_arr > radii_bins_for_data[radii_index]-bin_stagger) & (radii_arr < radii_bins_for_data[radii_index+1]-bin_stagger) & 
 										(angle_arr > angle_bins_for_data[angle_index]-bin_stagger) & (angle_arr < angle_bins_for_data[angle_index+1]-bin_stagger)))
 				if angle_index < ang_2_fold_size: # put quantities here that map to two quadrants (2 fold)
@@ -716,7 +732,7 @@ for gal_index in range(0,np.size(dirs)):
 				if angle_index < ang_4_fold_size: # put quantities here that map to one quadrant (4 fold)
 					ang_4_fold_ind = np.where(((axis_arr == axis[axis_index]) & (radii_arr > radii_bins_for_data[radii_index]-bin_stagger) & (radii_arr < radii_bins_for_data[radii_index+1]-bin_stagger) & 
 										(ang_arr_4_fold > ang_bins_4_fold_for_data[angle_index]-bin_stagger) & (ang_arr_4_fold < ang_bins_4_fold_for_data[angle_index+1]-bin_stagger)))
-				
+
 				# shouldn't need to move in and of logspace for madian/percentiles because they don't take into account all values. Just the order, which is unchanged by log10
 				if angle_index < ang_4_fold_size: # put quantities here that map to one quadrant (4 fold)
 					col_data[data_indices], col_top[data_indices], col_bot[data_indices] = np.median(col_dens_arr[ang_4_fold_ind]), np.percentile(col_dens_arr[ang_4_fold_ind], 84.), np.percentile(col_dens_arr[ang_4_fold_ind], 16.)
@@ -802,8 +818,8 @@ if H_col_rad:
 		for axis_index in range(np.size(axis)):
 			fig, ax = plt.subplots(1)
 			ax.hold(True)
-			for angle_index in range(np.size(plot_angles)):
-				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], H_col_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
+			for angle_index in range(np.size(plot_ang_4_fold)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], H_col_data[gal_index, axis_index,:,angle_index], label = str(plot_ang_4_fold[angle_index]),
 							yerr=[H_col_data[gal_index, axis_index,:,angle_index] - H_col_bot[gal_index, axis_index,:,angle_index], H_col_top[gal_index, axis_index,:,angle_index] - H_col_data[gal_index, axis_index,:,angle_index]])
 			ax.hold(False)
 			ax.legend(ncol=2, loc="lower left")
@@ -821,7 +837,7 @@ if H_col_ang:
 			fig, ax = plt.subplots(1)
 			ax.hold(True)
 			for radius_index in range(np.size(plot_radii)):
-				ax.errorbar(plot_angles+angle_plot_stagger[radius_index], H_col_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
+				ax.errorbar(plot_ang_4_fold+angle_plot_stagger[radius_index], H_col_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
 							yerr = [H_col_data[gal_index, axis_index, radius_index, :] - H_col_bot[gal_index, axis_index, radius_index, :], H_col_top[gal_index, axis_index, radius_index, :] - H_col_data[gal_index, axis_index, radius_index, :]])
 			ax.hold(False)
 			ax.legend(ncol=4, loc="lower center")
@@ -838,8 +854,8 @@ if W_rad:
 		for axis_index in range(np.size(axis)):
 			fig, ax = plt.subplots(1)
 			ax.hold(True)
-			for angle_index in range(np.size(plot_angles)):
-				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], W_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
+			for angle_index in range(np.size(plot_ang_4_fold)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], W_data[gal_index, axis_index,:,angle_index], label = str(plot_ang_4_fold[angle_index]),
 							yerr=[W_data[gal_index, axis_index,:,angle_index] - W_bot[gal_index, axis_index,:,angle_index], W_top[gal_index, axis_index,:,angle_index] - W_data[gal_index, axis_index,:,angle_index]])
 			ax.hold(False)
 			ax.legend(ncol=2, loc="upper right")
@@ -857,7 +873,7 @@ if W_ang:
 			fig, ax = plt.subplots(1)
 			ax.hold(True)
 			for radius_index in range(np.size(plot_radii)):
-				ax.errorbar(plot_angles+angle_plot_stagger[radius_index], W_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
+				ax.errorbar(plot_ang_4_fold+angle_plot_stagger[radius_index], W_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
 							yerr = [W_data[gal_index, axis_index, radius_index, :] - W_bot[gal_index, axis_index, radius_index, :], W_top[gal_index, axis_index, radius_index, :] - W_data[gal_index, axis_index, radius_index, :]])
 			ax.hold(False)
 			ax.legend(ncol=4, loc="upper center")
@@ -874,8 +890,8 @@ if vel_rad:
 		for axis_index in range(np.size(axis)):
 			fig, ax = plt.subplots(1)
 			ax.hold(True)
-			for angle_index in range(np.size(plot_angles)):
-				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], vel_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
+			for angle_index in range(np.size(plot_ang_2_fold)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], vel_data[gal_index, axis_index,:,angle_index], label = str(plot_ang_2_fold[angle_index]),
 							yerr=[vel_data[gal_index, axis_index,:,angle_index] - vel_bot[gal_index, axis_index,:,angle_index], vel_top[gal_index, axis_index,:,angle_index] - vel_data[gal_index, axis_index,:,angle_index]])
 			ax.hold(False)
 			ax.legend(ncol=4, loc="upper right")
@@ -893,7 +909,7 @@ if vel_ang:
 			fig, ax = plt.subplots(1)
 			ax.hold(True)
 			for radius_index in range(np.size(plot_radii)):
-				ax.errorbar(plot_angles+angle_plot_stagger[radius_index], vel_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
+				ax.errorbar(plot_ang_2_fold+angle_plot_stagger[radius_index], vel_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
 							yerr = [vel_data[gal_index, axis_index, radius_index, :] - vel_bot[gal_index, axis_index, radius_index, :], vel_top[gal_index, axis_index, radius_index, :] - vel_data[gal_index, axis_index, radius_index, :]])
 			ax.hold(False)
 			ax.legend(ncol=4, loc="upper center")
@@ -910,13 +926,13 @@ if ann_mass_rad:
 		for axis_index in range(np.size(axis)):
 			fig, ax = plt.subplots(1)
 			ax.hold(True)
-			for angle_index in range(np.size(plot_angles)):
-				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], mass_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
+			for angle_index in range(np.size(plot_ang_4_fold)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], mass_data[gal_index, axis_index,:,angle_index], label = str(plot_ang_4_fold[angle_index]),
 							yerr=[mass_data[gal_index, axis_index,:,angle_index] - mass_bot[gal_index, axis_index,:,angle_index], mass_top[gal_index, axis_index,:,angle_index] - mass_data[gal_index, axis_index,:,angle_index]])
 			ax.hold(False)
 			ax.legend(ncol=2, loc="upper right")
 			ax.set_yscale("log")
-			ax.set_ylim([10**3.2,10**10.1])
+			ax.set_ylim([10**5.,10**11.])
 			ax.set_xlabel("Impact Parameter (kpc)")
 			ax.set_ylabel(r"$M_{HI, ann}$  $M_{\odot}$")
 			ax.set_title(r"$M_{HI, ann}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
@@ -930,12 +946,12 @@ if ann_mass_ang:
 			fig, ax = plt.subplots(1)
 			ax.hold(True)
 			for radius_index in range(np.size(plot_radii)):
-				ax.errorbar(plot_angles+angle_plot_stagger[radius_index], mass_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
+				ax.errorbar(plot_ang_4_fold+angle_plot_stagger[radius_index], mass_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
 							yerr = [mass_data[gal_index, axis_index, radius_index, :] - mass_bot[gal_index, axis_index, radius_index, :], mass_top[gal_index, axis_index, radius_index, :] - mass_data[gal_index, axis_index, radius_index, :]])
 			ax.hold(False)
 			ax.legend(ncol=4, loc="upper center")
 			ax.set_yscale("log")
-			ax.set_ylim([10**3.2,10**10.1])
+			ax.set_ylim([10**5.,10**11.])
 			ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
 			ax.set_ylabel(r"$M_{HI, ann}$  $M_{\odot}$")
 			ax.set_title(r"$M_{HI, ann}$ vs $\theta$: Axis=%s" % (axis_letters[axis_index]))
@@ -948,13 +964,13 @@ if H_ann_mass_rad:
 		for axis_index in range(np.size(axis)):
 			fig, ax = plt.subplots(1)
 			ax.hold(True)
-			for angle_index in range(np.size(plot_angles)):
-				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], H_mass_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
+			for angle_index in range(np.size(plot_ang_4_fold)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], H_mass_data[gal_index, axis_index,:,angle_index], label = str(plot_ang_4_fold[angle_index]),
 							yerr=[H_mass_data[gal_index, axis_index,:,angle_index] - H_mass_bot[gal_index, axis_index,:,angle_index], H_mass_top[gal_index, axis_index,:,angle_index] - H_mass_data[gal_index, axis_index,:,angle_index]])
 			ax.hold(False)
 			ax.legend(ncol=2, loc="upper right")
 			ax.set_yscale("log")
-			ax.set_ylim([10**8.0,10**10.1])
+			ax.set_ylim([10**9.0,10**12.])
 			ax.set_xlabel("Impact Parameter (kpc)")
 			ax.set_ylabel(r"$M_{H, ann}$  $M_{\odot}$")
 			ax.set_title(r"$M_{H, ann}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
@@ -968,12 +984,12 @@ if H_ann_mass_ang:
 			fig, ax = plt.subplots(1)
 			ax.hold(True)
 			for radius_index in range(np.size(plot_radii)):
-				ax.errorbar(plot_angles+angle_plot_stagger[radius_index], H_mass_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
+				ax.errorbar(plot_ang_4_fold+angle_plot_stagger[radius_index], H_mass_data[gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]), 
 							yerr = [H_mass_data[gal_index, axis_index, radius_index, :] - H_mass_bot[gal_index, axis_index, radius_index, :], H_mass_top[gal_index, axis_index, radius_index, :] - H_mass_data[gal_index, axis_index, radius_index, :]])
 			ax.hold(False)
 			ax.legend(ncol=4, loc="upper center")
 			ax.set_yscale("log")
-			ax.set_ylim([10**8.0,10**10.1])
+			ax.set_ylim([10**9.0,10**12.])
 			ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
 			ax.set_ylabel(r"$M_{H, ann}$  $M_{\odot}$")
 			ax.set_title(r"$M_{H, ann}$ vs $\theta$: Axis=%s" % (axis_letters[axis_index]))
@@ -986,13 +1002,13 @@ if cum_mass:
 		for axis_index in range(np.size(axis)):
 			fig, ax = plt.subplots(1)
 			ax.hold(True)
-			for angle_index in range(np.size(plot_angles)):
-				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], cum_mass_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
+			for angle_index in range(np.size(plot_ang_4_fold)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], cum_mass_data[gal_index, axis_index,:,angle_index], label = str(plot_ang_4_fold[angle_index]),
 							yerr=[cum_mass_data[gal_index, axis_index,:,angle_index] - cum_mass_bot[gal_index, axis_index,:,angle_index], cum_mass_top[gal_index, axis_index,:,angle_index] - cum_mass_data[gal_index, axis_index,:,angle_index]])
 			ax.hold(False)
 			ax.legend(ncol=2, loc="lower right")
 			ax.set_yscale("log")
-			ax.set_ylim([10**5.,10**10.2])
+			ax.set_ylim([10**6.,10**11.2])
 			ax.set_xlabel("Impact Parameter (kpc)")
 			ax.set_ylabel(r"$M_{HI, cum}$  $M_{\odot}$")
 			ax.set_title(r"$M_{HI, cum}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
@@ -1005,13 +1021,13 @@ if H_cum_mass:
 		for axis_index in range(np.size(axis)):
 			fig, ax = plt.subplots(1)
 			ax.hold(True)
-			for angle_index in range(np.size(plot_angles)):
-				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], H_cum_mass_data[gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]),
+			for angle_index in range(np.size(plot_ang_4_fold)):
+				ax.errorbar(plot_radii+radii_plot_stagger[angle_index], H_cum_mass_data[gal_index, axis_index,:,angle_index], label = str(plot_ang_4_fold[angle_index]),
 							yerr=[H_cum_mass_data[gal_index, axis_index,:,angle_index] - H_cum_mass_bot[gal_index, axis_index,:,angle_index], H_cum_mass_top[gal_index, axis_index,:,angle_index] - H_cum_mass_data[gal_index, axis_index,:,angle_index]])
 			ax.hold(False)
 			ax.legend(ncol=2, loc="lower right")
 			ax.set_yscale("log")
-			ax.set_ylim([10**8.8,10**11.2])
+			ax.set_ylim([10**9.8,10**12.2])
 			ax.set_xlabel("Impact Parameter (kpc)")
 			ax.set_ylabel(r"$M_{H, cum}$  $M_{\odot}$")
 			ax.set_title(r"$M_{H, cum}$ vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
@@ -1028,8 +1044,8 @@ for i in range(np.size(covering_frac_vals)):
 			for axis_index in range(np.size(axis)):
 				fig, ax = plt.subplots(1)
 				ax.hold(True)
-				for angle_index in range(np.size(plot_angles)):
-					ax.plot(plot_radii+radii_plot_stagger[angle_index], covering_fracs[i][gal_index, axis_index,:,angle_index], label = str(plot_angles[angle_index]))
+				for angle_index in range(np.size(plot_ang_4_fold)):
+					ax.plot(plot_radii+radii_plot_stagger[angle_index], covering_fracs[i][gal_index, axis_index,:,angle_index], label = str(plot_ang_4_fold[angle_index]))
 				ax.hold(False)
 				ax.legend(ncol=2, loc="lower right")
 				# ax.set_yscale("log")
@@ -1047,7 +1063,7 @@ for i in range(np.size(covering_frac_vals)):
 				fig, ax = plt.subplots(1)
 				ax.hold(True)
 				for radius_index in range(np.size(plot_radii)):
-					ax.plot(plot_angles+angle_plot_stagger[radius_index], covering_fracs[i][gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]))
+					ax.plot(plot_ang_4_fold+angle_plot_stagger[radius_index], covering_fracs[i][gal_index, axis_index, radius_index, :], label = str(plot_radii[radius_index]))
 				ax.hold(False)
 				ax.legend(ncol=4, loc="upper center")
 				# ax.set_yscale("log")

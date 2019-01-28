@@ -984,7 +984,13 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 	eagle_params, eagle_errs = np.polyfit(plot_cols_radii, median, 1 ,cov=True)
 	eagle_fit_arr = eagle_params[0]*plot_cols_radii+eagle_params[1]
 
-	cos_params, cos_errs = np.polyfit(plot_cols_radii, plot_cols, 1, cov=True)
+
+	ignore_low_indices = np.where((plot_cols) > (13.)) # get all indices excpet the 7 very low EW points that are all upper limits in column density 
+	print plot_cols
+	print "how many low indices?"
+	print np.size(plot_cols)-np.size(ignore_low_indices)
+	print ''
+	cos_params, cos_errs = np.polyfit(plot_cols_radii[ignore_low_indices], plot_cols[ignore_low_indices], 1, cov=True)
 	cos_fit_arr = cos_params[0]*plot_cols_radii + cos_params[1]
 
 	if np.size(plot_cols) > 0:
@@ -1230,6 +1236,10 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 	eagle_params, eagle_errs = np.polyfit(plot_equ_widths_radii, median, 1 ,cov=True)
 	eagle_fit_arr = eagle_params[0]*plot_equ_widths_radii+eagle_params[1]
 
+	# ignore_low_indices = np.where(temp_plot_equ_widths > np.log10(0.05)) # get all indices excpet the 7 very low EW points that are all upper limits in column density 
+	# print "how many low indices?"
+	# print np.size(temp_plot_equ_widths)-np.size(ignore_low_indices)
+	# print ''
 	cos_params, cos_errs = np.polyfit(plot_equ_widths_radii, temp_plot_equ_widths, 1, cov=True)
 	cos_fit_arr = cos_params[0]*plot_equ_widths_radii + cos_params[1]
 
@@ -1609,7 +1619,7 @@ def make_equ_width_contour_plots(ion, radii, virial_radii, equ_widths, smasses, 
 
 	colors = ['g', 'b', 'r']
 	stagger = [0.0, -1.5, 1.5]
-	labels = ['Low Mass', 'Blue', 'Red']
+	labels = ['Low Mass', 'Active', 'Passive']
 	fit_objects = [[],[],[]]
 	cos_fit_objects = [[],[],[]]
 
@@ -1644,14 +1654,15 @@ def make_equ_width_contour_plots(ion, radii, virial_radii, equ_widths, smasses, 
 			indices = np.where(((np.log10(smasses) < upper_mass[i]) & (np.log10(smasses) > lower_mass[i]) & (ssfr < upper_ssfr[i]) & (ssfr > lower_ssfr[i])))
 			curr_radii = virial_radii[indices]
 			curr_equ_widths = equ_widths[indices]
+
 			if log_plots:
 				eagle_params, eagle_errs = np.polyfit(curr_radii, np.log10(curr_equ_widths), 1 ,cov=True)
-				eagle_fit_arr = np.power(10,eagle_params[0]*virial_radii+eagle_params[1])
+				eagle_fit_arr = np.power(10,eagle_params[0]*curr_radii+eagle_params[1])
 			else:
 				eagle_params, eagle_errs = np.polyfit(curr_radii, curr_equ_widths, 1 ,cov=True)
-				eagle_fit_arr = eagle_params[0]*virial_radii+eagle_params[1]
+				eagle_fit_arr = eagle_params[0]*curr_radii+eagle_params[1]
 			# comma means we only keep the first input, plt.plot returns list (length one for this case but you still want just the element)
-			fit_objects[i], = ax.plot(virial_radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0], color=colors[i], label=r'm=%.2f $\pm$ %.2f' %(round(eagle_params[0]*100.)/100., round(100.*np.sqrt(eagle_errs[0,0]))/100.) + '\n' + r'b=%.2f $\pm$ %.2f' % (round(100.*eagle_params[1])/100., round(100.*np.sqrt(eagle_errs[1,1]))/100.))
+			fit_objects[i], = ax.plot(curr_radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0], color=colors[i], label=r'm=%.2f $\pm$ %.2f' %(round(eagle_params[0]*100.)/100., round(100.*np.sqrt(eagle_errs[0,0]))/100.) + '\n' + r'b=%.2f $\pm$ %.2f' % (round(100.*eagle_params[1])/100., round(100.*np.sqrt(eagle_errs[1,1]))/100.))
 
 
 	else:
@@ -1667,14 +1678,14 @@ def make_equ_width_contour_plots(ion, radii, virial_radii, equ_widths, smasses, 
 		for i in range(0,np.size(upper_mass)):
 			curr_radii = radii[((np.log10(smasses) < upper_mass[i]) & (np.log10(smasses) > lower_mass[i]) & (ssfr < upper_ssfr[i]) & (ssfr > lower_ssfr[i]))]
 			curr_equ_widths = equ_widths[((np.log10(smasses) < upper_mass[i]) & (np.log10(smasses) > lower_mass[i]) & (ssfr < upper_ssfr[i]) & (ssfr > lower_ssfr[i]))]
-			
+
 			if log_plots:
 				eagle_params, eagle_errs = np.polyfit(curr_radii, np.log10(curr_equ_widths), 1 ,cov=True)
-				eagle_fit_arr = np.power(10,eagle_params[0]*radii+eagle_params[1])
+				eagle_fit_arr = np.power(10,eagle_params[0]*curr_radii+eagle_params[1])
 			else:
 				eagle_params, eagle_errs = np.polyfit(curr_radii, curr_equ_widths, 1 ,cov=True)
-				eagle_fit_arr = eagle_params[0]*radii+eagle_params[1]
-			fit_objects[i], = ax.plot(radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0], color=colors[i], label=r'm=%.1e $\pm$ %.0e' %(eagle_params[0], np.sqrt(eagle_errs[0,0])) + '\n' + r'b=%.1e $\pm$ %.0e' % (eagle_params[1], np.sqrt(eagle_errs[1,1])))
+				eagle_fit_arr = eagle_params[0]*curr_radii+eagle_params[1]
+			fit_objects[i], = ax.plot(curr_radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0], color=colors[i], label=r'm=%.1e $\pm$ %.0e' %(eagle_params[0], np.sqrt(eagle_errs[0,0])) + '\n' + r'b=%.1e $\pm$ %.0e' % (eagle_params[1], np.sqrt(eagle_errs[1,1])))
 
 		# ### If using just one
 		# eagle_params, eagle_errs = np.polyfit(radii, equ_widths, 1 ,cov=True)

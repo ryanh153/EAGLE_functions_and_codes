@@ -506,26 +506,32 @@ def get_star_props(snap_directory, radius, group_number, particles_included_keyw
 
 	return star_coords_in_R, star_distance_in_R, star_mass_in_R, star_velocity_in_R, star_speed_in_R
 
-def get_props_for_coldens(species, snap_directory, group_number, particles_included_keyword, group_included_keyword, subfind_included_keyword):
+def get_props_for_coldens(species, snap_directory, group_number, particles_included_keyword, group_included_keyword, subfind_included_keyword, groups_dir=None):
 	# create array of files
+	print "in get props"
 	snap_files = get_snap_files(snap_directory, particles_included_keyword)
 	# because particle included keyword is different in rotated snapshots have to grab the groups_ files seperately
-	snap_files = np.concatenate((snap_files, get_snap_files(snap_directory, group_included_keyword)))
+	if groups_dir == None:
+		snap_files = np.concatenate((snap_files, get_snap_files(snap_directory, group_included_keyword)))
+	else:
+		snap_files = np.concatenate((snap_files, get_snap_files(groups_dir, group_included_keyword)))
+	print snap_files
 
 	p = pool(12)
+	print "pool opened"
 
-	gas_coords_test = read_array(snap_files, 'PartType0/Coordinates', include_file_keyword=particles_included_keyword)
+	# gas_coords_test = read_array(snap_files, 'PartType0/Coordinates', include_file_keyword=particles_included_keyword)
 	gas_coords_x_result = p.apply_async(read_array, [snap_files, 'PartType0/Coordinates'], {'include_file_keyword':particles_included_keyword, 'column':0})
 	gas_coords_y_result = p.apply_async(read_array, [snap_files, 'PartType0/Coordinates'], {'include_file_keyword':particles_included_keyword, 'column':1})
 	gas_coords_z_result = p.apply_async(read_array, [snap_files, 'PartType0/Coordinates'], {'include_file_keyword':particles_included_keyword, 'column':2})
-
+	print "gas coords initialized"
 	smoothing_length_result = p.apply_async(read_array, [snap_files, 'PartType0/SmoothingLength'], {'include_file_keyword':particles_included_keyword})
 	particle_mass_result = p.apply_async(read_array, [snap_files, 'PartType0/Mass'], {'include_file_keyword':particles_included_keyword})
 	density_result = p.apply_async(read_array, [snap_files, 'PartType0/Density'], {'include_file_keyword':particles_included_keyword})
 	GrpIDs_result = p.apply_async(read_array, [snap_files, "Subhalo/GroupNumber"], {'include_file_keyword':subfind_included_keyword})
 	SubIDs_result = p.apply_async(read_array, [snap_files, "Subhalo/SubGroupNumber"], {'include_file_keyword':subfind_included_keyword})
 	gal_coords_result = p.apply_async(read_array, [snap_files, "Subhalo/CentreOfPotential"], {'include_file_keyword':subfind_included_keyword}) # map center
-
+	print "10 initiated"
 	if species.lower() == 'h1':
 		element_mass_frac_result = p.apply_async(read_array, [snap_files, 'PartType0/ElementAbundance/Hydrogen'], {'include_file_keyword':particles_included_keyword})
 		ion_fracs_result = p.apply_async(read_array, [snap_files, 'PartType0/ChemicalAbundances/HydrogenI'], {'include_file_keyword':particles_included_keyword, 'get_scaling_conversions':False})
@@ -533,8 +539,9 @@ def get_props_for_coldens(species, snap_directory, group_number, particles_inclu
 		raise ValueError('We are only dealing with HI right now, species should be h1')
 
 	p.close()
-
+	print "pool closed"
 	gas_coords_x = gas_coords_x_result.get()
+	print "got gas coords"
 	gas_coords_y = gas_coords_y_result.get()
 	gas_coords_z = gas_coords_z_result.get()
 	gas_coords = np.column_stack((gas_coords_x, gas_coords_y, gas_coords_z))
@@ -542,18 +549,18 @@ def get_props_for_coldens(species, snap_directory, group_number, particles_inclu
 	smoothing_length = smoothing_length_result.get()
 	particle_mass = particle_mass_result.get()
 	element_mass_frac = element_mass_frac_result.get()
-	ion_fracs = ion_fracs_result.get() # really the number density of the ion relative to nH fixed in if statement
+	# ion_fracs = ion_fracs_result.get() # really the number density of the ion relative to nH fixed in if statement
 
 	if species.lower() == 'h1':
 		density = density_result.get()
 		nH = density*element_mass_frac/atomic_mass_unit # number density of all hydrogen (HI and HII)
-		ion_fracs = (ion_fracs*nH*atomic_mass_unit)/(element_mass_frac*density) # now it's the fraction of the element that is the ion (N_ion/N_element)
-		ion_fracs[np.where(element_mass_frac == 0.0)] = 0 # makes sure the ion mass is zero wherever there is none of the element. Otherwise get div by zero
+		# ion_fracs = (ion_fracs*nH*atomic_mass_unit)/(element_mass_frac*density) # now it's the fraction of the element that is the ion (N_ion/N_element)
+		# ion_fracs[np.where(element_mass_frac == 0.0)] = 0 # makes sure the ion mass is zero wherever there is none of the element. Otherwise get div by zero
 	else:
 		raise ValueError('We are only dealing with HI right now, species should be h1')
 
 	element_mass = particle_mass*element_mass_frac
-	ion_mass = particle_mass*element_mass_frac*ion_fracs
+	# ion_mass = particle_mass*element_mass_frac*ion_fracs
 	GrpIDs = GrpIDs_result.get()
 	SubIDs = SubIDs_result.get()
 	index = np.where((GrpIDs == float(group_number)) & (SubIDs == 0))[0] # picks out most massive galaxy in the designated group
@@ -571,10 +578,10 @@ def get_props_for_coldens(species, snap_directory, group_number, particles_inclu
 	gal_coords/=(parsec_in_cm*1.e6) # Mpcs!!!
 	box_size/=1. # box_size is an attribute and so it is already in Mpcs!
 	element_mass/=(M_sol) # solar masses
-	ion_mass/=(M_sol) # solar masses
+	# ion_mass/=(M_sol) # solar masses
 
 
-	return gas_coords, smoothing_length, element_mass, ion_mass, gal_coords, box_size
+	return gas_coords, smoothing_length, element_mass, None, gal_coords, box_size # None should be ion mass
 
 
 
