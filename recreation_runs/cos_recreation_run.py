@@ -101,13 +101,13 @@ lookup_files = '/projects/ryho3446/Ali_Spec_src/IonizationTables/HM01G+C+SSH/'
 # where all that data is put and where created los live. Basically the home for the run you are doing. 
 # don't make it the same for multiple runs and make sure if you're just running plotting stuff it looks in the right place
 
-folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos_5rel_1')
-folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass_5rel_1'))
-folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs_5rel_1'))
+# folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos_5rel_1')
+# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass_5rel_1'))
+# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs_5rel_1'))
 
-# folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs*')
-# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
-# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
+folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs*')
+folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
+folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
 # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarf*'))
 # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
 # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
@@ -164,7 +164,7 @@ if run_specwizard:
 else:
 	# make whatever you want to select a subsample
 	max_smass = 15.
-	min_smass = 9.7
+	min_smass = 5.
 	max_ssfr = -5.
 	min_ssfr = -15.
 
@@ -391,15 +391,15 @@ for i in range(0,np.size(ions)):
 	
 	# cos_functions.neutral_columns_plot(cols, H_cols, radii, virial_radii, R200, smasses, masses, ssfr, ion_num_densities, gas_densities, temperatues, mean_total_mass_bool, virial_radii_bool, pop_str)
 
-	# if equ_widths_bool:
-	# 	# cos_functions.make_equ_width_plots(ions_short[i], ssfr, masses, smasses, radii, virial_radii, equ_widths, eagle_ids, curr_cos_id_arr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, colorbar, bins_for_median, log_plots) # line in Angst
+	if equ_widths_bool:
+		cos_functions.make_equ_width_plots(ions_short[i], ssfr, masses, smasses, radii, virial_radii, equ_widths, eagle_ids, curr_cos_id_arr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, colorbar, bins_for_median, log_plots) # line in Angst
 
-	# 	cos_functions.make_equ_width_contour_plots(ions_short[i], radii, virial_radii, equ_widths, smasses, ssfr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, curr_cos_smass, curr_cos_ssfr, virial_radii_bool, log_plots)
+		# cos_functions.make_equ_width_contour_plots(ions_short[i], radii, virial_radii, equ_widths, smasses, ssfr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, curr_cos_smass, curr_cos_ssfr, virial_radii_bool, log_plots)
 
-	# else:
-	# 	cos_functions.make_col_dense_plots(ions_short[i], covered, total, ssfr, masses, smasses, radii, virial_radii, cols, eagle_ids, curr_cos_id_arr, plot_cols, plot_cols_err, plot_cols_flags, plot_cols_radii, covering_frac_val, colorbar, bins_for_median)
+	else:
+		cos_functions.make_col_dense_plots(ions_short[i], covered, total, ssfr, masses, smasses, radii, virial_radii, cols, eagle_ids, curr_cos_id_arr, plot_cols, plot_cols_err, plot_cols_flags, plot_cols_radii, covering_frac_val, colorbar, bins_for_median)
 
-	# 	# cos_functions.make_contour_col_dense_plots(ions_short[i], radii, virial_radii, cols, plot_cols, plot_cols_err, plot_cols_flags, plot_cols_radii, smasses, ssfr, virial_radii_bool)
+		# cos_functions.make_contour_col_dense_plots(ions_short[i], radii, virial_radii, cols, plot_cols, plot_cols_err, plot_cols_flags, plot_cols_radii, smasses, ssfr, virial_radii_bool)
 
 	# cos_functions.plot_for_multiple_gals_by_radius(ions_short[i], radii_bins, radii_colors, virial_vel_bool, virial_radii_bool, halo_mass_bool, mean_spectra_bool, radii, virial_radii, masses, smasses, flux_for_stacks, vel_for_stacks, virial_vel_for_stacks, min_halo_mass, max_halo_mass)
 
@@ -421,11 +421,11 @@ for i in range(0,np.size(ions)):
 
 # 	# cos_functions.fits(ions_short[i], which_survey, spec_output_directory, combined_plots_folder, plot_equ_widths, plot_equ_widths_radii, covering_frac_bool = True, covering_frac_val = 14.0, lambda_line = lambda_line, colorbar = colorbar, offset = starting_gal_id) # line in Angst
 
-list_for_all_id_data = particle_tracking_functions.get_all_id_data(spec_output_directory)
-print 'got list'
-print list_for_all_id_data
-print ''
-particle_tracking_functions.get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lookup_files, new_lines)
+# list_for_all_id_data = particle_tracking_functions.get_all_id_data(spec_output_directory)
+# print 'got list'
+# print list_for_all_id_data
+# print ''
+# particle_tracking_functions.get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lookup_files, new_lines)
 
 
 # ########################################

@@ -1105,7 +1105,7 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 		# plt.plot(plot_x, plot_10, 'r')
 		plt.hold(False)
 
-		plt.title('All Surveys: W vs b for HI')
+		plt.title('All Surveys: N vs b for HI')
 
 	ax.set_xlabel('Impact Parameter (kpc)')
 	ax.set_ylabel(r'$log_{10}(N_{HI})$ ${\rm cm}^{-2}$')
@@ -1181,7 +1181,7 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 	plot_radii_err = []
 	cos_percentiles = []
 
-	plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['legend.fontsize'], plt.rcParams['xtick.labelsize'], plt.rcParams['ytick.labelsize'] = 17, 20., 14, 14, 14
+	plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['legend.fontsize'], plt.rcParams['xtick.labelsize'], plt.rcParams['ytick.labelsize'] = 18, 18., 15, 16, 16
 
 	# ### if moving to mA
 	# equ_widths *= 1.e3
@@ -1328,7 +1328,7 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 		norm_radii = plot_equ_widths_radii[plot_W_flags > 0.]
 		norm_equ_widths = plot_equ_widths[plot_W_flags > 0.]
 		norm_err = plot_W_errs[plot_W_flags > 0.]
-		cos_data_object = ax.errorbar(norm_radii, norm_equ_widths, yerr=norm_err, fmt='*', c='#00FF00', markersize = 8.5, markeredgecolor = 'k', markeredgewidth = 0.5, label = 'COS: high=%.2f, low=%.2f' % (high_frac, low_frac))
+		cos_data_object = ax.errorbar(norm_radii, norm_equ_widths, yerr=norm_err, fmt='*', c='#00FF00', markersize = 8.5, markeredgecolor = 'k', markeredgewidth = 0.5, label = 'COS')#: high=%.2f, low=%.2f' % (high_frac, low_frac))
 
 		data_legend = ax.legend(handles=[eagle_data_object, cos_data_object], loc='upper right')
 
@@ -1349,7 +1349,7 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 		plt.rcParams['legend.fontsize'] = 14
 
 		# plt.title('Red W vs b, Rejection at: %s' % (str(reject_val)))
-		ax.set_title('All Surveys: W vs b for HI')
+		ax.set_title('EAGLE vs COS-Halos, Dwarfs, & GASS')
 		ax.add_artist(fit_legend)
 		ax.add_artist(data_legend)
 
@@ -1387,12 +1387,12 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 		# plt.plot(plot_x, plot_10, 'r')
 		plt.hold(False)
 
-		ax.set_title('All Surveys: W vs b for HI')
+		ax.set_title('EAGLE vs COS-Halos, Dwarfs, & GASS')
 
 	ax.set_xlabel('Impact Parameter (kpc)')
 
 	if log_plots:
-		ax.set_ylabel(r'$log_{10}(W)$ $\AA{}$')
+		ax.set_ylabel(r'$log_{10}(W_{HI})$ $\AA{}$')
 		ax.set_yticks([0.1,1.0])
 		ax.set_yticklabels(['-1', '0'])
 		ax.set_ylim(0.01, 5.0)
@@ -1439,9 +1439,9 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 	plt.hold(False)
 
 	try:
-		plt.title('All Surveys: W vs b for %s' % (ion))
+		plt.title('EAGLE vs COS-Halos, Dwarfs, & GASS for %s' % (ion))
 	except:
-		plt.title('All Surveys: W vs b for %s' % (ion))
+		plt.title('EAGLE vs COS-Halos, Dwarfs, & GASS for %s' % (ion))
 	plt.xlabel('Impact Parameter (in virial radii)')
 	plt.ylabel(r'Equivalent Width ($\AA{}$)')
 	if colorbar == 'smass':
@@ -1696,7 +1696,7 @@ def make_equ_width_contour_plots(ion, radii, virial_radii, equ_widths, smasses, 
 	ax.set_ylim((ymin, ymax))
 	ax.set_yticks([0.01,0.1,1.0])
 	ax.set_yticklabels(['-2','-1', '0'])
-	ax.set_title('All Surveys: W vs b for HI')
+	ax.set_title('EAGLE vs COS-Halos, Dwarfs, & GASS')
 
 
 	### overplot all data points if testing stuff

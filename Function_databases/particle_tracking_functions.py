@@ -13,6 +13,7 @@
 ### snap_directroy/*snapshot_noneq*/*file_keyword* play around with the middle part (snapshot_noneq) being just read from the file keyword
 ### Check to make sure it doesn't break AGN.
 ### halos part_ids 10
+# Otters@78911
 
 ### Imports
 import h5py 
@@ -220,31 +221,31 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 					if on_first:
 						overall_gas_ids, overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 		   				overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, \
-		   				overall_z0_time_since_ISM, overall_groups, overall_radius_bins \
+		   				overall_z0_time_since_ISM, overall_groups, overall_radius_bins, overall_col_dense \
 		   				= create_overall_arrays(curr_gas_ids, curr_particle_radii, curr_density, curr_gas_vel, curr_metallicity, curr_particle_mass, curr_smoothing_length, curr_temperature, \
-						curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, curr_group, curr_radius_bin)
+						curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, curr_group, curr_radius_bin, col_dense)
 
 						on_first = False
 
 					else:
 						overall_gas_ids, overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 			   			overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-			   			overall_groups, overall_radius_bins \
+			   			overall_groups, overall_radius_bins, overall_col_dense \
 			   			= appending_all_data(curr_gas_ids, curr_particle_radii, curr_density, curr_gas_vel, curr_metallicity, curr_particle_mass, curr_smoothing_length, curr_temperature, \
-						curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, curr_group, curr_radius_bin, overall_gas_ids, \
+						curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, curr_group, curr_radius_bin, col_dense, overall_gas_ids, \
 						overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 			   			overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-			   			overall_groups, overall_radius_bins)
+			   			overall_groups, overall_radius_bins, overall_col_dense)
 
 		   			# plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 			   		# 	overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-			   		# 	overall_groups, overall_radius_bins)
+			   		# 	overall_groups, overall_radius_bins, overall_col_dense)
 
 		   	# if j > 9:
 		   	# 	print 'here'
 		   	# 	# plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 		   	# 	# 	overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-		   	# 	# 	overall_groups, overall_radius_bins)
+		   	# 	# 	overall_groups, overall_radius_bins, overall_col_dense)
 		   	# 	raise ValueError('did 9 gals at least')
 
 
@@ -257,7 +258,7 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 
 		plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 			   			overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-			   			overall_groups, overall_radius_bins)
+			   			overall_groups, overall_radius_bins, overall_col_dense)
 
 
 def get_particle_id_tag(k): # get passed k, the number of the sightline, assign it a 3 digit number for consistency (k=1, returns '001', k=11 returns '011')
@@ -800,7 +801,7 @@ def check_directory_format(directory):
 
 def create_overall_arrays(curr_gas_ids, curr_particle_radii, curr_density, curr_gas_vel, curr_metallicity, curr_particle_mass, curr_smoothing_length, curr_temperature, \
 						  curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, \
-						  curr_group, curr_radius_bin):
+						  curr_group, curr_radius_bin, col_dense):
 	overall_gas_ids = curr_gas_ids
 	overall_particle_radii = curr_particle_radii
 	overall_density = curr_density
@@ -819,17 +820,18 @@ def create_overall_arrays(curr_gas_ids, curr_particle_radii, curr_density, curr_
 	num_parts = np.size(curr_gas_ids)
 	overall_groups = np.zeros(num_parts) + curr_group
 	overall_radius_bins = np.zeros(num_parts) + curr_radius_bin
+	overall_col_dense = np.zeros(num_parts) + col_dense
 
 	return overall_gas_ids, overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 		   overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-		   overall_groups, overall_radius_bins
+		   overall_groups, overall_radius_bins, overall_col_dense
 
 
 def appending_all_data(curr_gas_ids, curr_particle_radii, curr_density, curr_gas_vel, curr_metallicity, curr_particle_mass, curr_smoothing_length, curr_temperature, \
-					curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, curr_group, curr_radius_bin, overall_gas_ids, \
-					overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
+					curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, curr_group, curr_radius_bin, col_dense, \
+					overall_gas_ids, overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 		   			overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-		   			overall_groups, overall_radius_bins):
+		   			overall_groups, overall_radius_bins, overall_col_dense):
 
 	overall_gas_ids = np.concatenate((overall_gas_ids,curr_gas_ids))
 	overall_particle_radii = np.concatenate((overall_particle_radii, curr_particle_radii))
@@ -846,6 +848,7 @@ def appending_all_data(curr_gas_ids, curr_particle_radii, curr_density, curr_gas
 	num_parts = np.size(curr_gas_ids)
 	overall_groups = np.concatenate((overall_groups, np.zeros(num_parts) + curr_group))
 	overall_radius_bins = np.concatenate((overall_radius_bins, np.zeros(num_parts) + curr_radius_bin))
+	overall_col_dense = np.concatenate((overall_col_dense, np.zeros(num_parts)+col_dense))
 
 	for key in curr_ion_fracs.keys():
 		overall_eagle_ion_fracs[key] = np.concatenate((overall_eagle_ion_fracs[key], curr_ion_fracs[key]))
@@ -856,11 +859,11 @@ def appending_all_data(curr_gas_ids, curr_particle_radii, curr_density, curr_gas
 
 	return overall_gas_ids, overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 		   overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-		   overall_groups, overall_radius_bins
+		   overall_groups, overall_radius_bins, overall_col_dense
 
 def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 		   				 overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, 
-		   				 overall_groups, overall_radius_bins):
+		   				 overall_groups, overall_radius_bins, overall_col_dense):
 	
 	### set bounds
 	close_indices = np.where(overall_particle_radii < 500.)
@@ -877,9 +880,9 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['legend.fontsize'], plt.rcParams['xtick.labelsize'],  plt.rcParams['ytick.labelsize'] = 17., 17., 13., 14., 16.
 
 	### If I want to filter plots by where they're close
-	[overall_z0_time_since_ISM, overall_time_since_ISM, overall_particle_radii, overall_particle_mass, overall_density, overall_temperature, overall_lookup_ion_fracs['HydrogenI'], overall_element_fracs['hydrogen'], overall_groups, overall_radius_bins] \
+	[overall_z0_time_since_ISM, overall_time_since_ISM, overall_particle_radii, overall_particle_mass, overall_density, overall_temperature, overall_lookup_ion_fracs['HydrogenI'], overall_element_fracs['hydrogen'], overall_groups, overall_radius_bins, overall_col_dense] \
 	= return_where_close(radius=500., radii=overall_particle_radii, arrays_to_filter=[overall_z0_time_since_ISM, overall_time_since_ISM, \
-		overall_particle_radii, overall_particle_mass, overall_density, overall_temperature, overall_lookup_ion_fracs['HydrogenI'], overall_element_fracs['hydrogen'], overall_groups, overall_radius_bins])
+		overall_particle_radii, overall_particle_mass, overall_density, overall_temperature, overall_lookup_ion_fracs['HydrogenI'], overall_element_fracs['hydrogen'], overall_groups, overall_radius_bins, overall_col_dense])
 
 	### get indices for past and future ISM interaction
 	overall_will_be_ISM, overall_new_accretion, overall_recycled_accretion, overall_were_ISM, overall_were_and_will_be_ISM = track_ISM(overall_z0_time_since_ISM, overall_time_since_ISM)
@@ -919,13 +922,25 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 		curr_group_indices = np.where(overall_groups == group_identifier)
 		for radius_bin_identifier in range(3): # this is within 0.5, 0.5-1, and >1. R_vir
 			curr_radius_indices = np.where(overall_radius_bins == radius_bin_identifier)
-
 			curr_indices = np.intersect1d(curr_group_indices, curr_radius_indices)
 			curr_num_parts = float(np.size(curr_indices))
+			curr_LLS_indices = np.where((overall_col_dense >= 16.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
+			curr_LLS_parts = float(np.size(curr_LLS_indices))
+			curr_mid_indices = np.where((overall_col_dense < 16.5) & (overall_col_dense >= 14.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
+			curr_mid_parts = float(np.size(curr_mid_indices))
+			curr_weak_indices = np.where((overall_col_dense < 14.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
+			curr_weak_parts = float(np.size(curr_weak_indices))
+
 
 			curr_will, curr_new, curr_recycled, curr_were, curr_both = track_ISM(overall_z0_time_since_ISM[curr_indices], overall_time_since_ISM[curr_indices])
+			curr_LLS_will, curr_LLS_new, curr_LLS_recycled, curr_LLS_were, curr_LLS_both = track_ISM( overall_z0_time_since_ISM[curr_LLS_indices], overall_time_since_ISM[curr_LLS_indices])
+			curr_mid_will, curr_mid_new, curr_mid_recycled, curr_mid_were, curr_mid_both = track_ISM( overall_z0_time_since_ISM[curr_mid_indices], overall_time_since_ISM[curr_mid_indices])
+			curr_weak_will, curr_weak_new, curr_weak_recycled, curr_weak_were, curr_weak_both = track_ISM( overall_z0_time_since_ISM[curr_weak_indices], overall_time_since_ISM[curr_weak_indices])
 
 			curr_frac_will, curr_frac_new, curr_frac_recycled, curr_frac_were, curr_frac_both = np.array([np.size(curr_will), np.size(curr_new), np.size(curr_recycled), np.size(curr_were), np.size(curr_both)])/curr_num_parts
+			curr_LLS_H_frac_will, curr_LLS_H_frac_new, curr_LLS_H_frac_recycled, curr_LLS_H_frac_were, curr_LLS_H_frac_both = np.array([np.size(curr_LLS_will), np.size(curr_LLS_new), np.size(curr_LLS_recycled), np.size(curr_LLS_were), np.size(curr_LLS_both)])/curr_LLS_parts
+			curr_mid_H_frac_will, curr_mid_H_frac_new, curr_mid_H_frac_recycled, curr_mid_H_frac_were, curr_mid_H_frac_both = np.array([np.size(curr_mid_will), np.size(curr_mid_new), np.size(curr_mid_recycled), np.size(curr_mid_were), np.size(curr_mid_both)])/curr_mid_parts
+			curr_weak_H_frac_will, curr_weak_H_frac_new, curr_weak_H_frac_recycled, curr_weak_H_frac_were, curr_weak_H_frac_both = np.array([np.size(curr_weak_will), np.size(curr_weak_new), np.size(curr_weak_recycled), np.size(curr_weak_were), np.size(curr_weak_both)])/curr_weak_parts
 			
 			if curr_num_parts != 0.0:
 				curr_nH, curr_T = [overall_nH[curr_indices], overall_temperature[curr_indices]]
@@ -959,12 +974,35 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 				# n_t_fig.savefig('n_t_hist_%s_%s.pdf' % (color_labels[group_identifier], filename_edgle_labels[radius_bin_identifier]))
 				plt.close(n_t_fig)
 				if ((group_identifier == 1) & (radius_bin_identifier == 0)):
-					print "fracs for active, low b gals"
+					H_frac_will = curr_frac_will
+					H_frac_were = curr_frac_were
+					H_frac_both = curr_frac_both
 					print curr_frac_will
 					print curr_frac_were
 					print curr_frac_both
+					print curr_num_parts
 					print ''
 
+					H_LLS_frac_will =  curr_LLS_H_frac_will
+					H_LLS_frac_were = curr_LLS_H_frac_were
+					H_LLS_frac_both = curr_LLS_H_frac_both
+					print  curr_LLS_H_frac_will
+					print curr_LLS_H_frac_were
+					print curr_LLS_H_frac_both
+					print curr_LLS_parts
+					print ''
+
+					print  curr_mid_H_frac_will
+					print curr_mid_H_frac_were
+					print curr_mid_H_frac_both
+					print curr_mid_parts
+					print ''
+
+					print  curr_weak_H_frac_will
+					print curr_weak_H_frac_were
+					print curr_weak_H_frac_both
+					print curr_weak_parts
+					print ''
 
 			curr_bar_xvals = all_bar_x_vals + radius_bin_identifier+1 + (group_identifier)*3
 			curr_bar_xvals = np.concatenate((curr_bar_xvals, [curr_bar_xvals[0]]))
@@ -1013,17 +1051,59 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 			curr_indices = np.intersect1d(curr_group_indices, curr_radius_indices)
 			curr_HI_masses = overall_HI_masses[curr_indices]
 			curr_total_HI_mass = np.sum(curr_HI_masses)
+			curr_LLS_indices = np.where((overall_col_dense >= 16.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
+			curr_LLS_HI_masses = overall_HI_masses[curr_LLS_indices]
+			curr_LLS_total_HI_mass = np.sum(curr_LLS_HI_masses)
+			curr_mid_indices = np.where((overall_col_dense < 16.5) & (overall_col_dense >= 14.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
+			curr_mid_HI_masses = overall_HI_masses[curr_mid_indices]
+			curr_mid_total_HI_mass = np.sum(curr_mid_HI_masses)
+			curr_weak_indices = np.where((overall_col_dense < 14.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
+			curr_weak_HI_masses = overall_HI_masses[curr_weak_indices]
+			curr_weak_total_HI_mass = np.sum(curr_weak_HI_masses)
 
 			curr_will, curr_new, curr_recycled, curr_were, curr_both = track_ISM(overall_z0_time_since_ISM[curr_indices], overall_time_since_ISM[curr_indices])
+			curr_LLS_will, curr_LLS_new, curr_LLS_recycled, curr_LLS_were, curr_LLS_both = track_ISM( overall_z0_time_since_ISM[curr_LLS_indices], overall_time_since_ISM[curr_LLS_indices])
+			curr_mid_will, curr_mid_new, curr_mid_recycled, curr_mid_were, curr_mid_both = track_ISM( overall_z0_time_since_ISM[curr_mid_indices], overall_time_since_ISM[curr_mid_indices])
+			curr_weak_will, curr_weak_new, curr_weak_recycled, curr_weak_were, curr_weak_both = track_ISM( overall_z0_time_since_ISM[curr_weak_indices], overall_time_since_ISM[curr_weak_indices])
 
 			curr_HI_mass_frac_will, curr_HI_mass_frac_new, curr_HI_mass_frac_recycled, curr_HI_mass_frac_were, curr_HI_mass_frac_both = np.array([np.sum(curr_HI_masses[curr_will]),
 				np.sum(curr_HI_masses[curr_new]), np.sum(curr_HI_masses[curr_recycled]), np.sum(curr_HI_masses[curr_were]), np.sum(curr_HI_masses[curr_both])])/curr_total_HI_mass
+			curr_LLS_HI_frac_will, curr_LLS_HI_frac_new, curr_LLS_HI_frac_recycled, curr_LLS_HI_frac_were, curr_LLS_HI_frac_both = np.array([np.sum(curr_LLS_HI_masses[curr_LLS_will]),
+				np.sum(curr_LLS_HI_masses[curr_LLS_new]), np.sum(curr_LLS_HI_masses[curr_LLS_recycled]), np.sum(curr_LLS_HI_masses[curr_LLS_were]), np.sum(curr_LLS_HI_masses[curr_LLS_both])])/curr_LLS_total_HI_mass
+			curr_mid_HI_frac_will, curr_mid_HI_frac_new, curr_mid_HI_frac_recycled, curr_mid_HI_frac_were, curr_mid_HI_frac_both = np.array([np.sum(curr_mid_HI_masses[curr_mid_will]),
+				np.sum(curr_mid_HI_masses[curr_mid_new]), np.sum(curr_mid_HI_masses[curr_mid_recycled]), np.sum(curr_mid_HI_masses[curr_mid_were]), np.sum(curr_mid_HI_masses[curr_mid_both])])/curr_mid_total_HI_mass
+			curr_weak_HI_frac_will, curr_weak_HI_frac_new, curr_weak_HI_frac_recycled, curr_weak_HI_frac_were, curr_weak_HI_frac_both = np.array([np.sum(curr_weak_HI_masses[curr_weak_will]),
+				np.sum(curr_weak_HI_masses[curr_weak_new]), np.sum(curr_weak_HI_masses[curr_weak_recycled]), np.sum(curr_weak_HI_masses[curr_weak_were]), np.sum(curr_weak_HI_masses[curr_weak_both])])/curr_weak_total_HI_mass
 
 			if ((group_identifier == 1) & (radius_bin_identifier == 0)):
-				print "fracs for active, low b gals HI weighted"
+				HI_frac_will = curr_HI_mass_frac_will
+				HI_frac_were = curr_HI_mass_frac_were
+				HI_frac_both = curr_HI_mass_frac_both
 				print curr_HI_mass_frac_will
 				print curr_HI_mass_frac_were
 				print curr_HI_mass_frac_both
+				print curr_total_HI_mass
+				print ''
+
+				HI_LLS_frac_will = curr_LLS_HI_frac_will
+				HI_LLS_frac_were = curr_LLS_HI_frac_were
+				HI_LLS_frac_both = curr_LLS_HI_frac_both
+				print curr_LLS_HI_frac_will
+				print curr_LLS_HI_frac_were
+				print curr_LLS_HI_frac_both
+				print curr_LLS_total_HI_mass
+				print ''
+
+				print curr_mid_HI_frac_will
+				print curr_mid_HI_frac_were
+				print curr_mid_HI_frac_both
+				print curr_mid_total_HI_mass
+				print ''
+
+				print curr_weak_HI_frac_will
+				print curr_weak_HI_frac_were
+				print curr_weak_HI_frac_both
+				print curr_weak_total_HI_mass
 				print ''
 
 			curr_bar_xvals = all_bar_x_vals + radius_bin_identifier+1 + (group_identifier)*3
@@ -1051,6 +1131,9 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	HI_ax.set_yticklabels(np.log10(HI_ax.get_yticks()).astype(int))
 	HI_fig.savefig('ISM_HI_hists.pdf')
 	plt.close(HI_fig)
+
+	### FINESST Figure
+
 
 	# ### Hydrogen
 	# nH = overall_density*overall_element_fracs['hydrogen']/m_H
