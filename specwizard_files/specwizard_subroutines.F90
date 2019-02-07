@@ -1435,11 +1435,12 @@ subroutine projectdata(file_number)
 
   !!! I added these
   character(len=3) :: gal_number
-  integer(kind=singleI) :: num_encountered
+  integer(kind=doubleI) :: num_encountered, matched_partids(NGas)
   integer(kind=doubleI), allocatable :: final_matched_partids(:)
-  real(kind=doubleR) :: prev_n_ion(nion,nveloc)
+  real(kind=doubleR), allocatable :: final_particle_col_contributions(:)
+  real(kind=doubleR) :: particle_col_contributions(NGas), prev_n_ion(nion,nveloc)
   dzbin = BoxSize / HubbleParam * acurrent * Mpc / dble(nveloc) ! bin size (physical cm)
-  print *, 'Why is dzbin zero? Or I think it is', dzbin, BoxSize, HubbleParam, acurrent, Mpc, dble(nveloc)
+
   !!!
 
   !
@@ -1810,7 +1811,7 @@ subroutine projectdata(file_number)
             ! quantities weighted by number of ions.  These are actually
             ! SPH estimates of A*rho, but we divide through by rho on the
             ! next loop.  This ensures that we explicitly conserve mass.
-            n_ion(:,j)     = n_ion(:,j)     + kernel_factor * totnr_ion(:)
+            n_ion(:,j)     = nn(_io:,j)     + kernel_factor * totnr_ion(:)
             veloc_ion(:,j) = veloc_ion(:,j) + kernel_factor * totnr_ion(:) * vr 
             temp_ion(:,j)  = temp_ion(:,j)  + kernel_factor * totnr_ion(:) * ParticleTemperature(i)
 	          met_ion(:,j)  = met_ion(:,j)  + kernel_factor * totnr_ion(:) * Metallicity(i)
@@ -1822,42 +1823,45 @@ subroutine projectdata(file_number)
             !
           endif ! kernel factor > 0
         enddo ! loop over contributing vertices
-        print *, 'Particles contribution to column density is:', SUM(n_ion-prev_n_ion)*DensCon*dzbin
+        particle_col_contribution(i) = SUM(n_ion-prev_n_ion)*DensCon*dzbin
         !      
     endif ! b le hh
     !
   enddo particle_loop
   print *, 'Total column density is:', SUM(n_ion)*DensCon*dzbin
+  print *, 'sum of individuals is:', SUM(particle_col_contribution)
 
   num_encountered = 0
 
   if (allocated(final_matched_partids)) deallocate(final_matched_partids)
+  if allocated(final_particle_col_contribution)) deallocate(final_particle_col_contribution)
   allocate(final_matched_partids(ncontr))
+  allocate(final_particle_col_contribution)
   final_matched_partids = 0
 
-  !IF (len(trim(outputdir)) == 17) THEN
-  !  gal_number = outputdir(16:16)
-  !ELSE IF (len(trim(outputdir)) == 18) THEN
-  !  gal_number = outputdir(16:17)
-  !ELSE
-  !  gal_number = "prob"
-  !END IF
+  IF (len(trim(outputdir)) == 17) THEN
+    gal_number = outputdir(16:16)
+  ELSE IF (len(trim(outputdir)) == 18) THEN
+    gal_number = outputdir(16:17)
+  ELSE
+    gal_number = "prob"
+  END IF
 
-  ! RH_ids
-  ! write(filename, '(A,I3.3,A)') 'eagle_particles_hit_',file_number,'.txt'
+   RH_ids
+   write(filename, '(A,I3.3,A)') 'eagle_particles_hit_',file_number,'.txt'
 
-  ! open(unit = 1, file=filename) 
-  ! encountered_ids_loop: do i= 1, NGas
-  !   if (matched_partids(i) .ne. 0) then
-  !     num_encountered = num_encountered + 1
-  !     final_matched_partids(int(num_encountered)) = matched_partids(i)
-  !     write(1,*) matched_partids(i)
-  !   endif
-  ! enddo encountered_ids_loop
-  ! close(1)
+   open(unit = 1, file=filename) 
+   encountered_ids_loop: do i= 1, NGas
+     if (matched_partids(i) .ne. 0) then
+       num_encountered = num_encountered + 1
+       !final_matched_partids(int(num_encountered)) = matched_partids(i)
+       write(1,*) matched_partids(i), particle_col_contribution(i)
+     endif
+   enddo encountered_ids_loop
+   close(1)
 
-  ! call system ( "mv "// filename// ' '//outputdir)
-  ! end RH_ids
+   call system ( "mv "// filename// ' '//outputdir)
+   end RH_ids
 
   !!! I moved this higher so I could use DensCon earlier
   !! Mass was computed in M_sun (was used to compute particle nr),
@@ -5007,9 +5011,7 @@ subroutine allocate_particledata
      if(allocated(Boundary)) deallocate(Boundary)
      if(allocated(partid)) deallocate(partid)
 
-     !!! I'm trying a thing here. Adding a new array for partids that are matched, it's also added to the allocation list below, after partid
-     if(allocated(matched_partids)) deallocate(matched_partids)
-#ifdef CHEMARRAY
+     #ifdef CHEMARRAY
      if(allocated(HI)) deallocate(HI)     
      if(allocated(CII)) deallocate(CII)
      if(allocated(CIII)) deallocate(CIII)
@@ -5026,7 +5028,7 @@ subroutine allocate_particledata
      !
      allocate(Mass(NGas),ParticleDensity(Ngas),ParticleSmoothingLength(NGas),ParticleTemperature(NGas),&
        Metallicity(NGas),MetallicityInSolar(NGas),ZMetal(NGas),ZRelat(NGas),StarFormationRate(Ngas),&
-       ParticleNeutralHFraction(Ngas),ParticleMolecularHFraction(Ngas),PartID(Ngas), matched_partids(Ngas), stat=AllocateStatus)
+       ParticleNeutralHFraction(Ngas),ParticleMolecularHFraction(Ngas),PartID(Ngas), stat=AllocateStatus)
 #ifdef CHEMARRAY
      allocate(HI(NGas),stat=AllocateStatus)
      allocate(CII(NGas),stat=AllocateStatus)
