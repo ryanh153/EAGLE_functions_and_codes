@@ -208,7 +208,7 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 						col_dense = np.array(curr_ion.get('LogTotalIonColumnDensity'))
 
 					### Possible filters
-					if ((col_dense <= 1.5) or (col_dense > 200.5)): # column density filter
+					if ((col_dense <= 16.5) or (col_dense > 200.5)): # column density filter
 						continue
 
 					# plots_for_each_line(ions, gal_mass, col_dense, i, j, k, curr_particle_radii, impact_param, curr_ion_fracs, curr_lookup_ion_fracs, list_for_all_id_data, curr_density, \
@@ -958,13 +958,19 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 				plt.tight_layout()
 				# n_t_fig.savefig('n_t_hist_%s_%s.pdf' % (color_labels[group_identifier], filename_edgle_labels[radius_bin_identifier]))
 				plt.close(n_t_fig)
-				if ((group_identifier == 1) & (radius_bin_identifier == 0)):
-					print "fracs for active, low b gals"
-					print curr_frac_will
-					print curr_frac_were
-					print curr_frac_both
+				if ((group_identifier == 0) & (radius_bin_identifier == 0)):
+					### just inside R_vir numbers
+					rvir_ind = np.where(overall_radius_bins != 2)
+					rvir_parts = np.size(rvir_ind)
+					rvir_will, rvir_new, rvir_recycled, rvir_were, rvir_both = track_ISM(overall_z0_time_since_ISM[rvir_ind], overall_time_since_ISM[rvir_ind])
+					rvir_frac_will, rvir_frac_new, rvir_frac_recycled, rvir_frac_were, rvir_frac_both = np.array([np.size(rvir_will), np.size(rvir_new), np.size(rvir_recycled), np.size(rvir_were), np.size(rvir_both)])/float(rvir_parts)
+					print "fracs inside rvir H"
+					print rvir_frac_will
+					print rvir_frac_were
+					print rvir_frac_new
+					print rvir_frac_recycled
+					print rvir_frac_both
 					print ''
-
 
 			curr_bar_xvals = all_bar_x_vals + radius_bin_identifier+1 + (group_identifier)*3
 			curr_bar_xvals = np.concatenate((curr_bar_xvals, [curr_bar_xvals[0]]))
@@ -1019,11 +1025,21 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 			curr_HI_mass_frac_will, curr_HI_mass_frac_new, curr_HI_mass_frac_recycled, curr_HI_mass_frac_were, curr_HI_mass_frac_both = np.array([np.sum(curr_HI_masses[curr_will]),
 				np.sum(curr_HI_masses[curr_new]), np.sum(curr_HI_masses[curr_recycled]), np.sum(curr_HI_masses[curr_were]), np.sum(curr_HI_masses[curr_both])])/curr_total_HI_mass
 
-			if ((group_identifier == 1) & (radius_bin_identifier == 0)):
-				print "fracs for active, low b gals HI weighted"
-				print curr_HI_mass_frac_will
-				print curr_HI_mass_frac_were
-				print curr_HI_mass_frac_both
+			if ((group_identifier == 0) & (radius_bin_identifier == 0)):
+				### just inside rvir stuff
+				rvir_ind = np.where(overall_radius_bins != 2)
+				rvir_HI_masses = overall_HI_masses[rvir_ind]
+				rvir_total_HI_mass = np.sum(rvir_HI_masses)
+
+				rvir_will, rvir_new, rvir_recycled, rvir_were, rvir_both = track_ISM(overall_z0_time_since_ISM[rvir_ind], overall_time_since_ISM[rvir_ind])
+
+				rvir_HI_mass_frac_will, rvir_HI_mass_frac_new, rvir_HI_mass_frac_recycled, rvir_HI_mass_frac_were, rvir_HI_mass_frac_both = np.array([np.sum(rvir_HI_masses[rvir_will]),
+					np.sum(rvir_HI_masses[rvir_new]), np.sum(rvir_HI_masses[rvir_recycled]), np.sum(rvir_HI_masses[rvir_were]), np.sum(rvir_HI_masses[rvir_both])])/rvir_total_HI_mass
+
+				print "fracs inside rvir, HI weighted"
+				print rvir_HI_mass_frac_will
+				print rvir_HI_mass_frac_were
+				print rvir_HI_mass_frac_both
 				print ''
 
 			curr_bar_xvals = all_bar_x_vals + radius_bin_identifier+1 + (group_identifier)*3
