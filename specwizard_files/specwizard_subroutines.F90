@@ -1415,6 +1415,8 @@ subroutine projectdata(file_number)
   use ionization_tables
   use modified_metallicity, only : modify_metallicity
   use w4_gadget_spline_kernel_class
+  ! I added these uses
+  ! use header, only :: BoxSize, HubbleParam
   implicit none 
   !
   ! local variables
@@ -1435,6 +1437,9 @@ subroutine projectdata(file_number)
   character(len=3) :: gal_number
   integer(kind=singleI) :: num_encountered
   integer(kind=doubleI), allocatable :: final_matched_partids(:)
+  real(kind=doubleR) :: prev_n_ion(nion,nveloc)
+  dzbin = BoxSize / HubbleParam * acurrent * Mpc / dble(nveloc) ! bin size (physical cm)
+  print *, 'Why is dzbin zero? Or I think it is', dzbin, BoxSize, HubbleParam, acurrent, Mpc, dble(nveloc)
   !!!
 
   !
@@ -1568,6 +1573,14 @@ subroutine projectdata(file_number)
   if (allocated(matched_partids)) deallocate(matched_partids)
   allocate(matched_partids(NGas))
   matched_partids = 0
+
+  !!! I moved this whole thing here to use DensCon earlier . 
+  ! Mass was computed in M_sun (was used to compute particle nr),
+  ! distance was in proper Mpc, conversion factor to n (cm^-3) is
+  ! thus: 
+  DensCon = Msun / Mpc**3 
+  ! Rescale density from sim redshift to current z using densscale.
+  DensCon = DensCon * densscale
 
   particle_loop: do i = 1, NGas
     !
@@ -1705,6 +1718,7 @@ subroutine projectdata(file_number)
         if (ioff*2 .gt. nveloc) stop 'ioff*2 > nveloc'
         !
         ! segment pixel loop
+        prev_n_ion = n_ion ! keeps the previos n_ion so we can get the contribution of each particle
         do iiz = iz-ioff, iz+ioff+1
           j = iiz
           j = mod(j-1+10*nveloc,nveloc)+1
@@ -1799,7 +1813,7 @@ subroutine projectdata(file_number)
             n_ion(:,j)     = n_ion(:,j)     + kernel_factor * totnr_ion(:)
             veloc_ion(:,j) = veloc_ion(:,j) + kernel_factor * totnr_ion(:) * vr 
             temp_ion(:,j)  = temp_ion(:,j)  + kernel_factor * totnr_ion(:) * ParticleTemperature(i)
-	    met_ion(:,j)  = met_ion(:,j)  + kernel_factor * totnr_ion(:) * Metallicity(i)
+	          met_ion(:,j)  = met_ion(:,j)  + kernel_factor * totnr_ion(:) * Metallicity(i)
             ! .... weighted by mass
             rho_tot(j)     = rho_tot(j)     + kernel_factor * Mass(i)
             veloc_tot(j)   = veloc_tot(j)   + kernel_factor * Mass(i) * vr
@@ -1808,10 +1822,12 @@ subroutine projectdata(file_number)
             !
           endif ! kernel factor > 0
         enddo ! loop over contributing vertices
+        print *, 'Particles contribution to column density is:', SUM(n_ion-prev_n_ion)*DensCon*dzbin
         !      
     endif ! b le hh
     !
   enddo particle_loop
+  print *, 'Total column density is:', SUM(n_ion)*DensCon*dzbin
 
   num_encountered = 0
 
@@ -1843,13 +1859,13 @@ subroutine projectdata(file_number)
   ! call system ( "mv "// filename// ' '//outputdir)
   ! end RH_ids
 
-  !
-  ! Mass was computed in M_sun (was used to compute particle nr),
-  ! distance was in proper Mpc, conversion factor to n (cm^-3) is
-  ! thus: 
-  DensCon = Msun / Mpc**3 
-  ! Rescale density from sim redshift to current z using densscale.
-  DensCon = DensCon * densscale
+  !!! I moved this higher so I could use DensCon earlier
+  !! Mass was computed in M_sun (was used to compute particle nr),
+  !! distance was in proper Mpc, conversion factor to n (cm^-3) is
+  !! thus: 
+  !DensCon = Msun / Mpc**3 
+  !! Rescale density from sim redshift to current z using densscale.
+  !DensCon = DensCon * densscale
   !
   do ii = 1, nion
     do i = 1, nveloc

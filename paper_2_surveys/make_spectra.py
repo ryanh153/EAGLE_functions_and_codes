@@ -75,9 +75,9 @@ redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
 ### survey properties
 
 ### Check these for errors in data size or related  issues
-points_per_radius = 96
-radii_start, radii_stop, radii_step = 20., 260., 10. # stop not inclusive
-cores = 16 # max number, use this is points per radius is divisable by 16
+points_per_radius = 1
+radii_start, radii_stop, radii_step = 20., 40., 10. # stop not inclusive
+cores = 1 # max number, use this is points per radius is divisable by 16
 ###
 
 radii =  np.arange(radii_start, radii_stop, radii_step) # kpc
@@ -88,7 +88,7 @@ angle_off = np.array(['y', 'z', 'x'])
 covering_frac_vals = np.array([14., 16., 18.])
 
 ### For specwizard
-run_specwizard = False
+run_specwizard = True
 making_npz_file = False
 if run_specwizard:
 	print "Running on %s cores. %s sightlines per core" % (str(cores), str(3*np.size(radii)))
@@ -613,6 +613,7 @@ if run_specwizard:
 			# run specwizard (in parallel)
 			# can not seperatre module loads and specwizard runs. Different calls of os.system() seem to happen in different environments!
 			os.system("module load intel_comp/2018-update2 intel_mpi/2018 hdf5/1.8.20 && mpirun -np %s %s %s" % (str(cores), path_to_specwizard_executable, param_filename)) # make sure all the right modules are installed
+			raise ValueError("only doing one line right now")
 			# if 8 lines per core it's about twice as fast. 1 or 2 lines it is slower by like 10%. Not perfeclty uniform though
 
 			# store files
