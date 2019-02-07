@@ -1436,8 +1436,8 @@ subroutine projectdata(file_number)
   !!! I added these
   character(len=3) :: gal_number
   integer(kind=doubleI) :: num_encountered, matched_partids(NGas)
-  integer(kind=doubleI), allocatable :: final_matched_partids(:)
-  real(kind=doubleR), allocatable :: final_particle_col_contributions(:)
+  !integer(kind=doubleI), allocatable :: final_matched_partids(:)
+  !real(kind=doubleR), allocatable :: final_particle_col_contributions(:)
   real(kind=doubleR) :: particle_col_contributions(NGas), prev_n_ion(nion,nveloc)
   dzbin = BoxSize / HubbleParam * acurrent * Mpc / dble(nveloc) ! bin size (physical cm)
 
