@@ -1435,11 +1435,15 @@ subroutine projectdata(file_number)
 
   !!! I added these
   character(len=3) :: gal_number
-  integer(kind=doubleI) :: num_encountered, matched_partids(NGas)
-  !integer(kind=doubleI), allocatable :: final_matched_partids(:)
+  !integer(kind=doubleI), allocatable :: final_matched_partids(:), 
   !real(kind=doubleR), allocatable :: final_particle_col_contributions(:)
   real(kind=doubleR) :: particle_col_contributions(NGas), prev_n_ion(nion,nveloc)
   dzbin = BoxSize / HubbleParam * acurrent * Mpc / dble(nveloc) ! bin size (physical cm)
+  particle_col_contributions = 0
+  if (allocated(matched_partids)) deallocate(matched_partids)
+  allocate(matched_partids(NGas))
+  matched_partids = 0
+
 
   !!!
 
@@ -1571,10 +1575,6 @@ subroutine projectdata(file_number)
   endif
   write(*,*) "physical_hold= ", x_physical_hold, y_physical_hold, z_physical_hold 
 
-  if (allocated(matched_partids)) deallocate(matched_partids)
-  allocate(matched_partids(NGas))
-  matched_partids = 0
-
   !!! I moved this whole thing here to use DensCon earlier . 
   ! Mass was computed in M_sun (was used to compute particle nr),
   ! distance was in proper Mpc, conversion factor to n (cm^-3) is
@@ -1628,7 +1628,7 @@ subroutine projectdata(file_number)
     !
     if(impactparameter .le. hh) then
        ncontr = ncontr + 1
-       matched_partids(int(ncontr)) = partid(i)
+       matched_partids(i) = partid(i)
     
 !        write (1,100) PartID(i), xx, yy, zz, hh
 ! 100 format(I16,1x,4(e12.4,1x))
@@ -1811,7 +1811,7 @@ subroutine projectdata(file_number)
             ! quantities weighted by number of ions.  These are actually
             ! SPH estimates of A*rho, but we divide through by rho on the
             ! next loop.  This ensures that we explicitly conserve mass.
-            n_ion(:,j)     = nn(_io:,j)     + kernel_factor * totnr_ion(:)
+            n_ion(:,j)     = n_ion(:,j)     + kernel_factor * totnr_ion(:)
             veloc_ion(:,j) = veloc_ion(:,j) + kernel_factor * totnr_ion(:) * vr 
             temp_ion(:,j)  = temp_ion(:,j)  + kernel_factor * totnr_ion(:) * ParticleTemperature(i)
 	          met_ion(:,j)  = met_ion(:,j)  + kernel_factor * totnr_ion(:) * Metallicity(i)
@@ -1823,21 +1823,11 @@ subroutine projectdata(file_number)
             !
           endif ! kernel factor > 0
         enddo ! loop over contributing vertices
-        particle_col_contribution(i) = SUM(n_ion-prev_n_ion)*DensCon*dzbin
+        particle_col_contributions(i) = SUM(n_ion-prev_n_ion)*DensCon*dzbin
         !      
     endif ! b le hh
     !
   enddo particle_loop
-  print *, 'Total column density is:', SUM(n_ion)*DensCon*dzbin
-  print *, 'sum of individuals is:', SUM(particle_col_contribution)
-
-  num_encountered = 0
-
-  if (allocated(final_matched_partids)) deallocate(final_matched_partids)
-  if allocated(final_particle_col_contribution)) deallocate(final_particle_col_contribution)
-  allocate(final_matched_partids(ncontr))
-  allocate(final_particle_col_contribution)
-  final_matched_partids = 0
 
   IF (len(trim(outputdir)) == 17) THEN
     gal_number = outputdir(16:16)
@@ -1847,30 +1837,20 @@ subroutine projectdata(file_number)
     gal_number = "prob"
   END IF
 
-   RH_ids
+   !RH_ids these flags (RH_ids) are just to tell me when what to turn off/on
    write(filename, '(A,I3.3,A)') 'eagle_particles_hit_',file_number,'.txt'
 
    open(unit = 1, file=filename) 
    encountered_ids_loop: do i= 1, NGas
      if (matched_partids(i) .ne. 0) then
-       num_encountered = num_encountered + 1
-       !final_matched_partids(int(num_encountered)) = matched_partids(i)
-       write(1,*) matched_partids(i), particle_col_contribution(i)
+       write(1,*) matched_partids(i), particle_col_contributions(i)
      endif
    enddo encountered_ids_loop
    close(1)
 
    call system ( "mv "// filename// ' '//outputdir)
-   end RH_ids
+   !end RH_ids
 
-  !!! I moved this higher so I could use DensCon earlier
-  !! Mass was computed in M_sun (was used to compute particle nr),
-  !! distance was in proper Mpc, conversion factor to n (cm^-3) is
-  !! thus: 
-  !DensCon = Msun / Mpc**3 
-  !! Rescale density from sim redshift to current z using densscale.
-  !DensCon = DensCon * densscale
-  !
   do ii = 1, nion
     do i = 1, nveloc
       if (n_ion(ii,i) .gt. 0.) then 
@@ -4599,7 +4579,7 @@ subroutine read_full_snapshot()
   if (MyPE == 0) &
        write (*,*) ' reading ID'
   ! RH_ids
-  ! np = read_dataset(snapinfo, 0, "ParticleIDs", PartID)
+  np = read_dataset(snapinfo, 0, "ParticleIDs", PartID)
 
   if(urchin) then
      stop ' not implemented urchin'
@@ -4717,9 +4697,9 @@ subroutine read_full_snapshot()
      call hdf5_read_attribute(file_handle,VarName,Dens_cgs_unit)
      !
      ! RH_ids
-     ! VarName = trim('PartType0')//'/ParticleIDs'        
-     ! call hdf5_read_data(file_handle, VarName, partid(NTotal+1:NTotal+Npart_this_file))
-     ! VarName = trim('PartType0')//'/Density/h-scale-exponent'
+     VarName = trim('PartType0')//'/ParticleIDs'        
+     call hdf5_read_data(file_handle, VarName, partid(NTotal+1:NTotal+Npart_this_file))
+     VarName = trim('PartType0')//'/Density/h-scale-exponent'
      !
 
 #ifndef SNIPSHOT
@@ -5011,7 +4991,7 @@ subroutine allocate_particledata
      if(allocated(Boundary)) deallocate(Boundary)
      if(allocated(partid)) deallocate(partid)
 
-     #ifdef CHEMARRAY
+#ifdef CHEMARRAY
      if(allocated(HI)) deallocate(HI)     
      if(allocated(CII)) deallocate(CII)
      if(allocated(CIII)) deallocate(CIII)

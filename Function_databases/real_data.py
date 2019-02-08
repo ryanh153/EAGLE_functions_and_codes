@@ -1,17 +1,19 @@
 import numpy as np
 import h5py
 
-# AGN_path = '/cosma/home/dp004/dc-oppe1/zooms/data/COS-AGN/COS-AGN.hdf5'
-# dwarfs_path = '/gpfs/data/analyse/rhorton/opp_research/snapshots/COS-Dwarfs.hdf5'
-# GASS_path = '/cosma/home/dp004/dc-oppe1/zooms/data/COS-GASS/COS-GASS.hdf5'
-# GTO_path = '/cosma/home/dp004/dc-oppe1/zooms/data/COS-GTO/COS-GTO.hdf5'
-# halos_path = '/gpfs/data/analyse/rhorton/opp_research/snapshots/COS-Halos.hdf5'
+### Cosma
+AGN_path = '/cosma/home/dp004/dc-oppe1/zooms/data/COS-AGN/COS-AGN.hdf5'
+dwarfs_path = '/cosma/home/analyse/rhorton/snapshots/COS-Dwarfs.hdf5'
+GASS_path = '/cosma/home/dp004/dc-oppe1/zooms/data/COS-GASS/COS-GASS.hdf5'
+GTO_path = '/cosma/home/dp004/dc-oppe1/zooms/data/COS-GTO/COS-GTO.hdf5'
+halos_path = '/cosma/home/analyse/rhorton/snapshots/COS-Halos.hdf5'
 
-AGN_path = '/projects/ryho3446/snapshots/COS-AGN.hdf5'
-dwarfs_path = '/projects/ryho3446/snapshots/COS-Dwarfs.hdf5'
-GASS_path = '/projects/ryho3446/snapshots/COS-GASS.hdf5'
-GTO_path = '/projects/ryho3446/snapshots/COS-GTO.hdf5'
-halos_path = '/projects/ryho3446/snapshots/COS-Halos.hdf5'
+### summit
+# AGN_path = '/projects/ryho3446/snapshots/COS-AGN.hdf5'
+# dwarfs_path = '/projects/ryho3446/snapshots/COS-Dwarfs.hdf5'
+# GASS_path = '/projects/ryho3446/snapshots/COS-GASS.hdf5'
+# GTO_path = '/projects/ryho3446/snapshots/COS-GTO.hdf5'
+# halos_path = '/projects/ryho3446/snapshots/COS-Halos.hdf5'
 
 num_AGN = 21
 num_dwarfs = 43

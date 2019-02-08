@@ -6,8 +6,6 @@
 ####: Halos/Dwarfs 51 out of 86
 ### 
 
-### make col dense maps (example maps)
-
 ### Populations (in COS) smass 9.9, ssfr -11 are the cuts
 
 ### Look for tests to compare fits with Rongmon
@@ -16,15 +14,6 @@
 ### Look into the fact that troughs in stacks are not zero centered? 
 ### Split into near/far side? 
 ### split into red/blue shifted? 
-
-### semi-rand gass1 has 6 extra?
-
-# No triangles on EWs
-# mA
-
-# % no frac for tracking
-# break down to entered ism and left, currently in ism, is a star
-
 
 ##################################
 # Imports
@@ -61,80 +50,82 @@ cos_comparisons_file = 'cos_data.hdf5'
 
 # ### old cosma locations
 
-# # this is the location of the gal output files that contain all the data you need from the eagle galaxies
-# # directory_with_gal_folders = '/cosma/home/analyse/rhorton/opp_research/data/AGN_gals/with_AGN'
-# directory_with_gal_folders = '/cosma/home/analyse/rhorton/opp_research/data/end_summer_gals'
-# lookup_files = '/cosma/home/analyse/rhorton/opp_research/Ali_Spec_src/IonizationTables/HM01G+C+SSH/'
-# # where all that data is put and where created los live. Basically the home for the run you are doing. 
-# # don't make it the same for multiple runs and make sure if you're just running plotting stuff it looks in the right place
+# this is the location of the gal output files that contain all the data you need from the eagle galaxies
+# directory_with_gal_folders = '/cosma/home/analyse/rhorton/snapshots/data/AGN_gals/with_AGN'
+directory_with_gal_folders = '/cosma/home/analyse/rhorton/data/paper1_gals'
+lookup_files = '/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/IonizationTables/HM01G+C+SSH/'
+# where all that data is put and where created los live. Basically the home for the run you are doing. 
+# don't make it the same for multiple runs and make sure if you're just running plotting stuff it looks in the right place
 
-# folders = glob.glob('/cosma/home/analyse/rhorton/opp_research/Ali_Spec_src/with_partIDs/test_new_spec')
+folders = glob.glob('/cosma/home/analyse/rhorton/Ali_Spec_src/spectra/tracking_with_col')
 
-# # folders = glob.glob('/cosma/home/analyse/rhorton/opp_research/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos_5rel_1')
-# # folders.append(glob.glob('/cosma/home/analyse/rhorton/opp_research/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass_5rel_1'))
-# # folders.append(glob.glob('/cosma/home/analyse/rhorton/opp_research/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs_5rel_1'))
+# folders = glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos_5rel_1')
+# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass_5rel_1'))
+# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs_5rel_1'))
 
-# # folders = glob.glob('/cosma/home/analyse/rhorton/opp_research/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/dwarfs*')
-# # folders.append(glob.glob('/cosma/home/analyse/rhorton/opp_research/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/gass*'))
-# # folders.append(glob.glob('/cosma/home/analyse/rhorton/opp_research/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/halos*'))
-# # folders.append(glob.glob('/cosma/home/analyse/rhorton/opp_research/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarf*'))
-# # folders.append(glob.glob('/cosma/home/analyse/rhorton/opp_research/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
-# # folders.append(glob.glob('/cosma/home/analyse/rhorton/opp_research/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
+# folders = glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/dwarfs*')
+# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/gass*'))
+# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/halos*'))
+# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarf*'))
+# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
+# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
 
-# spec_output_directory = np.hstack(folders)
+spec_output_directory = np.hstack(folders)
 
-# # combined_plots_folder = None
-# combined_plots_folder = '/cosma/home/analyse/rhorton/opp_research/Ali_Spec_src/with_partIDs/gal_paper_plots'
+# combined_plots_folder = None
+combined_plots_folder = '/cosma/home/analyse/rhorton/Ali_Spec_src/plots'
 
-# # so it knows where to grab things since it might not be living in Ali_spec_src anymore. Check these before each run!
-# # otherwise you'll get confusion between runs. Run something new, but pull old data etc. 
-# path_to_param_template = '/cosma/home/analyse/rhorton/opp_research/Ali_Spec_src/CGM_template.par'
-# path_to_specwizard_executable = '/cosma/home/analyse/rhorton/opp_research/Ali_Spec_src/specwizard'
-# path_to_cos_comparisons = '/cosma/home/analyse/rhorton/opp_research/snapshots/%s' % (cos_comparisons_file)
+# so it knows where to grab things since it might not be living in Ali_spec_src anymore. Check these before each run!
+# otherwise you'll get confusion between runs. Run something new, but pull old data etc. 
+path_to_param_template = '/cosma/home/analyse/rhorton/Ali_Spec_src/CGM_template.par'
+path_to_specwizard_executable = '/cosma/home/analyse/rhorton/Ali_Spec_src/specwizard'
+path_to_cos_comparisons = '/cosma/home/analyse/rhorton/snapshots/%s' % (cos_comparisons_file)
 
 ### New rc locations
 
-# this is the location of the gal output files that contain all the data you need from the eagle galaxies
-# directory_with_gal_folders = '/projects/ryho3446/data/AGN_gals/with_AGN'
-directory_with_gal_folders = '/projects/ryho3446/data/end_summer_gals'
-lookup_files = '/projects/ryho3446/Ali_Spec_src/IonizationTables/HM01G+C+SSH/'
-# where all that data is put and where created los live. Basically the home for the run you are doing. 
-# don't make it the same for multiple runs and make sure if you're just running plotting stuff it looks in the right place
+# # this is the location of the gal output files that contain all the data you need from the eagle galaxies
+# # directory_with_gal_folders = '/projects/ryho3446/data/AGN_gals/with_AGN'
+# directory_with_gal_folders = '/projects/ryho3446/data/end_summer_gals'
+# lookup_files = '/projects/ryho3446/Ali_Spec_src/IonizationTables/HM01G+C+SSH/'
+# # where all that data is put and where created los live. Basically the home for the run you are doing. 
+# # don't make it the same for multiple runs and make sure if you're just running plotting stuff it looks in the right place
 
 # folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos_5rel_1')
 # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass_5rel_1'))
 # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs_5rel_1'))
 
-folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs*')
-folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
-folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
-# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarf*'))
-# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
-# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
+# # folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs*')
+# # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
+# # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
+# # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarf*'))
+# # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
+# # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
 
-spec_output_directory = np.hstack(folders)
+# spec_output_directory = np.hstack(folders)
 
-# combined_plots_folder = None
-combined_plots_folder = '/projects/ryho3446/Ali_Spec_src/with_partIDs/gal_paper_plots'
+# # combined_plots_folder = None
+# combined_plots_folder = '/projects/ryho3446/Ali_Spec_src/with_partIDs/gal_paper_plots'
 
-# so it knows where to grab things since it might not be living in Ali_spec_src anymore. Check these before each run!
-# otherwise you'll get confusion between runs. Run something new, but pull old data etc. 
-path_to_param_template = '/projects/ryho3446/Ali_Spec_src/CGM_template.par'
-path_to_specwizard_executable = '/projects/ryho3446/Ali_Spec_src/specwizard'
-path_to_cos_comparisons = '/projects/ryho3446/snapshots/%s' % (cos_comparisons_file)
+# # so it knows where to grab things since it might not be living in Ali_spec_src anymore. Check these before each run!
+# # otherwise you'll get confusion between runs. Run something new, but pull old data etc. 
+# path_to_param_template = '/projects/ryho3446/Ali_Spec_src/CGM_template.par'
+# path_to_specwizard_executable = '/projects/ryho3446/Ali_Spec_src/specwizard'
+# path_to_cos_comparisons = '/projects/ryho3446/snapshots/%s' % (cos_comparisons_file)
+
+########
 
 R_in_vir = 2.0
 colorbar = 'hmass'
 
-cos_gass_bool = True
-cos_halos_bool = True
+cos_gass_bool = False
+cos_halos_bool = False
 cos_dwarfs_bool = True
 cos_AGN_bool = False
 cos_gto_bool = False
 single_gal_for_tests = False
 
-run_specwizard = False
-make_new_los_files = False
+run_specwizard = True
+make_new_los_files = True
 AGN_bool = False
 semi_random_radius = False # radii will be drawn from gauss with center being survey values and 10kpc std
 random_radii = False # radii will be random between max and min radius (passed)
@@ -391,15 +382,15 @@ for i in range(0,np.size(ions)):
 	
 	# cos_functions.neutral_columns_plot(cols, H_cols, radii, virial_radii, R200, smasses, masses, ssfr, ion_num_densities, gas_densities, temperatues, mean_total_mass_bool, virial_radii_bool, pop_str)
 
-	if equ_widths_bool:
-		cos_functions.make_equ_width_plots(ions_short[i], ssfr, masses, smasses, radii, virial_radii, equ_widths, eagle_ids, curr_cos_id_arr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, colorbar, bins_for_median, log_plots) # line in Angst
+	# if equ_widths_bool:
+	# 	# cos_functions.make_equ_width_plots(ions_short[i], ssfr, masses, smasses, radii, virial_radii, equ_widths, eagle_ids, curr_cos_id_arr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, colorbar, bins_for_median, log_plots) # line in Angst
 
-		# cos_functions.make_equ_width_contour_plots(ions_short[i], radii, virial_radii, equ_widths, smasses, ssfr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, curr_cos_smass, curr_cos_ssfr, virial_radii_bool, log_plots)
+	# 	cos_functions.make_equ_width_contour_plots(ions_short[i], radii, virial_radii, equ_widths, smasses, ssfr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, curr_cos_smass, curr_cos_ssfr, virial_radii_bool, log_plots)
 
-	else:
-		cos_functions.make_col_dense_plots(ions_short[i], covered, total, ssfr, masses, smasses, radii, virial_radii, cols, eagle_ids, curr_cos_id_arr, plot_cols, plot_cols_err, plot_cols_flags, plot_cols_radii, covering_frac_val, colorbar, bins_for_median)
+	# else:
+	# 	cos_functions.make_col_dense_plots(ions_short[i], covered, total, ssfr, masses, smasses, radii, virial_radii, cols, eagle_ids, curr_cos_id_arr, plot_cols, plot_cols_err, plot_cols_flags, plot_cols_radii, covering_frac_val, colorbar, bins_for_median)
 
-		# cos_functions.make_contour_col_dense_plots(ions_short[i], radii, virial_radii, cols, plot_cols, plot_cols_err, plot_cols_flags, plot_cols_radii, smasses, ssfr, virial_radii_bool)
+	# 	# cos_functions.make_contour_col_dense_plots(ions_short[i], radii, virial_radii, cols, plot_cols, plot_cols_err, plot_cols_flags, plot_cols_radii, smasses, ssfr, virial_radii_bool)
 
 	# cos_functions.plot_for_multiple_gals_by_radius(ions_short[i], radii_bins, radii_colors, virial_vel_bool, virial_radii_bool, halo_mass_bool, mean_spectra_bool, radii, virial_radii, masses, smasses, flux_for_stacks, vel_for_stacks, virial_vel_for_stacks, min_halo_mass, max_halo_mass)
 
