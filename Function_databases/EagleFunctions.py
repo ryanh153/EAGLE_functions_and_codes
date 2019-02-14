@@ -47,9 +47,13 @@ def get_snap_files(snap_directory, particles_included_keyword):
 		glob_snap_directory += '/'
 
 	snap_files = glob.glob(glob_snap_directory+"*hdf5") # list of snap files in the directory
-	snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+str(particles_included_keyword[0:4])+'shot'+str(particles_included_keyword[4::])+'*/'+str(particles_included_keyword)+'*')])
+	# removed a wildcard in the two lines of code below this to get rid of directories ending in .ioneq
+	# if this causes problems look into another solution. 
+	# old line
+	# snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+str(particles_included_keyword[0:4])+'shot'+str(particles_included_keyword[4::])+'*/'+str(particles_included_keyword)+'*')])
+	snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+str(particles_included_keyword[0:4])+'shot'+str(particles_included_keyword[4::])+'/'+str(particles_included_keyword)+'*')])
 	# in case there are _noneq_ files in a folder without the noneq keyword. It was done apparently before the naming convention was there
-	snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+str(particles_included_keyword[0:4])+'shot'+str(particles_included_keyword[4::])+'*/'+ str(particles_included_keyword[0:4])+'_noneq'+str(particles_included_keyword[4::])+'*')])
+	snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+str(particles_included_keyword[0:4])+'shot'+str(particles_included_keyword[4::])+'/'+ str(particles_included_keyword[0:4])+'_noneq'+str(particles_included_keyword[4::])+'*')])
 	snap_files = np.concatenate([snap_files, glob.glob(glob_snap_directory+'groups_'+str(particles_included_keyword[-12::])+'/*hdf5')])
 	return snap_files
 
@@ -125,7 +129,7 @@ def read_array(snap_files,array_name,include_file_keyword="",column=None, get_sc
 			iteration += 1
 	else:
 		for file in snap_files: # iterates over files
-			if ((include_file_keyword in file) or (include_file_keyword[0:4]+'_noneq'+include_file_keyword[4::] in file)): # in noneq file in folder w/o
+			if ((include_file_keyword in file) or (include_file_keyword[0:4]+'_noneq'+include_file_keyword[4::] in file)): # if noneq file in folder w/o
 				h5py_file = h5py.File(file,'r')
 				if column != None:
 					array = np.asarray(h5py_file[array_name])[:,column] # opens the array for one of the files

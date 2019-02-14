@@ -92,7 +92,7 @@ binned_vel, binned_wavelengths, binned_flux = lsf_functions.bin_data(convolved_v
 ### These are the REQUIRED parameters to be passed. Make sure these are correct
 rest_wavelength = 1216. # the wavelength of your line in Angstroms in the rest frame 
 redshift = 0.205 # the redshift of the line (so the observed wavelength can be calculated)
-snr = 10. # the signal to noise in each pixel (the final snr will be less if you bin pixels together)
+snr = 12. # the signal to noise in each resolution element
 pix_per_bin = 3 # how many pixels are binned together 
 
 ### Optional parameters (can be passed in any order, but must specify variable name)
@@ -103,9 +103,9 @@ vel_kms = True # default: True if false, assume the x input is in angstroms
 
 ### COS sepecific pixel correlation
 correlated_pixels = True # default: False COS has correlated pixel noise and thus you don't reduce S/N as fast as you should when binning multiple 
-# pixels. If true use S/N = snr*pix_per_bin**0.38, if false use S/N = snr*pix_per_bin**0.5 in the noise vector that will be added here
+# pixels. If true use S/N = snr**0.38, if false use S/N = snr**0.5 in the noise vector that will be added here
 
-noisy_flux = lsf_functions.add_noise(binned_vel, binned_flux, rest_wavelength, redshift, snr, pix_per_bin, vel_kms=vel_kms, correlated_pixels=correlated_pixels)
+noisy_flux = lsf_functions.add_noise(binned_vel, binned_flux, rest_wavelength, redshift, snr, vel_kms=vel_kms, correlated_pixels=correlated_pixels)
 
 ############################################################
 ### All in one: If you want to just do all of these steps with one line of code I made a function for that

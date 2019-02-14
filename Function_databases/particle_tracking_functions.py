@@ -111,7 +111,7 @@ def get_gal_id_from_folder_name(folder):
 		return gal_id
 
 
-def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lookup_file, new_lines=False):
+def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lookup_file, new_lines=False, col_con_bool=True):
 	not_files = 0
 	files = 0
 	on_first = True # are we still waiting to start our array concatenation 
@@ -167,7 +167,7 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 						continue
 					else:
 						curr_gas_ids, curr_gas_coords, curr_gas_vel, curr_particle_mass, curr_time_since_ISM, curr_metallicity, curr_temperature, curr_density, curr_smoothing_length, \
-						curr_mass_fracs, curr_ion_fracs, curr_lookup_ion_fracs, curr_z0_time_since_ISM, curr_z0_coords, curr_z0_vel \
+						curr_mass_fracs, curr_ion_fracs, curr_lookup_ion_fracs, curr_z0_time_since_ISM, curr_z0_coords, curr_z0_vel, curr_col_contibutions \
 						= find_matched_particles_and_store_data(particles_hit_file, \
 						lookup_file, curr_gal_output, snap_directory, file_keyword, z0_keyword, ions, ions_short, elements, redshift, gas_ids, gas_coords, gal_coords, gas_vel, particle_mass, time_since_ISM, \
 						temperature, density, smoothing_length, metallicity, mass_fracs, nH, ion_fracs, z0_gal_coords, z0_ids, z0_time_since_ISM, z0_coords, z0_vel)
@@ -186,7 +186,7 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 					# 	raise ValueError('done after 10')
 					curr_gas_ids, curr_gas_coords, curr_density, curr_gas_vel, curr_metallicity, curr_particle_mass, curr_smoothing_length, curr_temperature, \
 					curr_time_since_ISM, gal_coords, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_coords, curr_z0_vel, curr_z0_time_since_ISM, \
-					z0_gal_coords = \
+					z0_gal_coords, curr_col_contibutions = \
 					read_in_matched_particle_data(particles_hit_file, file_keyword, ions, elements)
 
 					num_particles_hit = np.size(curr_gas_ids)
@@ -208,7 +208,7 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 						col_dense = np.array(curr_ion.get('LogTotalIonColumnDensity'))
 
 					### Possible filters
-					if ((col_dense <= 16.5) or (col_dense > 200.5)): # column density filter
+					if ((col_dense <= 0.5) or (col_dense > 200.5)): # column density filter
 						continue
 
 					# plots_for_each_line(ions, gal_mass, col_dense, i, j, k, curr_particle_radii, impact_param, curr_ion_fracs, curr_lookup_ion_fracs, list_for_all_id_data, curr_density, \
@@ -220,32 +220,21 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 					if on_first:
 						overall_gas_ids, overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 		   				overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, \
-		   				overall_z0_time_since_ISM, overall_groups, overall_radius_bins, overall_col_dense \
+		   				overall_z0_time_since_ISM, overall_groups, overall_radius_bins, overall_col_dense, overall_col_contributions \
 		   				= create_overall_arrays(curr_gas_ids, curr_particle_radii, curr_density, curr_gas_vel, curr_metallicity, curr_particle_mass, curr_smoothing_length, curr_temperature, \
-						curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, curr_group, curr_radius_bin, col_dense)
+						curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, curr_group, curr_radius_bin, col_dense, curr_col_contibutions)
 
 						on_first = False
 
 					else:
 						overall_gas_ids, overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 			   			overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-			   			overall_groups, overall_radius_bins, overall_col_dense \
+			   			overall_groups, overall_radius_bins, overall_col_dense, overall_col_contributions \
 			   			= appending_all_data(curr_gas_ids, curr_particle_radii, curr_density, curr_gas_vel, curr_metallicity, curr_particle_mass, curr_smoothing_length, curr_temperature, \
-						curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, curr_group, curr_radius_bin, col_dense, overall_gas_ids, \
-						overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
+						curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, curr_group, curr_radius_bin, col_dense, curr_col_contibutions, \
+						overall_gas_ids, overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 			   			overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-			   			overall_groups, overall_radius_bins, overall_col_dense)
-
-		   			# plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
-			   		# 	overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-			   		# 	overall_groups, overall_radius_bins, overall_col_dense)
-
-		   	# if j > 9:
-		   	# 	print 'here'
-		   	# 	# plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
-		   	# 	# 	overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-		   	# 	# 	overall_groups, overall_radius_bins, overall_col_dense)
-		   	# 	raise ValueError('did 9 gals at least')
+			   			overall_groups, overall_radius_bins, overall_col_dense, overall_col_contributions, col_con_bool)
 
 
 	## All lines have now been read in and arrays of data for all particles hit in all sightlines accumulated
@@ -257,7 +246,7 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 
 		plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 			   			overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-			   			overall_groups, overall_radius_bins, overall_col_dense)
+			   			overall_groups, overall_radius_bins, overall_col_dense, overall_col_contributions, col_con_bool)
 
 
 def get_particle_id_tag(k): # get passed k, the number of the sightline, assign it a 3 digit number for consistency (k=1, returns '001', k=11 returns '011')
@@ -278,8 +267,14 @@ def sorted_search(array, value):
 		if array[index] == value:
 			return index
 		else:
+			print "not matched"
+			print array[index-10:index+10]
+			print value
 			return -1
 	else:
+		print "not in range of array"
+		print array[index-10:index+10]
+		print value
 		return -1
 
 
@@ -343,15 +338,15 @@ def read_in_data(snap_directory, curr_snapshot_files, file_keyword, ions, elemen
 		### for 1-32 and then 33-64. Then concatenate these together after pool is closed. Or maybe do chuncks of 16 since we know that works.
 		gas_ids_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/ParticleIDs'], {'include_file_keyword':file_keyword})
 
-		gas_coords_x_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Coordinates'], {'include_file_keyword':file_keyword, 'column':0})
-		gas_coords_y_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Coordinates'], {'include_file_keyword':file_keyword, 'column':1})
-		gas_coords_z_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Coordinates'], {'include_file_keyword':file_keyword, 'column':2})
-		# gas_coords_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Coordinates'], {'include_file_keyword':file_keyword})
+		# gas_coords_x_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Coordinates'], {'include_file_keyword':file_keyword, 'column':0})
+		# gas_coords_y_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Coordinates'], {'include_file_keyword':file_keyword, 'column':1})
+		# gas_coords_z_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Coordinates'], {'include_file_keyword':file_keyword, 'column':2})
+		gas_coords_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Coordinates'], {'include_file_keyword':file_keyword})
 
-		gas_vel_x_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Velocity'], {'include_file_keyword':file_keyword, 'column':0})
-		gas_vel_y_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Velocity'], {'include_file_keyword':file_keyword, 'column':1})
-		gas_vel_z_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Velocity'], {'include_file_keyword':file_keyword, 'column':2})
-		# gas_vel_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Velocity'], {'include_file_keyword':file_keyword})
+		# gas_vel_x_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Velocity'], {'include_file_keyword':file_keyword, 'column':0})
+		# gas_vel_y_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Velocity'], {'include_file_keyword':file_keyword, 'column':1})
+		# gas_vel_z_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Velocity'], {'include_file_keyword':file_keyword, 'column':2})
+		gas_vel_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Velocity'], {'include_file_keyword':file_keyword})
 
 		particle_mass_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Mass'], {'include_file_keyword':file_keyword})
 		time_since_ISM_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/OnEquationOfState'], {'include_file_keyword':file_keyword})
@@ -360,10 +355,10 @@ def read_in_data(snap_directory, curr_snapshot_files, file_keyword, ions, elemen
 		smoothing_length_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/SmoothingLength'], {'include_file_keyword':file_keyword})
 		metallicity_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/Metallicity'], {'include_file_keyword':file_keyword})
 		hydrogen_mass_frac_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/ElementAbundance/Hydrogen'], {'include_file_keyword':file_keyword})
-		carbon_mass_frac_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/ElementAbundance/Carbon'], {'include_file_keyword':file_keyword})
-		oxygen_mass_frac_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/ElementAbundance/Oxygen'], {'include_file_keyword':file_keyword})
-		silicon_mass_frac_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/ElementAbundance/Silicon'], {'include_file_keyword':file_keyword})
-		nitrogen_mass_frac_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/ElementAbundance/Nitrogen'], {'include_file_keyword':file_keyword})
+		# carbon_mass_frac_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/ElementAbundance/Carbon'], {'include_file_keyword':file_keyword})
+		# oxygen_mass_frac_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/ElementAbundance/Oxygen'], {'include_file_keyword':file_keyword})
+		# silicon_mass_frac_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/ElementAbundance/Silicon'], {'include_file_keyword':file_keyword})
+		# nitrogen_mass_frac_result = p.apply_async(EagleFunctions.read_array, [curr_snapshot_files, 'PartType0/ElementAbundance/Nitrogen'], {'include_file_keyword':file_keyword})
 
 		ion_fracs_result = [None]*np.size(ions)
 		for ion_iter in range(0,np.size(ions)):
@@ -397,25 +392,25 @@ def read_in_data(snap_directory, curr_snapshot_files, file_keyword, ions, elemen
 		z0_star_ids_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, "PartType4/ParticleIDs"], {'include_file_keyword':z0_keyword})
 		z0_time_since_ISM_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, "PartType0/OnEquationOfState"], {'include_file_keyword':z0_keyword})
 		
-		z0_gas_coords_x_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType0/Coordinates'], {'include_file_keyword':z0_keyword, 'column':0})
-		z0_gas_coords_y_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType0/Coordinates'], {'include_file_keyword':z0_keyword, 'column':1})
-		z0_gas_coords_z_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType0/Coordinates'], {'include_file_keyword':z0_keyword, 'column':2})
-		# z0_gas_coords_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, "PartType0/Coordinates"], {'include_file_keyword':z0_keyword})
+		# z0_gas_coords_x_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType0/Coordinates'], {'include_file_keyword':z0_keyword, 'column':0})
+		# z0_gas_coords_y_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType0/Coordinates'], {'include_file_keyword':z0_keyword, 'column':1})
+		# z0_gas_coords_z_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType0/Coordinates'], {'include_file_keyword':z0_keyword, 'column':2})
+		z0_gas_coords_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, "PartType0/Coordinates"], {'include_file_keyword':z0_keyword})
 		
-		z0_star_coords_x_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType4/Coordinates'], {'include_file_keyword':z0_keyword, 'column':0})
-		z0_star_coords_y_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType4/Coordinates'], {'include_file_keyword':z0_keyword, 'column':1})
-		z0_star_coords_z_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType4/Coordinates'], {'include_file_keyword':z0_keyword, 'column':2})
-		# z0_star_coords_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, "PartType4/Coordinates"], {'include_file_keyword':z0_keyword})
+		# z0_star_coords_x_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType4/Coordinates'], {'include_file_keyword':z0_keyword, 'column':0})
+		# z0_star_coords_y_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType4/Coordinates'], {'include_file_keyword':z0_keyword, 'column':1})
+		# z0_star_coords_z_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType4/Coordinates'], {'include_file_keyword':z0_keyword, 'column':2})
+		z0_star_coords_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, "PartType4/Coordinates"], {'include_file_keyword':z0_keyword})
 		
-		z0_gas_vel_x_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType0/Velocity'], {'include_file_keyword':z0_keyword, 'column':0})
-		z0_gas_vel_y_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType0/Velocity'], {'include_file_keyword':z0_keyword, 'column':1})
-		z0_gas_vel_z_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType0/Velocity'], {'include_file_keyword':z0_keyword, 'column':2})
-		# z0_gas_vel_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, "PartType0/Velocity"], {'include_file_keyword':z0_keyword})
+		# z0_gas_vel_x_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType0/Velocity'], {'include_file_keyword':z0_keyword, 'column':0})
+		# z0_gas_vel_y_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType0/Velocity'], {'include_file_keyword':z0_keyword, 'column':1})
+		# z0_gas_vel_z_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType0/Velocity'], {'include_file_keyword':z0_keyword, 'column':2})
+		z0_gas_vel_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, "PartType0/Velocity"], {'include_file_keyword':z0_keyword})
 		
-		z0_star_vel_x_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType4/Velocity'], {'include_file_keyword':z0_keyword, 'column':0})
-		z0_star_vel_y_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType4/Velocity'], {'include_file_keyword':z0_keyword, 'column':1})
-		z0_star_vel_z_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType4/Velocity'], {'include_file_keyword':z0_keyword, 'column':2})
-		# z0_star_vel_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, "PartType4/Velocity"], {'include_file_keyword':z0_keyword})
+		# z0_star_vel_x_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType4/Velocity'], {'include_file_keyword':z0_keyword, 'column':0})
+		# z0_star_vel_y_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType4/Velocity'], {'include_file_keyword':z0_keyword, 'column':1})
+		# z0_star_vel_z_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, 'PartType4/Velocity'], {'include_file_keyword':z0_keyword, 'column':2})
+		z0_star_vel_result = p.apply_async(EagleFunctions.read_array, [z0_snapshot_files, "PartType4/Velocity"], {'include_file_keyword':z0_keyword})
 
 		p.close()
 
@@ -423,17 +418,17 @@ def read_in_data(snap_directory, curr_snapshot_files, file_keyword, ions, elemen
 		sorted_indices = np.argsort(gas_ids)
 		gas_ids = gas_ids[sorted_indices]
 
-		gas_coords_x = gas_coords_x_result.get()[sorted_indices]/(parsec_to_cm*1000)
-		gas_coords_y = gas_coords_y_result.get()[sorted_indices]/(parsec_to_cm*1000)
-		gas_coords_z = gas_coords_z_result.get()[sorted_indices]/(parsec_to_cm*1000)
-		gas_coords = np.column_stack((gas_coords_x, gas_coords_y, gas_coords_z))
-		# gas_coords = gas_coords_result.get()[sorted_indices]/(parsec_to_cm*1000)
+		# gas_coords_x = gas_coords_x_result.get()[sorted_indices]/(parsec_to_cm*1000)
+		# gas_coords_y = gas_coords_y_result.get()[sorted_indices]/(parsec_to_cm*1000)
+		# gas_coords_z = gas_coords_z_result.get()[sorted_indices]/(parsec_to_cm*1000)
+		# gas_coords = np.column_stack((gas_coords_x, gas_coords_y, gas_coords_z))
+		gas_coords = gas_coords_result.get()[sorted_indices]/(parsec_to_cm*1000)
 
-		gas_vel_x = gas_vel_x_result.get()[sorted_indices]/(1.e5)
-		gas_vel_y = gas_vel_y_result.get()[sorted_indices]/(1.e5)
-		gas_vel_z = gas_vel_z_result.get()[sorted_indices]/(1.e5)
-		gas_vel = np.column_stack((gas_vel_x, gas_vel_y, gas_vel_z))
-		# gas_vel = gas_vel_result.get()[sorted_indices]/(1.e5)
+		# gas_vel_x = gas_vel_x_result.get()[sorted_indices]/(1.e5)
+		# gas_vel_y = gas_vel_y_result.get()[sorted_indices]/(1.e5)
+		# gas_vel_z = gas_vel_z_result.get()[sorted_indices]/(1.e5)
+		# gas_vel = np.column_stack((gas_vel_x, gas_vel_y, gas_vel_z))
+		gas_vel = gas_vel_result.get()[sorted_indices]/(1.e5)
 
 		particle_mass = particle_mass_result.get()[sorted_indices]
 		time_since_ISM = time_since_ISM_result.get()[sorted_indices]
@@ -442,11 +437,11 @@ def read_in_data(snap_directory, curr_snapshot_files, file_keyword, ions, elemen
 		smoothing_length = smoothing_length_result.get()[sorted_indices]/(parsec_to_cm*1000)
 		metallicity = metallicity_result.get()[sorted_indices]
 		hydrogen_mass_frac = hydrogen_mass_frac_result.get()[sorted_indices]
-		carbon_mass_frac = carbon_mass_frac_result.get()[sorted_indices]
-		oxygen_mass_frac = oxygen_mass_frac_result.get()[sorted_indices]
-		silicon_mass_frac = silicon_mass_frac_result.get()[sorted_indices]
-		nitrogen_mass_frac = nitrogen_mass_frac_result.get()[sorted_indices]
-		mass_fracs = {'hydrogen' : hydrogen_mass_frac, 'carbon' : carbon_mass_frac, 'oxygen' : oxygen_mass_frac, 'silicon' : silicon_mass_frac, 'nitrogen' : nitrogen_mass_frac}
+		# carbon_mass_frac = carbon_mass_frac_result.get()[sorted_indices]
+		# oxygen_mass_frac = oxygen_mass_frac_result.get()[sorted_indices]
+		# silicon_mass_frac = silicon_mass_frac_result.get()[sorted_indices]
+		# nitrogen_mass_frac = nitrogen_mass_frac_result.get()[sorted_indices]
+		mass_fracs = {'hydrogen' : hydrogen_mass_frac}#, 'carbon' : carbon_mass_frac, 'oxygen' : oxygen_mass_frac, 'silicon' : silicon_mass_frac, 'nitrogen' : nitrogen_mass_frac}
 		nH = density*hydrogen_mass_frac/m_H # number density of all hydrogen (HI and HII)
 
 		ion_fracs = [None]*np.size(ions)
@@ -479,31 +474,31 @@ def read_in_data(snap_directory, curr_snapshot_files, file_keyword, ions, elemen
 		z0_time_since_ISM = z0_time_since_ISM_result.get()
 		z0_time_since_ISM = np.concatenate((z0_time_since_ISM, np.ones(np.size(z0_star_ids))+1.))[z0_sorted_indices]
 		
-		z0_gas_coords_x = z0_gas_coords_x_result.get()/(parsec_to_cm*1000)
-		z0_gas_coords_y = z0_gas_coords_y_result.get()/(parsec_to_cm*1000)
-		z0_gas_coords_z = z0_gas_coords_z_result.get()/(parsec_to_cm*1000)
-		z0_gas_coords = np.column_stack((z0_gas_coords_x, z0_gas_coords_y, z0_gas_coords_z))
-		# z0_gas_coords = z0_gas_coords_result.get()
+		# z0_gas_coords_x = z0_gas_coords_x_result.get()/(parsec_to_cm*1000)
+		# z0_gas_coords_y = z0_gas_coords_y_result.get()/(parsec_to_cm*1000)
+		# z0_gas_coords_z = z0_gas_coords_z_result.get()/(parsec_to_cm*1000)
+		# z0_gas_coords = np.column_stack((z0_gas_coords_x, z0_gas_coords_y, z0_gas_coords_z))
+		z0_gas_coords = z0_gas_coords_result.get()
 		
-		z0_star_coords_x = z0_star_coords_x_result.get()/(parsec_to_cm*1000)
-		z0_star_coords_y = z0_star_coords_y_result.get()/(parsec_to_cm*1000)
-		z0_star_coords_z = z0_star_coords_z_result.get()/(parsec_to_cm*1000)
-		z0_star_coords = np.column_stack((z0_star_coords_x, z0_star_coords_y, z0_star_coords_z))
-		# z0_star_coords = z0_star_coords_result.get()
+		# z0_star_coords_x = z0_star_coords_x_result.get()/(parsec_to_cm*1000)
+		# z0_star_coords_y = z0_star_coords_y_result.get()/(parsec_to_cm*1000)
+		# z0_star_coords_z = z0_star_coords_z_result.get()/(parsec_to_cm*1000)
+		# z0_star_coords = np.column_stack((z0_star_coords_x, z0_star_coords_y, z0_star_coords_z))
+		z0_star_coords = z0_star_coords_result.get()
 		
 		z0_coords = np.concatenate((z0_gas_coords, z0_star_coords))[z0_sorted_indices]
 		
-		z0_gas_vel_x = z0_gas_vel_x_result.get()/(1.e5)
-		z0_gas_vel_y = z0_gas_vel_y_result.get()/(1.e5)
-		z0_gas_vel_z = z0_gas_vel_z_result.get()/(1.e5)
-		z0_gas_vel = np.column_stack((z0_gas_vel_x, z0_gas_vel_y, z0_gas_vel_z))
-		# z0_gas_vel = z0_gas_vel_result.get()
+		# z0_gas_vel_x = z0_gas_vel_x_result.get()/(1.e5)
+		# z0_gas_vel_y = z0_gas_vel_y_result.get()/(1.e5)
+		# z0_gas_vel_z = z0_gas_vel_z_result.get()/(1.e5)
+		# z0_gas_vel = np.column_stack((z0_gas_vel_x, z0_gas_vel_y, z0_gas_vel_z))
+		z0_gas_vel = z0_gas_vel_result.get()
 		
-		z0_star_vel_x = z0_star_vel_x_result.get()/(1.e5)
-		z0_star_vel_y = z0_star_vel_y_result.get()/(1.e5)
-		z0_star_vel_z = z0_star_vel_z_result.get()/(1.e5)
-		z0_star_vel = np.column_stack((z0_star_vel_x, z0_star_vel_y, z0_star_vel_z))
-		# z0_star_vel = z0_star_vel_result.get()
+		# z0_star_vel_x = z0_star_vel_x_result.get()/(1.e5)
+		# z0_star_vel_y = z0_star_vel_y_result.get()/(1.e5)
+		# z0_star_vel_z = z0_star_vel_z_result.get()/(1.e5)
+		# z0_star_vel = np.column_stack((z0_star_vel_x, z0_star_vel_y, z0_star_vel_z))
+		z0_star_vel = z0_star_vel_result.get()
 		
 		z0_vel = np.concatenate((z0_gas_vel, z0_star_vel))[z0_sorted_indices]
 
@@ -516,30 +511,39 @@ def read_in_data(snap_directory, curr_snapshot_files, file_keyword, ions, elemen
 def find_matched_particles_and_store_data(particles_hit_file, lookup_file, curr_gal_output, snap_directory, file_keyword, z0_keyword, ions, ions_short, elements, redshift, gas_ids, \
 gas_coords, gal_coords, gas_vel, particle_mass, time_since_ISM, temperature, density, smoothing_length, metallicity, mass_fracs, nH, ion_fracs, z0_gal_coords, z0_ids, z0_time_since_ISM, z0_coords, z0_vel):
 
-	matched_indices = []
-	without_future_stars_indices = []
-	z0_matched_indices = []
-	lines_read = 0
-	with open(particles_hit_file, 'r') as curr_particle_file:
-		for line in curr_particle_file:
-			curr_id = int(line)
-			matched_index = sorted_search(gas_ids, curr_id)
-			z0_matched_index = sorted_search(z0_ids, curr_id)
+	curr_particle_file = np.loadtxt(particles_hit_file)
+	particles_in_file = np.shape(curr_particle_file)[0] # rows
+	matched_indices = np.zeros(particles_in_file, dtype=int)
+	z0_matched_indices = np.zeros(particles_in_file, dtype=int)
+	curr_col_contibutions = np.zeros(particles_in_file)
+	for i, line in enumerate(curr_particle_file):
+		curr_id, curr_col_contibutions[i] = int(line[0]), line[1]
+		matched_index = sorted_search(gas_ids, curr_id)
+		z0_matched_index = sorted_search(z0_ids, curr_id)
 
-			if ((z0_matched_index != -1) and (matched_index != -1)):
-				matched_indices.append(matched_index)
-				without_future_stars_indices.append(matched_index)
-				z0_matched_indices.append(z0_matched_index)
+		if ((z0_matched_index != -1) and (matched_index != -1)):
+			matched_indices[i] = (matched_index)
+			z0_matched_indices[i] = (z0_matched_index)
+		else:
+			if matched_index == -1:
+				matched_indices[i] = (matched_index)
+				print 'problem: missing gas particle from current redshift gal'
+				print ''
 			else:
-				if matched_index == -1:
-					raise ValueError('problem: missing gas particle from current redshift gal')
-				else:
-					raise ValueError('problem: missing gas particle from redshift 0 gal')
-			lines_read += 1
+				z0_matched_indices[i] = (z0_matched_index)
+				print 'problem: missing gas particle from redshift 0 gal'
+				print ''
 
 	
 	if np.size(matched_indices) == 0:
 		raise ValueError('No particles were found with matching ids. particles hit file = %s, curr gal output file: %s' % (particles_hit_file, curr_gal_output))
+
+	# remove particles zero values (meaning wherever the output particle ID was not found in either current redshfit of z=0)
+	found_indices = np.where(((matched_indices != -1) & (z0_matched_indices != -1)))
+	matched_indices = matched_indices[found_indices]
+	z0_matched_indices = z0_matched_indices[found_indices]
+	curr_col_contibutions = curr_col_contibutions[found_indices]
+	particles_in_file = np.size(found_indices)
 
 	curr_gas_ids = gas_ids[matched_indices]
 	curr_gas_coords = gas_coords[matched_indices]
@@ -571,59 +575,62 @@ gas_coords, gal_coords, gas_vel, particle_mass, time_since_ISM, temperature, den
 
 	hdf5_file = particles_hit_file[0:-4]+'.hdf5'
 	with h5py.File(hdf5_file,'w') as hf:
-		arr_size = np.size(matched_indices)
 
 		hdf5_snap_directory = hf.create_dataset('snap_directory', (1,), maxshape= (None,), data = snap_directory)
 		hdf5_snap_directory.attrs['description'] = 'base directory for snap files of this galaxy'
 
-		hdf5_particle_ids = hf.create_dataset('particle_ids', (arr_size,), maxshape= (None,), data=curr_gas_ids.astype(int))
+		hdf5_particle_ids = hf.create_dataset('particle_ids', (particles_in_file,), maxshape= (None,), data=curr_gas_ids.astype(int))
 		hdf5_particle_ids.attrs['description'] = 'particle ids of all particles hit by this specwizard line'
 
 		hdf5_curr_redshift_gal = hf.create_group(str(file_keyword[-8::]))
 
 		hdf5_eagle_ion_fracs = hdf5_curr_redshift_gal.create_group('eagle_ion_fracs')
 		for ion_iter in range(0,np.size(ions)):
-			hdf5_curr_ion_fracs = hdf5_eagle_ion_fracs.create_dataset(ions[ion_iter], (arr_size,), maxshape= (None,), data = curr_ion_fracs[ion_iter])
+			hdf5_curr_ion_fracs = hdf5_eagle_ion_fracs.create_dataset(ions[ion_iter], (particles_in_file,), maxshape= (None,), data = curr_ion_fracs[ion_iter])
 			hdf5_curr_ion_fracs.attrs['description']='fraction of this particle whose mass is the given ion. Taken from eagle snapshots'
 
 		hdf5_lookup_ion_fracs = hdf5_curr_redshift_gal.create_group('lookup_ion_fracs')
 		for ion_iter in range(0,np.size(ions)):
-			hdf5_curr_lookup_ion_frac = hdf5_lookup_ion_fracs.create_dataset(ions[ion_iter], (arr_size,), maxshape= (None,), data = curr_lookup_ion_fracs[ion_iter])
+			hdf5_curr_lookup_ion_frac = hdf5_lookup_ion_fracs.create_dataset(ions[ion_iter], (particles_in_file,), maxshape= (None,), data = curr_lookup_ion_fracs[ion_iter])
 			hdf5_curr_lookup_ion_frac.attrs['description']='fraction of this particle whose mass is the given ion. Taken from eagle specwizard lookup tables for redshift,density, and temperature'
 
 		hdf5_element_abundance = hdf5_curr_redshift_gal.create_group('element_abundance')
 		for ion_iter in range(0,len(curr_mass_fracs)):
-			hdf5_curr_element_abundance = hdf5_element_abundance.create_dataset(curr_mass_fracs.keys()[ion_iter], (arr_size,), maxshape= (None,), data = curr_mass_fracs[curr_mass_fracs.keys()[ion_iter]])
+			hdf5_curr_element_abundance = hdf5_element_abundance.create_dataset(curr_mass_fracs.keys()[ion_iter], (particles_in_file,), maxshape= (None,), data = curr_mass_fracs[curr_mass_fracs.keys()[ion_iter]])
 			hdf5_curr_element_abundance.attrs['description'] = 'fraction of the particle whose mass is the given element'
 
 		hdf5_file_keyword=hdf5_curr_redshift_gal.create_dataset('file_keyword', (1,), maxshape= (None,), data = file_keyword)
 		hdf5_file_keyword.attrs['description'] = 'keyword that can be used to grab only snap files for the gal at the desired redshift'
 
+		hdf5_col_contributions=hdf5_curr_redshift_gal.create_dataset('ColumDensityContributions', (particles_in_file,), maxshape= (None,), data = curr_col_contibutions)
+		hdf5_col_contributions.attrs['description'] = 'The column density (cm^-2) that each particle contributes to the specwizard spectra'
+		hdf5_col_contributions.attrs['units'] = 'cm^-2'
+
 		hdf5_gal_coords = hdf5_curr_redshift_gal.create_dataset('gal_coords', (1,3), maxshape= (None,3), data = gal_coords)
 		hdf5_gal_coords.attrs['units'] = 'kpc'
 
-		hdf5_gas_coords=hdf5_curr_redshift_gal.create_dataset('gas_coords', (arr_size,3), maxshape= (None,3), data=curr_gas_coords)
+		hdf5_gas_coords=hdf5_curr_redshift_gal.create_dataset('gas_coords', (particles_in_file,3), maxshape= (None,3), data=curr_gas_coords)
 		hdf5_gas_coords.attrs['units'] = 'kpc'
 
-		hdf5_gas_vel=hdf5_curr_redshift_gal.create_dataset('gas_vel', (arr_size,3), maxshape= (None,3), data=curr_gas_vel)
+		hdf5_gas_vel=hdf5_curr_redshift_gal.create_dataset('gas_vel', (particles_in_file,3), maxshape= (None,3), data=curr_gas_vel)
 		hdf5_gas_vel.attrs['units'] = 'km/s'
 
-		hdf5_particle_mass=hdf5_curr_redshift_gal.create_dataset('particle_mass', (arr_size,), maxshape= (None,), data=curr_particle_mass)
+		hdf5_particle_mass=hdf5_curr_redshift_gal.create_dataset('particle_mass', (particles_in_file,), maxshape= (None,), data=curr_particle_mass)
 		hdf5_particle_mass.attrs['units'] = 'grams'
 
-		hdf5_time_since_ISM=hdf5_curr_redshift_gal.create_dataset('time_since_ISM', (arr_size,), maxshape= (None,), data=curr_time_since_ISM)
+		hdf5_time_since_ISM=hdf5_curr_redshift_gal.create_dataset('time_since_ISM', (particles_in_file,), maxshape= (None,), data=curr_time_since_ISM)
 		hdf5_time_since_ISM.attrs['description'] = 'star-formation flag. 0 if it has never formed stars. Positive value if currently star forming, negative value if it has. Then the vlaue indicates the expansion factor (aexp) at which it last formed stars'
 
-		hdf5_temperature=hdf5_curr_redshift_gal.create_dataset('temperature', (arr_size,), maxshape= (None,), data=curr_temperature)
+		hdf5_temperature=hdf5_curr_redshift_gal.create_dataset('temperature', (particles_in_file,), maxshape= (None,), data=curr_temperature)
 		hdf5_temperature.attrs['units'] = 'Kelvin'
 
-		hdf5_density=hdf5_curr_redshift_gal.create_dataset('density', (arr_size,), maxshape= (None,), data=curr_density)
+		hdf5_density=hdf5_curr_redshift_gal.create_dataset('density', (particles_in_file,), maxshape= (None,), data=curr_density)
 		hdf5_density.attrs['units'] = 'grams/cm^3'
 
-		hdf5_smoothing_length=hdf5_curr_redshift_gal.create_dataset('smoothing_length', (arr_size,), maxshape= (None,), data=curr_smoothing_length)
+		hdf5_smoothing_length=hdf5_curr_redshift_gal.create_dataset('smoothing_length', (particles_in_file,), maxshape= (None,), data=curr_smoothing_length)
 		hdf5_smoothing_length.attrs['units'] = 'kpc'
 
-		hdf5_metallicity=hdf5_curr_redshift_gal.create_dataset('metallicity', (arr_size,), maxshape= (None,), data=curr_metallicity)
+		hdf5_metallicity=hdf5_curr_redshift_gal.create_dataset('metallicity', (particles_in_file,), maxshape= (None,), data=curr_metallicity)
 		hdf5_metallicity.attrs['description'] = 'mass fraction of elements heavier than helium'
 
 
@@ -635,17 +642,17 @@ gas_coords, gal_coords, gas_vel, particle_mass, time_since_ISM, temperature, den
 		hdf5_z0_gal_coords = hdf5_zero_redshift_gal.create_dataset('z0_gal_coords', (1,3), maxshape= (None,3), data=z0_gal_coords)
 		hdf5_z0_gal_coords.attrs['units'] = 'kpc'
 
-		hdf5_z0_coords=hdf5_zero_redshift_gal.create_dataset('z0_coords', (arr_size,3), maxshape= (None,3), data=curr_z0_coords)
+		hdf5_z0_coords=hdf5_zero_redshift_gal.create_dataset('z0_coords', (particles_in_file,3), maxshape= (None,3), data=curr_z0_coords)
 		hdf5_z0_coords.attrs['units'] = 'kpc'
 
-		hdf5_z0_vel=hdf5_zero_redshift_gal.create_dataset('z0_vel', (arr_size,3), maxshape= (None,3), data=curr_z0_vel)
+		hdf5_z0_vel=hdf5_zero_redshift_gal.create_dataset('z0_vel', (particles_in_file,3), maxshape= (None,3), data=curr_z0_vel)
 		hdf5_z0_vel.attrs['units'] = 'kpc'
 
-		hdf5_z0_time_since_ISM=hdf5_zero_redshift_gal.create_dataset('z0_time_since_ISM', (arr_size,), maxshape= (None,), data=curr_z0_time_since_ISM)
+		hdf5_z0_time_since_ISM=hdf5_zero_redshift_gal.create_dataset('z0_time_since_ISM', (particles_in_file,), maxshape= (None,), data=curr_z0_time_since_ISM)
 		hdf5_z0_time_since_ISM.attrs['description'] = 'star-formation flag. 0 if it has never formed stars. Positive value if currently star forming, negative value if it has. Then the vlaue indicates the expansion factor (aexp) at which it last formed stars'
 
 	return curr_gas_ids, curr_gas_coords, curr_gas_vel, curr_particle_mass, curr_time_since_ISM, curr_metallicity, curr_temperature, curr_density, curr_smoothing_length, \
-	curr_mass_fracs, curr_ion_fracs, curr_lookup_ion_fracs, curr_z0_time_since_ISM, curr_z0_coords, curr_z0_vel
+	curr_mass_fracs, curr_ion_fracs, curr_lookup_ion_fracs, curr_z0_time_since_ISM, curr_z0_coords, curr_z0_vel, curr_col_contibutions
 
 def read_in_matched_particle_data(particles_hit_file, file_keyword, ions, elements):
 	hdf5_file = particles_hit_file[0:-4]+'.hdf5'
@@ -653,20 +660,24 @@ def read_in_matched_particle_data(particles_hit_file, file_keyword, ions, elemen
 
 		curr_gas_ids = np.array(hf.get('particle_ids'))
 		curr_redshift_gal = hf.get(str(file_keyword[-8::]))
+		try:
+			curr_density = np.array(curr_redshift_gal.get('density'))
+			curr_gas_coords = np.array(curr_redshift_gal.get('gas_coords'))
+			curr_gas_vel = np.array(curr_redshift_gal.get('gas_vel'))
+			curr_metallicity = np.array(curr_redshift_gal.get('metallicity'))
+			curr_particle_mass = np.array(curr_redshift_gal.get('particle_mass'))
+			curr_smoothing_length = np.array(curr_redshift_gal.get('smoothing_length'))
+			curr_temperature = np.array(curr_redshift_gal.get('temperature'))
+			curr_time_since_ISM = np.array(curr_redshift_gal.get('time_since_ISM'))
+			curr_col_contibutions = np.array(curr_redshift_gal.get("ColumDensityContributions"))
+			gal_coords = np.array(curr_redshift_gal.get('gal_coords'))
 
-		curr_density = np.array(curr_redshift_gal.get('density'))
-		curr_gas_coords = np.array(curr_redshift_gal.get('gas_coords'))
-		curr_gas_vel = np.array(curr_redshift_gal.get('gas_vel'))
-		curr_metallicity = np.array(curr_redshift_gal.get('metallicity'))
-		curr_particle_mass = np.array(curr_redshift_gal.get('particle_mass'))
-		curr_smoothing_length = np.array(curr_redshift_gal.get('smoothing_length'))
-		curr_temperature = np.array(curr_redshift_gal.get('temperature'))
-		curr_time_since_ISM = np.array(curr_redshift_gal.get('time_since_ISM'))
-		gal_coords = np.array(curr_redshift_gal.get('gal_coords'))
-
-		eagle_ion_fracs = curr_redshift_gal.get('eagle_ion_fracs')
-		lookup_ion_fracs = curr_redshift_gal.get('lookup_ion_fracs')
-		element_fracs = curr_redshift_gal.get('element_abundance')
+			eagle_ion_fracs = curr_redshift_gal.get('eagle_ion_fracs')
+			lookup_ion_fracs = curr_redshift_gal.get('lookup_ion_fracs')
+			element_fracs = curr_redshift_gal.get('element_abundance')
+		except:
+			print hdf5_file
+			raise ValueError("Issue reading out from hdf5 files that stored data. See file above")
 
 		curr_ion_fracs_keys = []
 		curr_element_fracs_keys = []
@@ -684,6 +695,9 @@ def read_in_matched_particle_data(particles_hit_file, file_keyword, ions, elemen
 
 		for ion_iter in range(0,np.size(ions)):
 			curr_ion_fracs[ions[ion_iter]] = np.array(eagle_ion_fracs.get(ions[ion_iter]))
+			if ((curr_ion_fracs[ions[ion_iter]][0] == 0) & (curr_ion_fracs[ions[ion_iter]][1] == 0)):
+				print curr_ion_fracs[ions[ion_iter]]
+				# subprocess.call("rm %s" % (hdf5_file), shell=True)
 			curr_lookup_ion_fracs[ions[ion_iter]] = np.array(lookup_ion_fracs.get(ions[ion_iter]))
 			if ((ion_iter > 0) & (elements[ion_iter] == elements[ion_iter-1])):
 				continue
@@ -698,7 +712,7 @@ def read_in_matched_particle_data(particles_hit_file, file_keyword, ions, elemen
 		z0_gal_coords = np.array(z0_gal.get('z0_gal_coords'))
 
 	return curr_gas_ids, curr_gas_coords, curr_density, curr_gas_vel, curr_metallicity, curr_particle_mass, curr_smoothing_length, curr_temperature, \
-	curr_time_since_ISM, gal_coords, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_coords, curr_z0_vel, curr_z0_time_since_ISM, z0_gal_coords
+	curr_time_since_ISM, gal_coords, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_coords, curr_z0_vel, curr_z0_time_since_ISM, z0_gal_coords, curr_col_contibutions
 
 
 def plots_for_each_line(ions, gal_mass, col_dense, i, j, k, curr_particle_radii, impact_param, curr_ion_fracs, curr_lookup_ion_fracs, list_for_all_id_data, curr_density, curr_temperature, element_masses, elements, curr_element_fracs, \
@@ -800,7 +814,7 @@ def check_directory_format(directory):
 
 def create_overall_arrays(curr_gas_ids, curr_particle_radii, curr_density, curr_gas_vel, curr_metallicity, curr_particle_mass, curr_smoothing_length, curr_temperature, \
 						  curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, \
-						  curr_group, curr_radius_bin, col_dense):
+						  curr_group, curr_radius_bin, col_dense, curr_col_contibutions):
 	overall_gas_ids = curr_gas_ids
 	overall_particle_radii = curr_particle_radii
 	overall_density = curr_density
@@ -815,6 +829,7 @@ def create_overall_arrays(curr_gas_ids, curr_particle_radii, curr_density, curr_
 	overall_element_fracs = curr_element_fracs.copy() # dictionary with keys = ['hydrogen', 'carbon', etc]
 	overall_z0_particle_radii = curr_z0_particle_radii
 	overall_z0_time_since_ISM = curr_z0_time_since_ISM
+	overall_col_contributions = curr_col_contibutions
 	### per line properties
 	num_parts = np.size(curr_gas_ids)
 	overall_groups = np.zeros(num_parts) + curr_group
@@ -823,14 +838,14 @@ def create_overall_arrays(curr_gas_ids, curr_particle_radii, curr_density, curr_
 
 	return overall_gas_ids, overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 		   overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-		   overall_groups, overall_radius_bins, overall_col_dense
+		   overall_groups, overall_radius_bins, overall_col_dense, overall_col_contributions
 
 
 def appending_all_data(curr_gas_ids, curr_particle_radii, curr_density, curr_gas_vel, curr_metallicity, curr_particle_mass, curr_smoothing_length, curr_temperature, \
-					curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, curr_group, curr_radius_bin, col_dense, \
+					curr_time_since_ISM, curr_ion_fracs, curr_lookup_ion_fracs, curr_element_fracs, curr_z0_particle_radii, curr_z0_time_since_ISM, curr_group, curr_radius_bin, col_dense, curr_col_contibutions, \
 					overall_gas_ids, overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 		   			overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-		   			overall_groups, overall_radius_bins, overall_col_dense):
+		   			overall_groups, overall_radius_bins, overall_col_dense, overall_col_contributions, col_con_bool):
 
 	overall_gas_ids = np.concatenate((overall_gas_ids,curr_gas_ids))
 	overall_particle_radii = np.concatenate((overall_particle_radii, curr_particle_radii))
@@ -843,6 +858,8 @@ def appending_all_data(curr_gas_ids, curr_particle_radii, curr_density, curr_gas
 	overall_time_since_ISM = np.concatenate((overall_time_since_ISM ,curr_time_since_ISM))
 	overall_z0_particle_radii = np.concatenate((overall_z0_particle_radii ,curr_z0_particle_radii))
 	overall_z0_time_since_ISM = np.concatenate((overall_z0_time_since_ISM ,curr_z0_time_since_ISM))
+	if col_con_bool:
+		overall_col_contributions = np.concatenate((overall_col_contributions, curr_col_contibutions))
 	### features of the galaxy/line
 	num_parts = np.size(curr_gas_ids)
 	overall_groups = np.concatenate((overall_groups, np.zeros(num_parts) + curr_group))
@@ -858,11 +875,11 @@ def appending_all_data(curr_gas_ids, curr_particle_radii, curr_density, curr_gas
 
 	return overall_gas_ids, overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 		   overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
-		   overall_groups, overall_radius_bins, overall_col_dense
+		   overall_groups, overall_radius_bins, overall_col_dense, overall_col_contributions
 
 def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 		   				 overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, 
-		   				 overall_groups, overall_radius_bins, overall_col_dense):
+		   				 overall_groups, overall_radius_bins, overall_col_dense, overall_col_contributions, col_con_bool):
 	
 	### set bounds
 	close_indices = np.where(overall_particle_radii < 500.)
@@ -879,9 +896,18 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['legend.fontsize'], plt.rcParams['xtick.labelsize'],  plt.rcParams['ytick.labelsize'] = 17., 17., 13., 14., 16.
 
 	### If I want to filter plots by where they're close
-	[overall_z0_time_since_ISM, overall_time_since_ISM, overall_particle_radii, overall_particle_mass, overall_density, overall_temperature, overall_lookup_ion_fracs['HydrogenI'], overall_element_fracs['hydrogen'], overall_groups, overall_radius_bins, overall_col_dense] \
-	= return_where_close(radius=500., radii=overall_particle_radii, arrays_to_filter=[overall_z0_time_since_ISM, overall_time_since_ISM, \
-		overall_particle_radii, overall_particle_mass, overall_density, overall_temperature, overall_lookup_ion_fracs['HydrogenI'], overall_element_fracs['hydrogen'], overall_groups, overall_radius_bins, overall_col_dense])
+	if col_con_bool:
+		[overall_z0_time_since_ISM, overall_time_since_ISM, overall_particle_radii, overall_particle_mass, overall_density, overall_temperature, overall_lookup_ion_fracs['HydrogenI'], overall_element_fracs['hydrogen'], overall_groups, \
+		overall_radius_bins, overall_col_dense, overall_col_contributions] \
+		= return_where_close(radius=500., radii=overall_particle_radii, arrays_to_filter=[overall_z0_time_since_ISM, overall_time_since_ISM, \
+			overall_particle_radii, overall_particle_mass, overall_density, overall_temperature, overall_lookup_ion_fracs['HydrogenI'], overall_element_fracs['hydrogen'], overall_groups, overall_radius_bins, \
+			overall_col_dense, overall_col_contributions])
+	else:
+		[overall_z0_time_since_ISM, overall_time_since_ISM, overall_particle_radii, overall_particle_mass, overall_density, overall_temperature, overall_lookup_ion_fracs['HydrogenI'], overall_element_fracs['hydrogen'], overall_groups, \
+		overall_radius_bins, overall_col_dense] \
+		= return_where_close(radius=500., radii=overall_particle_radii, arrays_to_filter=[overall_z0_time_since_ISM, overall_time_since_ISM, \
+			overall_particle_radii, overall_particle_mass, overall_density, overall_temperature, overall_lookup_ion_fracs['HydrogenI'], overall_element_fracs['hydrogen'], overall_groups, overall_radius_bins, \
+			overall_col_dense])
 
 	### get indices for past and future ISM interaction
 	overall_will_be_ISM, overall_new_accretion, overall_recycled_accretion, overall_were_ISM, overall_were_and_will_be_ISM = track_ISM(overall_z0_time_since_ISM, overall_time_since_ISM)
@@ -897,9 +923,6 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	all_bar_heights = np.array([frac_will_be_ISM, frac_were_ISM, frac_both])
 	all_bar_heights = np.where(all_bar_heights == 0., 1.0e-4, all_bar_heights)
 
-	print "Overall H Fracs: Will %.2e, were %.2e, both %.2e" % (frac_will_be_ISM, frac_were_ISM, frac_both)
-	print ""
-
 	colors = np.array(['g','b','r'])
 	color_labels = ['Low Mass', 'Active', 'Passive']
 	edge_styles = np.array(['-', '--', ':'])
@@ -913,6 +936,11 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	for i in range(3):
 		patches_list2.append(mpatches.Patch(facecolor = 'w', edgecolor = 'k', linestyle = edge_styles[i], label = edge_labels[i]))
 
+	
+	# ### gas mass traced
+
+	print "Overall H Fracs: Will %.2e, were %.2e, both %.2e" % (frac_will_be_ISM, frac_were_ISM, frac_both)
+	print ""
 	fig, ax = plt.subplots(1)
 	ax.bar(all_bar_x_vals, all_bar_heights, color='k')
 	plt.hold(True)
@@ -922,6 +950,8 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 		for radius_bin_identifier in range(3): # this is within 0.5, 0.5-1, and >1. R_vir
 			curr_radius_indices = np.where(overall_radius_bins == radius_bin_identifier)
 			curr_indices = np.intersect1d(curr_group_indices, curr_radius_indices)
+			print "curr size"
+			print np.size(curr_indices)
 			curr_num_parts = float(np.size(curr_indices))
 			curr_LLS_indices = np.where((overall_col_dense >= 16.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
 			curr_LLS_parts = float(np.size(curr_LLS_indices))
@@ -935,12 +965,19 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 			curr_LLS_will, curr_LLS_new, curr_LLS_recycled, curr_LLS_were, curr_LLS_both = track_ISM( overall_z0_time_since_ISM[curr_LLS_indices], overall_time_since_ISM[curr_LLS_indices])
 			curr_mid_will, curr_mid_new, curr_mid_recycled, curr_mid_were, curr_mid_both = track_ISM( overall_z0_time_since_ISM[curr_mid_indices], overall_time_since_ISM[curr_mid_indices])
 			curr_weak_will, curr_weak_new, curr_weak_recycled, curr_weak_were, curr_weak_both = track_ISM( overall_z0_time_since_ISM[curr_weak_indices], overall_time_since_ISM[curr_weak_indices])
+			print np.size(curr_will)
+			print np.size(curr_were)
+			print np.size(curr_both)
+			print ''
 
 			curr_frac_will, curr_frac_new, curr_frac_recycled, curr_frac_were, curr_frac_both = np.array([np.size(curr_will), np.size(curr_new), np.size(curr_recycled), np.size(curr_were), np.size(curr_both)])/curr_num_parts
 			curr_LLS_H_frac_will, curr_LLS_H_frac_new, curr_LLS_H_frac_recycled, curr_LLS_H_frac_were, curr_LLS_H_frac_both = np.array([np.size(curr_LLS_will), np.size(curr_LLS_new), np.size(curr_LLS_recycled), np.size(curr_LLS_were), np.size(curr_LLS_both)])/curr_LLS_parts
 			curr_mid_H_frac_will, curr_mid_H_frac_new, curr_mid_H_frac_recycled, curr_mid_H_frac_were, curr_mid_H_frac_both = np.array([np.size(curr_mid_will), np.size(curr_mid_new), np.size(curr_mid_recycled), np.size(curr_mid_were), np.size(curr_mid_both)])/curr_mid_parts
 			curr_weak_H_frac_will, curr_weak_H_frac_new, curr_weak_H_frac_recycled, curr_weak_H_frac_were, curr_weak_H_frac_both = np.array([np.size(curr_weak_will), np.size(curr_weak_new), np.size(curr_weak_recycled), np.size(curr_weak_were), np.size(curr_weak_both)])/curr_weak_parts
-			
+			print curr_frac_will
+			print curr_frac_were
+			print curr_frac_both
+			print ''
 			if curr_num_parts != 0.0:
 				curr_nH, curr_T = [overall_nH[curr_indices], overall_temperature[curr_indices]]
 				height, xedges, yedges = np.histogram2d(np.log10(curr_nH), np.log10(curr_T), range=[[nH_min, nH_max], [T_min, T_max]], bins=hist_bins) #, weights = overall_lookup_ion_fracs['HydrogenI'][curr_indices])
@@ -990,13 +1027,15 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 			curr_bar_xvals = np.concatenate((curr_bar_xvals, [curr_bar_xvals[0]]))
 			curr_bar_heights = np.array([curr_frac_will, curr_frac_were, curr_frac_both])
 			curr_bar_heights = np.concatenate((curr_bar_heights, [curr_frac_new]))
-			curr_bar_heights = np.where(curr_bar_heights <= 1.0e-5, 1.0e-5, curr_bar_heights)
+			print curr_bar_heights 
+			print ''
+			curr_bar_heights = np.where(curr_bar_heights <= 1.0e-3, 1.0e-3, curr_bar_heights)
 
 			ax.bar(curr_bar_xvals, curr_bar_heights, color=colors[group_identifier], edgecolor = 'k', linestyle=edge_styles[radius_bin_identifier])
 
 	plt.hold(False)
 	ax.set_title(r'Origin and Fate of Gas') #: ${\rm log}_{10}(N_{HI})$ $<$ 16.5')
-	ax.set_ylim(ymin = 1.e-5,ymax=500.0)
+	ax.set_ylim(ymin = 1.e-3,ymax=500.0)
 	ax.set_ylabel(r'${\rm log}_{10}(f)$')
 	plt.xticks([0.5, 5, 10.5, 15, 20.5, 25, 30.5], ['','Future Accretion','', 'Previous ISM','', 'Recycling Gas',''])
 	ax.axvline(0.5, color='k', linewidth=0.5)
@@ -1020,12 +1059,11 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	print "Overall HI Fracs: Will %.2e, were %.2e, both %.2e" % (frac_HI_will_be_ISM, frac_HI_were_ISM, frac_HI_both)
 	print ""
 	all_HI_bar_heights = np.array([frac_HI_will_be_ISM, frac_HI_were_ISM, frac_HI_both])
-	all_HI_bar_heights = np.where(all_HI_bar_heights <= 1.0e-5, 1.0e-5, all_HI_bar_heights)
+	all_HI_bar_heights = np.where(all_HI_bar_heights <= 1.0e-3, 1.0e-3, all_HI_bar_heights)
 
 	HI_fig, HI_ax = plt.subplots(1)
 	HI_ax.bar(all_bar_x_vals, all_HI_bar_heights, color='k')
 	plt.hold(True)
-
 	for group_identifier in range(3): # this is low mass, active, passive
 		curr_group_indices = np.where(overall_groups == group_identifier)
 		for radius_bin_identifier in range(3): # this is within 0.5, 0.5-1, and >1. R_vir
@@ -1078,13 +1116,14 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 			curr_bar_xvals = np.concatenate((curr_bar_xvals, [curr_bar_xvals[0]]))
 			curr_HI_mass_bar_heights = np.array([curr_HI_mass_frac_will, curr_HI_mass_frac_were, curr_HI_mass_frac_both])
 			curr_HI_mass_bar_heights = np.concatenate((curr_HI_mass_bar_heights, [curr_HI_mass_frac_new]))
-			curr_HI_mass_bar_heights = np.where(curr_HI_mass_bar_heights <= 1.0e-5, 1.0e-5, curr_HI_mass_bar_heights)
+			print curr_HI_mass_bar_heights
+			curr_HI_mass_bar_heights = np.where(curr_HI_mass_bar_heights <= 1.0e-3, 1.0e-3, curr_HI_mass_bar_heights)
 
 			HI_ax.bar(curr_bar_xvals, curr_HI_mass_bar_heights, color=colors[group_identifier], edgecolor = 'k', linestyle=edge_styles[radius_bin_identifier])
 
 	plt.hold(False)
 	HI_ax.set_title(r'Origin and Fate of HI Gas') #: ${\rm log}_{10}(N_{HI})$ $<$ 16.5')
-	HI_ax.set_ylim(ymin = 1.e-5,ymax=500.0)
+	HI_ax.set_ylim(ymin = 1.e-3,ymax=500.0)
 	HI_ax.set_ylabel(r'${\rm log}_{10}(f_{M_{HI}})$')
 	plt.xticks([0.5, 5, 10.5, 15, 20.5, 25, 30.5], ['','Future Accretion','', 'Previous ISM','', 'Recycling Gas',''])
 	HI_ax.axvline(0.5, color='k', linewidth=0.5)
@@ -1099,6 +1138,96 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	HI_ax.set_yticklabels(np.log10(HI_ax.get_yticks()).astype(int))
 	HI_fig.savefig('ISM_HI_hists.pdf')
 	plt.close(HI_fig)
+
+	# # ### Column density contribution based
+	# print "did we fuck up adding col cons? "
+	# print np.shape(overall_col_contributions)
+	# print np.shape(overall_HI_masses)
+	# print ''
+	# all_lines_col = np.sum(overall_col_contributions)
+	# frac_col_con_will_be_ISM, frac_col_con_were_ISM, frac_col_con_both = np.array([np.sum(overall_col_contributions[overall_will_be_ISM]), np.sum(overall_col_contributions[overall_were_ISM]), np.sum(overall_col_contributions[overall_were_and_will_be_ISM])])/all_lines_col
+	# print "Overall Col Con Fracs: Will %.2e, were %.2e, both %.2e" % (frac_col_con_will_be_ISM, frac_col_con_were_ISM, frac_col_con_both)
+	# print ""
+	# all_col_con_bar_heights = np.array([frac_col_con_will_be_ISM, frac_col_con_were_ISM, frac_col_con_both])
+	# all_col_con_bar_heights = np.where(all_col_con_bar_heights <= 1.0e-3, 1.0e-3, all_col_con_bar_heights)
+
+	# col_con_fig, col_con_ax = plt.subplots(1)
+	# col_con_ax.bar(all_bar_x_vals, all_col_con_bar_heights, color='k')
+	# plt.hold(True)
+
+	# for group_identifier in range(3): # this is low mass, active, passive
+	# 	curr_group_indices = np.where(overall_groups == group_identifier)
+	# 	for radius_bin_identifier in range(3): # this is within 0.5, 0.5-1, and >1. R_vir
+	# 		curr_radius_indices = np.where(overall_radius_bins == radius_bin_identifier)
+	# 		curr_indices = np.intersect1d(curr_group_indices, curr_radius_indices)
+	# 		curr_col_cons = overall_col_contributions[curr_indices]
+	# 		curr_total_col = np.sum(curr_col_cons)
+	# 		curr_LLS_indices = np.where((overall_col_dense >= 16.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
+	# 		curr_LLS_col_con = overall_col_contributions[curr_LLS_indices]
+	# 		curr_LLS_total_col = np.sum(curr_LLS_col_con)
+	# 		curr_mid_indices = np.where((overall_col_dense < 16.5) & (overall_col_dense >= 14.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
+	# 		curr_mid_col_con = overall_col_contributions[curr_mid_indices]
+	# 		curr_mid_total_col = np.sum(curr_mid_col_con)
+	# 		curr_weak_indices = np.where((overall_col_dense < 14.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
+	# 		curr_weak_col_con = overall_col_contributions[curr_weak_indices]
+	# 		curr_weak_total_col = np.sum(curr_weak_col_con)
+
+	# 		curr_will, curr_new, curr_recycled, curr_were, curr_both = track_ISM(overall_z0_time_since_ISM[curr_indices], overall_time_since_ISM[curr_indices])
+	# 		curr_LLS_will, curr_LLS_new, curr_LLS_recycled, curr_LLS_were, curr_LLS_both = track_ISM( overall_z0_time_since_ISM[curr_LLS_indices], overall_time_since_ISM[curr_LLS_indices])
+	# 		curr_mid_will, curr_mid_new, curr_mid_recycled, curr_mid_were, curr_mid_both = track_ISM( overall_z0_time_since_ISM[curr_mid_indices], overall_time_since_ISM[curr_mid_indices])
+	# 		curr_weak_will, curr_weak_new, curr_weak_recycled, curr_weak_were, curr_weak_both = track_ISM( overall_z0_time_since_ISM[curr_weak_indices], overall_time_since_ISM[curr_weak_indices])
+
+	# 		curr_col_con_mass_frac_will, curr_col_con_mass_frac_new, curr_col_con_mass_frac_recycled, curr_col_con_mass_frac_were, curr_col_con_mass_frac_both = np.array([np.sum(curr_col_cons[curr_will]),
+	# 			np.sum(curr_col_cons[curr_new]), np.sum(curr_col_cons[curr_recycled]), np.sum(curr_col_cons[curr_were]), np.sum(curr_col_cons[curr_both])])/curr_total_col
+	# 		curr_LLS_col_con_frac_will, curr_LLS_col_con_frac_new, curr_LLS_col_con_frac_recycled, curr_LLS_col_con_frac_were, curr_LLS_col_con_frac_both = np.array([np.sum(curr_LLS_col_con[curr_LLS_will]),
+	# 			np.sum(curr_LLS_col_con[curr_LLS_new]), np.sum(curr_LLS_col_con[curr_LLS_recycled]), np.sum(curr_LLS_col_con[curr_LLS_were]), np.sum(curr_LLS_col_con[curr_LLS_both])])/curr_LLS_total_col
+	# 		curr_mid_col_con_frac_will, curr_mid_col_con_frac_new, curr_mid_col_con_frac_recycled, curr_mid_col_con_frac_were, curr_mid_col_con_frac_both = np.array([np.sum(curr_mid_col_con[curr_mid_will]),
+	# 			np.sum(curr_mid_col_con[curr_mid_new]), np.sum(curr_mid_col_con[curr_mid_recycled]), np.sum(curr_mid_col_con[curr_mid_were]), np.sum(curr_mid_col_con[curr_mid_both])])/curr_mid_total_col
+	# 		curr_weak_col_con_frac_will, curr_weak_col_con_frac_new, curr_weak_col_con_frac_recycled, curr_weak_col_con_frac_were, curr_weak_col_con_frac_both = np.array([np.sum(curr_weak_col_con[curr_weak_will]),
+	# 			np.sum(curr_weak_col_con[curr_weak_new]), np.sum(curr_weak_col_con[curr_weak_recycled]), np.sum(curr_weak_col_con[curr_weak_were]), np.sum(curr_weak_col_con[curr_weak_both])])/curr_weak_total_col
+
+	# 		if ((group_identifier == 0) & (radius_bin_identifier == 0)):
+	# 			### just inside rvir stuff
+	# 			rvir_ind = np.where(overall_radius_bins != 2)
+	# 			rvir_col_con = overall_col_contributions[rvir_ind]
+	# 			rvir_total_col = np.sum(rvir_col_con)
+
+	# 			rvir_will, rvir_new, rvir_recycled, rvir_were, rvir_both = track_ISM(overall_z0_time_since_ISM[rvir_ind], overall_time_since_ISM[rvir_ind])
+
+	# 			rvir_col_con_mass_frac_will, rvir_col_con_mass_frac_new, rvir_col_con_mass_frac_recycled, rvir_col_con_mass_frac_were, rvir_col_con_mass_frac_both = np.array([np.sum(rvir_col_con[rvir_will]),
+	# 				np.sum(rvir_col_con[rvir_new]), np.sum(rvir_col_con[rvir_recycled]), np.sum(rvir_col_con[rvir_were]), np.sum(rvir_col_con[rvir_both])])/rvir_total_col
+
+	# 			print "fracs inside rvir, column density weighted"
+	# 			print rvir_col_con_mass_frac_will
+	# 			print rvir_col_con_mass_frac_were
+	# 			print rvir_col_con_mass_frac_both
+	# 			print ''
+
+	# 		curr_bar_xvals = all_bar_x_vals + radius_bin_identifier+1 + (group_identifier)*3
+	# 		curr_bar_xvals = np.concatenate((curr_bar_xvals, [curr_bar_xvals[0]]))
+	# 		curr_col_con_mass_bar_heights = np.array([curr_col_con_mass_frac_will, curr_col_con_mass_frac_were, curr_col_con_mass_frac_both])
+	# 		curr_col_con_mass_bar_heights = np.concatenate((curr_col_con_mass_bar_heights, [curr_col_con_mass_frac_new]))
+	# 		curr_col_con_mass_bar_heights = np.where(curr_col_con_mass_bar_heights <= 1.0e-3, 1.0e-3, curr_col_con_mass_bar_heights)
+
+	# 		col_con_ax.bar(curr_bar_xvals, curr_col_con_mass_bar_heights, color=colors[group_identifier], edgecolor = 'k', linestyle=edge_styles[radius_bin_identifier])
+
+	# plt.hold(False)
+	# col_con_ax.set_title(r'Origin and Fate of HI Gas') #: ${\rm log}_{10}(N_{HI})$ $<$ 16.5')
+	# col_con_ax.set_ylim(ymin = 1.e-3,ymax=500.0)
+	# col_con_ax.set_ylabel(r'${\rm log}_{10}(f_{M_{HI}})$')
+	# plt.xticks([0.5, 5, 10.5, 15, 20.5, 25, 30.5], ['','Future Accretion','', 'Previous ISM','', 'Recycling Gas',''])
+	# col_con_ax.axvline(0.5, color='k', linewidth=0.5)
+	# col_con_ax.axvline(10.5, color='k', linewidth=0.5)
+	# col_con_ax.axvline(20.5, color='k', linewidth=0.5)
+	# col_con_ax.axvline(30.5, color='k', linewidth=0.5)
+	# legend1 = col_con_ax.legend(ncol=1,loc='upper left', handles = patches_list1) # [0.05,0.68]
+	# legend2 = col_con_ax.legend(loc='upper right', handles = patches_list2) # [0.53,0.76]
+	# col_con_ax.add_artist(legend1)
+	# col_con_ax.add_artist(legend2)
+	# col_con_ax.set_yscale('log')
+	# col_con_ax.set_yticklabels(np.log10(col_con_ax.get_yticks()).astype(int))
+	# col_con_fig.savefig('ISM_col_con_hists.pdf')
+	# plt.close(col_con_fig)
 
 	### FINESST Figure
 

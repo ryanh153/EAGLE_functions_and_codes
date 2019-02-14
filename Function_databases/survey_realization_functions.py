@@ -456,8 +456,8 @@ def run_specwizard_for_matching_gals(cos_comparisons_file, directory_with_gal_fo
 				subprocess.call("mkdir particle_id_files_"+str(gal_id), shell=True)
 				subprocess.call("mv eagle_particles_hit* particle_id_files_"+str(gal_id), shell=True)
 				calls += 1
-				# if calls >= 2:
-					# raise ValueError('Stoped after two specwizard runs')
+				# if calls >= 1:
+				# 	raise ValueError('Stoped after one specwizard run')
 
 	print 'num of calls'
 	print calls

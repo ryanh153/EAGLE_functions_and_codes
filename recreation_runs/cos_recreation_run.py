@@ -15,6 +15,8 @@
 ### Split into near/far side? 
 ### split into red/blue shifted? 
 
+### Do a check for how many galaxies have HI ion abundances that are just all zeros. That will tell you how many chem_abundance checks failed. 
+
 ##################################
 # Imports
 
@@ -47,85 +49,88 @@ plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['le
 cos_comparisons_file = 'cos_data.hdf5'
 
 # ### Super important to make sure these are right before each run. Don't overwrite stuff for the love of god. Especially on long runs
+cosma_bool = True
+summit_bool = False
+### old cosma locations
+if cosma_bool:
+	# this is the location of the gal output files that contain all the data you need from the eagle galaxies
+	# directory_with_gal_folders = '/cosma/home/analyse/rhorton/snapshots/data/AGN_gals/with_AGN'
+	directory_with_gal_folders = '/cosma/home/analyse/rhorton/data/paper1_gals'
+	lookup_files = '/cosma/home/analyse/rhorton/Ali_Spec_src/IonizationTables/HM01G+C+SSH/'
+	# where all that data is put and where created los live. Basically the home for the run you are doing. 
+	# don't make it the same for multiple runs and make sure if you're just running plotting stuff it looks in the right place
 
-# ### old cosma locations
+	folders = glob.glob('/cosma/home/analyse/rhorton/Ali_Spec_src/spectra/tracking_with_col/5_rel_all_surveys')
 
-# this is the location of the gal output files that contain all the data you need from the eagle galaxies
-# directory_with_gal_folders = '/cosma/home/analyse/rhorton/snapshots/data/AGN_gals/with_AGN'
-directory_with_gal_folders = '/cosma/home/analyse/rhorton/data/paper1_gals'
-lookup_files = '/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/IonizationTables/HM01G+C+SSH/'
-# where all that data is put and where created los live. Basically the home for the run you are doing. 
-# don't make it the same for multiple runs and make sure if you're just running plotting stuff it looks in the right place
+	# folders = glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos_5rel_1')
+	# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass_5rel_1'))
+	# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs_5rel_1'))
 
-folders = glob.glob('/cosma/home/analyse/rhorton/Ali_Spec_src/spectra/tracking_with_col')
+	# folders = glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/dwarfs*')
+	# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/gass*'))
+	# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/halos*'))
+	# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarf*'))
+	# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
+	# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
 
-# folders = glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos_5rel_1')
-# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass_5rel_1'))
-# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs_5rel_1'))
+	spec_output_directory = np.hstack(folders)
 
-# folders = glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/dwarfs*')
-# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/gass*'))
-# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/halos*'))
-# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarf*'))
-# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
-# folders.append(glob.glob('/cosma/home/analyse/rhorton/snapshots/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
+	# combined_plots_folder = None
+	combined_plots_folder = '/cosma/home/analyse/rhorton/Ali_Spec_src/plots'
 
-spec_output_directory = np.hstack(folders)
+	# so it knows where to grab things since it might not be living in Ali_spec_src anymore. Check these before each run!
+	# otherwise you'll get confusion between runs. Run something new, but pull old data etc. 
+	path_to_param_template = '/cosma/home/analyse/rhorton/Ali_Spec_src/CGM_template.par'
+	path_to_specwizard_executable = '/cosma/home/analyse/rhorton/Ali_Spec_src/specwizard'
+	path_to_cos_comparisons = '/cosma/home/analyse/rhorton/snapshots/%s' % (cos_comparisons_file)
 
-# combined_plots_folder = None
-combined_plots_folder = '/cosma/home/analyse/rhorton/Ali_Spec_src/plots'
+## New rc locations
+elif summit_bool:
+	# this is the location of the gal output files that contain all the data you need from the eagle galaxies
+	# directory_with_gal_folders = '/projects/ryho3446/data/AGN_gals/with_AGN'
+	directory_with_gal_folders = '/projects/ryho3446/data/end_summer_gals'
+	lookup_files = '/projects/ryho3446/Ali_Spec_src/IonizationTables/HM01G+C+SSH/'
+	# where all that data is put and where created los live. Basically the home for the run you are doing. 
+	# don't make it the same for multiple runs and make sure if you're just running plotting stuff it looks in the right place
 
-# so it knows where to grab things since it might not be living in Ali_spec_src anymore. Check these before each run!
-# otherwise you'll get confusion between runs. Run something new, but pull old data etc. 
-path_to_param_template = '/cosma/home/analyse/rhorton/Ali_Spec_src/CGM_template.par'
-path_to_specwizard_executable = '/cosma/home/analyse/rhorton/Ali_Spec_src/specwizard'
-path_to_cos_comparisons = '/cosma/home/analyse/rhorton/snapshots/%s' % (cos_comparisons_file)
+	folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos_5rel_1')
+	folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass_5rel_1'))
+	folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs_5rel_1'))
 
-### New rc locations
+	# folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs*')
+	# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
+	# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
+	# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarf*'))
+	# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
+	# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
 
-# # this is the location of the gal output files that contain all the data you need from the eagle galaxies
-# # directory_with_gal_folders = '/projects/ryho3446/data/AGN_gals/with_AGN'
-# directory_with_gal_folders = '/projects/ryho3446/data/end_summer_gals'
-# lookup_files = '/projects/ryho3446/Ali_Spec_src/IonizationTables/HM01G+C+SSH/'
-# # where all that data is put and where created los live. Basically the home for the run you are doing. 
-# # don't make it the same for multiple runs and make sure if you're just running plotting stuff it looks in the right place
+	spec_output_directory = np.hstack(folders)
 
-# folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos_5rel_1')
-# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass_5rel_1'))
-# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs_5rel_1'))
+	# combined_plots_folder = None
+	combined_plots_folder = '/projects/ryho3446/Ali_Spec_src/with_partIDs/gal_paper_plots'
 
-# # folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs*')
-# # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
-# # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
-# # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarf*'))
-# # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
-# # folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
-
-# spec_output_directory = np.hstack(folders)
-
-# # combined_plots_folder = None
-# combined_plots_folder = '/projects/ryho3446/Ali_Spec_src/with_partIDs/gal_paper_plots'
-
-# # so it knows where to grab things since it might not be living in Ali_spec_src anymore. Check these before each run!
-# # otherwise you'll get confusion between runs. Run something new, but pull old data etc. 
-# path_to_param_template = '/projects/ryho3446/Ali_Spec_src/CGM_template.par'
-# path_to_specwizard_executable = '/projects/ryho3446/Ali_Spec_src/specwizard'
-# path_to_cos_comparisons = '/projects/ryho3446/snapshots/%s' % (cos_comparisons_file)
+	# so it knows where to grab things since it might not be living in Ali_spec_src anymore. Check these before each run!
+	# otherwise you'll get confusion between runs. Run something new, but pull old data etc. 
+	path_to_param_template = '/projects/ryho3446/Ali_Spec_src/CGM_template.par'
+	path_to_specwizard_executable = '/projects/ryho3446/Ali_Spec_src/specwizard'
+	path_to_cos_comparisons = '/projects/ryho3446/snapshots/%s' % (cos_comparisons_file)
+else:
+	raise ValueError("You have to be somewhere... (both cosma_bool and summit_bool are false) Exiting.")
 
 ########
 
 R_in_vir = 2.0
 colorbar = 'hmass'
 
-cos_gass_bool = False
-cos_halos_bool = False
+cos_gass_bool = True
+cos_halos_bool = True
 cos_dwarfs_bool = True
 cos_AGN_bool = False
 cos_gto_bool = False
 single_gal_for_tests = False
 
-run_specwizard = True
-make_new_los_files = True
+run_specwizard = False
+make_new_los_files = False
 AGN_bool = False
 semi_random_radius = False # radii will be drawn from gauss with center being survey values and 10kpc std
 random_radii = False # radii will be random between max and min radius (passed)
@@ -141,7 +146,8 @@ proch_bool = False
 mean_total_mass_bool = False
 virial_radii_bool = False
 make_realistic_bool = False
-new_lines = False
+new_lines = True
+col_con_bool = True
 equ_widths_bool = True
 log_plots = True
 
@@ -160,7 +166,7 @@ else:
 	min_ssfr = -15.
 
 starting_gal_id = int(0)
-realizations = 1
+realizations = 5
 bins_for_median= 2 # in scatter or maybe hist plots number of bins used to make running median/percentile lines
 max_abs_vel = 500. # km/s
 min_halo_mass = 10. # for plots. 
@@ -260,88 +266,88 @@ if run_specwizard:
 	print 'Number of gals Matched'
 	print np.size(gals_matched_for_each_cos_gal[gals_matched_for_each_cos_gal!=0])
 
-h1_cols_indices, h1_W_indices, si3_cols_indices, si3_equ_widths_indices, o6_cols_indices, o6_equ_widths_indices, c4_cols_indices, c4_equ_widths_indices = real_data.cos_where_matched_in_EAGLE(AGN_bool, proch_bool, proch_ids, where_matched_bools, cos_smass_data, cos_ssfr_data, cos_radii_data, cos_id_arr, cos_h1_equ_widths, cos_h1_equ_widths_radii, cos_h1_cols, cos_h1_cols_radii, cos_si3_equ_widths, cos_si3_equ_widths_radii, cos_si3_cols, cos_si3_cols_radii, cos_o6_cols, cos_o6_cols_radii, cos_o6_equ_widths, cos_o6_equ_widths_radii, cos_c4_cols, cos_c4_cols_radii, cos_c4_equ_widths, cos_c4_equ_widths_radii, cos_AGN)
+# h1_cols_indices, h1_W_indices, si3_cols_indices, si3_equ_widths_indices, o6_cols_indices, o6_equ_widths_indices, c4_cols_indices, c4_equ_widths_indices = real_data.cos_where_matched_in_EAGLE(AGN_bool, proch_bool, proch_ids, where_matched_bools, cos_smass_data, cos_ssfr_data, cos_radii_data, cos_id_arr, cos_h1_equ_widths, cos_h1_equ_widths_radii, cos_h1_cols, cos_h1_cols_radii, cos_si3_equ_widths, cos_si3_equ_widths_radii, cos_si3_cols, cos_si3_cols_radii, cos_o6_cols, cos_o6_cols_radii, cos_o6_equ_widths, cos_o6_equ_widths_radii, cos_c4_cols, cos_c4_cols_radii, cos_c4_equ_widths, cos_c4_equ_widths_radii, cos_AGN)
 
-### If you want KS tests and histrograms for each realization run in all directories passed (each KS test is on a single rel even if a folder is multiple)
-# if equ_widths_bool:
-# 	cos_functions.handle_single_realization_statistics(spec_output_directory, cos_smass_data[h1_W_indices], cos_ssfr_data[h1_W_indices], cos_id_arr[h1_W_indices],\
-# 		cos_h1_equ_widths[h1_W_indices], cos_h1_W_flags[h1_W_indices], cos_h1_equ_widths_radii[h1_W_indices], cos_h1_cols[h1_W_indices], cos_h1_cols_flags[h1_W_indices], \
-# 		cos_h1_cols_radii[h1_W_indices], equ_widths_bool)
+# ### If you want KS tests and histrograms for each realization run in all directories passed (each KS test is on a single rel even if a folder is multiple)
+# # if equ_widths_bool:
+# # 	cos_functions.handle_single_realization_statistics(spec_output_directory, cos_smass_data[h1_W_indices], cos_ssfr_data[h1_W_indices], cos_id_arr[h1_W_indices],\
+# # 		cos_h1_equ_widths[h1_W_indices], cos_h1_W_flags[h1_W_indices], cos_h1_equ_widths_radii[h1_W_indices], cos_h1_cols[h1_W_indices], cos_h1_cols_flags[h1_W_indices], \
+# # 		cos_h1_cols_radii[h1_W_indices], equ_widths_bool)
 
+# # else:
+# # 	cos_functions.handle_single_realization_statistics(spec_output_directory, cos_smass_data[h1_cols_indices], cos_ssfr_data[h1_cols_indices], cos_id_arr[h1_cols_indices],\
+# # 		cos_h1_equ_widths[h1_cols_indices], cos_h1_W_flags[h1_cols_indices], cos_h1_equ_widths_radii[h1_cols_indices], cos_h1_cols[h1_cols_indices], cos_h1_cols_flags[h1_cols_indices], \
+# # 		cos_h1_cols_radii[h1_cols_indices], equ_widths_bool)
+
+# if combined_plots_folder != None:
+# 	os.chdir(combined_plots_folder)
 # else:
-# 	cos_functions.handle_single_realization_statistics(spec_output_directory, cos_smass_data[h1_cols_indices], cos_ssfr_data[h1_cols_indices], cos_id_arr[h1_cols_indices],\
-# 		cos_h1_equ_widths[h1_cols_indices], cos_h1_W_flags[h1_cols_indices], cos_h1_equ_widths_radii[h1_cols_indices], cos_h1_cols[h1_cols_indices], cos_h1_cols_flags[h1_cols_indices], \
-# 		cos_h1_cols_radii[h1_cols_indices], equ_widths_bool)
+# 	os.chdir(spec_output_directory)
 
-if combined_plots_folder != None:
-	os.chdir(combined_plots_folder)
-else:
-	os.chdir(spec_output_directory)
-
-for i in range(0,np.size(ions)):
-	print 'doing new ion'
-	print ions[i]
-	print ''
-	ion = ions[i]
-	lookup_file = lookup_files+ions_short[i]+'.hdf5'
-	covering_frac_val = covering_frac_vals[i]
-	lambda_line = line_wavelengths[i]
+# for i in range(0,np.size(ions)):
+# 	print 'doing new ion'
+# 	print ions[i]
+# 	print ''
+# 	ion = ions[i]
+# 	lookup_file = lookup_files+ions_short[i]+'.hdf5'
+# 	covering_frac_val = covering_frac_vals[i]
+# 	lambda_line = line_wavelengths[i]
 	
-	if ion == 'HydrogenI':
-		plot_cols = cos_h1_cols[h1_cols_indices]
-		plot_cols_err = cos_h1_cols_errs[h1_cols_indices]
-		plot_cols_flags = cos_h1_cols_flags[h1_cols_indices]
-		plot_cols_radii = cos_h1_cols_radii[h1_cols_indices]
-		plot_equ_widths = cos_h1_equ_widths[h1_W_indices]
-		plot_W_errs = cos_h1_W_errs[h1_W_indices]
-		plot_W_flags = cos_h1_W_flags[h1_W_indices]
-		plot_equ_widths_radii = cos_h1_equ_widths_radii[h1_W_indices]
-		if equ_widths_bool:
-			curr_cos_id_arr = cos_id_arr[h1_W_indices]
-			curr_cos_smass = cos_smass_data[h1_W_indices]
-			curr_cos_ssfr = cos_ssfr_data[h1_W_indices]
-		else:
-			curr_cos_id_arr = cos_id_arr[h1_cols_indices]
-			curr_cos_id_arr = cos_id_arr[h1_cols_indices]
-			curr_cos_smass = cos_smass_data[h1_cols_indices]
-			curr_cos_ssfr = cos_ssfr_data[h1_cols_indices]
-	elif ion == 'SiliconIII':
-		plot_cols = cos_si3_cols[si3_cols_indices]
-		plot_cols_radii = cos_si3_cols_radii[si3_cols_indices]
-		plot_equ_widths = cos_si3_equ_widths[si3_equ_widths_indices]
-		plot_equ_widths_radii = cos_si3_equ_widths_radii[si3_equ_widths_indices]
-		if equ_widths_bool:
-			curr_cos_id_arr = cos_id_arr[si3_equ_widths_indices]
-		else:
-			curr_cos_id_arr = cos_id_arr[si3_cols_indices]
-	elif ion == 'OxygenVI':
-		plot_cols = cos_o6_cols[o6_cols_indices]
-		plot_cols_radii = cos_o6_cols_radii[o6_cols_indices]
-		plot_equ_widths = cos_o6_equ_widths[o6_equ_widths_indices]
-		plot_equ_widths_radii = cos_o6_equ_widths_radii[o6_equ_widths_indices]
-		if equ_widths_bool:
-			curr_cos_id_arr = cos_id_arr[o6_equ_widths_indices]
-		else:
-			curr_cos_id_arr = cos_id_arr[o6_cols_indices]
-	elif ion == 'CarbonIV':
-		plot_cols = cos_c4_cols[c4_cols_indices]
-		plot_cols_radii = cos_c4_cols_radii[c4_cols_indices]
-		plot_equ_widths = cos_c4_equ_widths[c4_equ_widths_indices]
-		plot_equ_widths_radii = cos_c4_equ_widths_radii[c4_equ_widths_indices]
-		if equ_widths_bool:
-			curr_cos_id_arr = cos_id_arr[c4_equ_widths_indices]
-		else:
-			curr_cos_id_arr = cos_id_arr[c4_cols_indices]
-	else: 
-		plot_cols = np.array([])
-		plot_cols_radii = np.array([])
-		plot_equ_widths = np.array([])
-		plot_equ_widths_radii = np.array([])
-		if equ_widths_bool:
-			curr_cos_id_arr = np.array([])
-		else:
-			curr_cos_id_arr = np.array([])
-		print 'warning: No COS data prepared for this ion'
+# 	if ion == 'HydrogenI':
+# 		plot_cols = cos_h1_cols[h1_cols_indices]
+# 		plot_cols_err = cos_h1_cols_errs[h1_cols_indices]
+# 		plot_cols_flags = cos_h1_cols_flags[h1_cols_indices]
+# 		plot_cols_radii = cos_h1_cols_radii[h1_cols_indices]
+# 		plot_equ_widths = cos_h1_equ_widths[h1_W_indices]
+# 		plot_W_errs = cos_h1_W_errs[h1_W_indices]
+# 		plot_W_flags = cos_h1_W_flags[h1_W_indices]
+# 		plot_equ_widths_radii = cos_h1_equ_widths_radii[h1_W_indices]
+# 		if equ_widths_bool:
+# 			curr_cos_id_arr = cos_id_arr[h1_W_indices]
+# 			curr_cos_smass = cos_smass_data[h1_W_indices]
+# 			curr_cos_ssfr = cos_ssfr_data[h1_W_indices]
+# 		else:
+# 			curr_cos_id_arr = cos_id_arr[h1_cols_indices]
+# 			curr_cos_id_arr = cos_id_arr[h1_cols_indices]
+# 			curr_cos_smass = cos_smass_data[h1_cols_indices]
+# 			curr_cos_ssfr = cos_ssfr_data[h1_cols_indices]
+# 	elif ion == 'SiliconIII':
+# 		plot_cols = cos_si3_cols[si3_cols_indices]
+# 		plot_cols_radii = cos_si3_cols_radii[si3_cols_indices]
+# 		plot_equ_widths = cos_si3_equ_widths[si3_equ_widths_indices]
+# 		plot_equ_widths_radii = cos_si3_equ_widths_radii[si3_equ_widths_indices]
+# 		if equ_widths_bool:
+# 			curr_cos_id_arr = cos_id_arr[si3_equ_widths_indices]
+# 		else:
+# 			curr_cos_id_arr = cos_id_arr[si3_cols_indices]
+# 	elif ion == 'OxygenVI':
+# 		plot_cols = cos_o6_cols[o6_cols_indices]
+# 		plot_cols_radii = cos_o6_cols_radii[o6_cols_indices]
+# 		plot_equ_widths = cos_o6_equ_widths[o6_equ_widths_indices]
+# 		plot_equ_widths_radii = cos_o6_equ_widths_radii[o6_equ_widths_indices]
+# 		if equ_widths_bool:
+# 			curr_cos_id_arr = cos_id_arr[o6_equ_widths_indices]
+# 		else:
+# 			curr_cos_id_arr = cos_id_arr[o6_cols_indices]
+# 	elif ion == 'CarbonIV':
+# 		plot_cols = cos_c4_cols[c4_cols_indices]
+# 		plot_cols_radii = cos_c4_cols_radii[c4_cols_indices]
+# 		plot_equ_widths = cos_c4_equ_widths[c4_equ_widths_indices]
+# 		plot_equ_widths_radii = cos_c4_equ_widths_radii[c4_equ_widths_indices]
+# 		if equ_widths_bool:
+# 			curr_cos_id_arr = cos_id_arr[c4_equ_widths_indices]
+# 		else:
+# 			curr_cos_id_arr = cos_id_arr[c4_cols_indices]
+# 	else: 
+# 		plot_cols = np.array([])
+# 		plot_cols_radii = np.array([])
+# 		plot_equ_widths = np.array([])
+# 		plot_equ_widths_radii = np.array([])
+# 		if equ_widths_bool:
+# 			curr_cos_id_arr = np.array([])
+# 		else:
+# 			curr_cos_id_arr = np.array([])
+# 		print 'warning: No COS data prepared for this ion'
 
 	# EagleFunctions.actual_cumulative_mass_for_EAGLE_gals('/gpfs/data/analyse/rhorton/opp_research/data/end_summer_gals/')
 
@@ -412,11 +418,11 @@ for i in range(0,np.size(ions)):
 
 # 	# cos_functions.fits(ions_short[i], which_survey, spec_output_directory, combined_plots_folder, plot_equ_widths, plot_equ_widths_radii, covering_frac_bool = True, covering_frac_val = 14.0, lambda_line = lambda_line, colorbar = colorbar, offset = starting_gal_id) # line in Angst
 
-# list_for_all_id_data = particle_tracking_functions.get_all_id_data(spec_output_directory)
-# print 'got list'
-# print list_for_all_id_data
-# print ''
-# particle_tracking_functions.get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lookup_files, new_lines)
+list_for_all_id_data = particle_tracking_functions.get_all_id_data(spec_output_directory)
+print 'got list'
+print list_for_all_id_data
+print ''
+particle_tracking_functions.get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lookup_files, new_lines, col_con_bool)
 
 
 # ########################################

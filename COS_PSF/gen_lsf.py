@@ -121,11 +121,11 @@ def bin_data(input_x,flux,pix_per_bin, rest_wavelength, redshift, vel_kms=True):
 	return binned_vel, binned_wavelengths, binned_flux
 
 # snr is signal to noise ratio
-def add_noise(input_x, input_flux, rest_wavelength, redshift, snr, pix_per_bin, vel_kms=True, correlated_pixels=False):
+def add_noise(input_x, input_flux, rest_wavelength, redshift, snr, vel_kms=True, correlated_pixels=False):
 	if correlated_pixels:
-		snr = snr*pix_per_bin**0.38
+		snr = snr**0.38
 	else:
-		snr = snr*pix_per_bin**0.5
+		snr = snr**0.5
 	noise_vector = np.zeros(np.size(input_flux))
 	for i in range(np.size(input_flux)):
 		noise_vector[i] = np.random.normal(0.,1./snr)
