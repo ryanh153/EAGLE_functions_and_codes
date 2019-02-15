@@ -121,16 +121,13 @@ def bin_data(input_x,flux,pix_per_bin, rest_wavelength, redshift, vel_kms=True):
 	return binned_vel, binned_wavelengths, binned_flux
 
 # snr is signal to noise ratio
-def add_noise(input_x, input_flux, rest_wavelength, redshift, snr, vel_kms=True, correlated_pixels=False):
-	if correlated_pixels:
-		snr = snr**0.38
-	else:
-		snr = snr**0.5
+def add_noise(input_x, input_flux, rest_wavelength, redshift, snr, vel_kms=True):
+
 	noise_vector = np.zeros(np.size(input_flux))
 	for i in range(np.size(input_flux)):
-		noise_vector[i] = np.random.normal(0.,1./snr)
+		noise_vector[i] = np.random.normal(0.,(input_flux[i]/snr)**0.5)
 
-	noisy_flux = input_flux + input_flux*noise_vector
+	noisy_flux = input_flux + noise_vector
 
 	return noisy_flux
 
@@ -150,7 +147,7 @@ def ang_to_vel(input_ang, rest_wavelength, redshift):
 	velocities = np.linspace(-1.*vel_range/2.0, vel_range/2.0, np.size(input_ang))
 	return velocities
 
-def do_it_all(simulated_x, simulated_flux, rest_wavelength, redshift, pix_per_bin, snr, cos_lsf_bool=True, directory_with_COS_LSF='./', correlated_pixels = True, vel_kms=True, chan=None, std=20, num_sigma_in_gauss=3, long_spec=False):
+def do_it_all(simulated_x, simulated_flux, rest_wavelength, redshift, pix_per_bin, snr, cos_lsf_bool=True, directory_with_COS_LSF='./', vel_kms=True, chan=None, std=20, num_sigma_in_gauss=3, long_spec=False):
 
 	if long_spec: # spectra is too long for one LSF, we break it down into 50 AA pieces (assumes we are passed wavelengths as simulated_x)
 		lsf_bin_edges = np.concatenate(([0.0], np.arange(1125., 1775., 50), [1.e10]))
@@ -179,11 +176,11 @@ def do_it_all(simulated_x, simulated_flux, rest_wavelength, redshift, pix_per_bi
 	if vel_kms:
 		binned_vel, binned_wavelengths, binned_flux = bin_data(convolved_vel, convolved_flux, pix_per_bin, rest_wavelength, redshift, vel_kms=vel_kms)
 
-		noisy_flux = add_noise(binned_vel, binned_flux, rest_wavelength, redshift, snr, pix_per_bin, vel_kms=vel_kms, correlated_pixels=correlated_pixels)
+		noisy_flux = add_noise(binned_vel, binned_flux, rest_wavelength, redshift, snr, vel_kms=vel_kms)
 	else:
 		binned_vel, binned_wavelengths, binned_flux = bin_data(convolved_wavelengths, convolved_flux, pix_per_bin, rest_wavelength, redshift, vel_kms=vel_kms)
 
-		noisy_flux = add_noise(binned_wavelengths, binned_flux, rest_wavelength, redshift, snr, pix_per_bin, vel_kms=vel_kms, correlated_pixels=correlated_pixels)
+		noisy_flux = add_noise(binned_wavelengths, binned_flux, rest_wavelength, redshift, snr, vel_kms=vel_kms)
 
 	return binned_vel, binned_wavelengths, noisy_flux
 

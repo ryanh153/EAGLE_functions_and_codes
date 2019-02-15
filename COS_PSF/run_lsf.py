@@ -26,7 +26,7 @@ import sys
 plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['legend.fontsize'], plt.rcParams['xtick.labelsize'], plt.rcParams['ytick.labelsize'] = 18., 18., 16., 16, 16
 
 ### Reading from .txt file (my own format)
-eagle_input = np.loadtxt('/Users/ryanhorton1/Documents/bitbucket/opp_research/snapshots/scripts/COS_PSF/h1_Spectrum0_0.1_R_vir.txt', delimiter=' ')
+eagle_input = np.loadtxt('/Users/ryho3446/Documents/OppResearch/COS_PSF/h1_Spectrum0_0.1_R_vir.txt', delimiter=' ')
 indices = np.argsort(eagle_input[:,0])
 simulated_vel = eagle_input[:,0][indices]
 rest_wavelength = 1216.
@@ -48,7 +48,7 @@ redshift = 0.205 # the redshift of the line (so the observed wavelength can be c
 vel_kms = True # default: True if false, assume the x input is in angstroms
 
 ### Pick specifics of COS LSF
-directory_with_COS_LSF = '/Users/ryanhorton1/Documents/bitbucket/opp_research/snapshots/scripts/COS_PSF/'
+directory_with_COS_LSF = '/Users/ryho3446/Documents/OppResearch/COS_PSF/'
 chan = None # default: None Specifies the channel. IF None it selects based on OBSERVED wavelength (<=1450 -> G130M, else -> G160M). Other inputs will return error!
 
 convolved_vel, convolved_wavelengths, convolved_flux=lsf_functions.convolve_spectra_with_COS_LSF(simulated_vel, simulated_flux, rest_wavelength, redshift, vel_kms=vel_kms, chan=chan, directory_with_COS_LSF=directory_with_COS_LSF)
@@ -71,12 +71,26 @@ num_sigma_in_gauss = 3. # default: 3
 gauss_vel, gauss_wavelengths, gauss_flux=lsf_functions.convolve_spectra_with_gaussian(simulated_vel, simulated_flux, std, rest_wavelength, redshift, vel_kms=vel_kms, num_sigma_in_gauss=num_sigma_in_gauss)
 
 ############################################################
+### Add noise
+
+### These are the REQUIRED parameters to be passed. Make sure these are correct
+rest_wavelength = 1216. # the wavelength of your line in Angstroms in the rest frame 
+redshift = 0.205 # the redshift of the line (so the observed wavelength can be calculated)
+snr = 7.90 # the signal to noise in each pixel
+
+### What x units are we using?
+vel_kms = True # default: True if false, assume the x input is in angstroms
+
+noisy_flux = lsf_functions.add_noise(convolved_vel, convolved_flux, rest_wavelength, redshift, snr, vel_kms=vel_kms)
+
+############################################################
 ### Binning pixels
 
 ### These are the REQUIRED parameters to be passed. Make sure these are correct
 rest_wavelength = 1216. # the wavelength of your line in Angstroms in the rest frame 
 redshift = 0.205 # the redshift of the line (so the observed wavelength can be calculated)
 pix_per_bin = 3 # how many pixels are binned together 
+# effective snr (for copmarisons) is snr*3**0.38 for COS and snr*3**0.5 for uncorrelated pixels
 
 ### Optional parameters (can be passed in any order, but must specify variable name)
 ### if any of these are not passed to the funciton they have a default (listed in the comments for each one)
@@ -84,28 +98,7 @@ pix_per_bin = 3 # how many pixels are binned together
 ### What x units are we using?
 vel_kms = True # default: True if false, assume the x input is in angstroms
 
-binned_vel, binned_wavelengths, binned_flux = lsf_functions.bin_data(convolved_vel, convolved_flux, pix_per_bin, rest_wavelength, redshift, vel_kms=vel_kms)
-
-############################################################
-### Add noise
-
-### These are the REQUIRED parameters to be passed. Make sure these are correct
-rest_wavelength = 1216. # the wavelength of your line in Angstroms in the rest frame 
-redshift = 0.205 # the redshift of the line (so the observed wavelength can be calculated)
-snr = 12. # the signal to noise in each resolution element
-pix_per_bin = 3 # how many pixels are binned together 
-
-### Optional parameters (can be passed in any order, but must specify variable name)
-### if any of these are not passed to the funciton they have a default (listed in the comments for each one)
-
-### What x units are we using?
-vel_kms = True # default: True if false, assume the x input is in angstroms
-
-### COS sepecific pixel correlation
-correlated_pixels = True # default: False COS has correlated pixel noise and thus you don't reduce S/N as fast as you should when binning multiple 
-# pixels. If true use S/N = snr**0.38, if false use S/N = snr**0.5 in the noise vector that will be added here
-
-noisy_flux = lsf_functions.add_noise(binned_vel, binned_flux, rest_wavelength, redshift, snr, vel_kms=vel_kms, correlated_pixels=correlated_pixels)
+binned_vel, binned_wavelengths, binned_flux = lsf_functions.bin_data(convolved_vel, noisy_flux, pix_per_bin, rest_wavelength, redshift, vel_kms=vel_kms)
 
 ############################################################
 ### All in one: If you want to just do all of these steps with one line of code I made a function for that
@@ -117,8 +110,8 @@ noisy_flux = lsf_functions.add_noise(binned_vel, binned_flux, rest_wavelength, r
 ### std = 20
 ### num_sigma_in_gauss = 3
 
-noisy_vel, noisy_ang, noisy_flux = lsf_functions.do_it_all(simulated_vel, simulated_flux, rest_wavelength, redshift, pix_per_bin, snr, cos_lsf_bool=True, correlated_pixels = correlated_pixels, vel_kms=True, chan=None, std=None,
-															 num_sigma_in_gauss=None, directory_with_COS_LSF = '/Users/ryanhorton1/Documents/bitbucket/opp_research/snapshots/scripts/COS_PSF/')
+noisy_vel, noisy_ang, noisy_flux = lsf_functions.do_it_all(simulated_vel, simulated_flux, rest_wavelength, redshift, pix_per_bin, snr, cos_lsf_bool=True, vel_kms=True, chan=None, std=None,
+															 num_sigma_in_gauss=None, directory_with_COS_LSF = '/Users/ryho3446/Documents/OppResearch/COS_PSF/')
 
 ############################################################
 ### Examples of plots
@@ -165,32 +158,32 @@ def make_plot(x,y, filename, title=None, color='b',step_bool=False, ylabel=None,
 	plt.savefig(filename, bbox_inches='tight')
 	plt.close()
 
-# make_plot(simulated_vel, simulated_flux, 'simulated_line_vel.pdf', title='Simulated HI Spectra Relative to the Velocity of the Galaxy', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Velocity (km/s)', xmin=-280, xmax=280,
+# make_plot(simulated_vel, simulated_flux, 'simulated_line_vel.pdf', title='Simulated HI Spectra', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Velocity (km/s)', xmin=-280, xmax=280,
 # 	      x_ticks = np.arange(-200,300,100), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
 # make_plot(convolved_vel, convolved_flux, 'convolved_line_vel.pdf', color='b', step_bool=True, ymin=-0.1, ymax=2.0, xmin=-280, xmax=280,
 # 	      x_ticks = np.arange(-200,300,100), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
-# make_plot(binned_vel, binned_flux, 'binned_line_vel.pdf', color='b', step_bool=True, ymin=-0.1, ymax=2.0, xmin=-280, xmax=280,
-# 	      x_ticks = np.arange(-200,300,100), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
-
-make_plot(noisy_vel, noisy_flux, 'noisy_line_vel.pdf', title='EAGLE Mock Spectra', color='b', step_bool=True, ylabel='', ymin=-0.1, ymax=2.0, xlabel='', xmin=-280, xmax=280,
+make_plot(binned_vel, binned_flux, 'binned_line_vel.pdf', title='Convolved HI Spectra with S/N=12', color='b', step_bool=True, ymin=-0.1, ymax=2.0, xmin=-280, xmax=280,
 	      x_ticks = np.arange(-200,300,100), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
-# make_plot(simulated_ang, simulated_flux, 'simulated_line_ang.pdf', title='Simulated HI Spectra', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength (Angstroms)', xmin=1463, xmax=1467,
-# 	      x_ticks = np.arange(1463, 1467, 1), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
+# make_plot(noisy_vel, noisy_flux, 'noisy_line_vel.pdf', color='b', step_bool=True, ylabel='', ymin=-0.1, ymax=2.0, xlabel='', xmin=-280, xmax=280,
+# 	      x_ticks = np.arange(-200,300,100), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
-# make_plot(convolved_wavelengths, convolved_flux, 'convolved_line_ang.pdf', title='Normalized Flux vs Wavelength', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength (Angstroms)', xmin=1463, xmax=1467,
-# 	      x_ticks = np.arange(1463, 1467, 1), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
+make_plot(simulated_ang, simulated_flux, 'simulated_line_ang.pdf', title='Simulated HI Spectra', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength (Angstroms)', xmin=1463.8, xmax=1466.2,
+	      x_ticks = np.arange(1464, 1466.5, 0.5), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
-# make_plot(gauss_wavelengths, gauss_flux, 'gauss_line_ang.pdf', color='b', step_bool=True, ymin=-0.1, ymax=2.0, xmin=1463, xmax=1467,
-# 	      x_ticks = np.arange(1463, 1468, 1), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
+make_plot(convolved_wavelengths, convolved_flux, 'convolved_line_ang.pdf', title='Normalized Flux vs Wavelength', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength (Angstroms)', xmin=1463.8, xmax=1466.2,
+	      x_ticks = np.arange(1464, 1466.5, 0.5), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
-# make_plot(binned_wavelengths, binned_flux, 'binned_line_ang.pdf', title='Normalized Flux vs Wavelength', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength (Angstroms)', xmin=1463, xmax=1467,
-# 	      x_ticks = np.arange(1463, 1467, 1), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
+# make_plot(gauss_wavelengths, gauss_flux, 'gauss_line_ang.pdf', color='b', step_bool=True, ymin=-0.1, ymax=2.0, xmin=1463.8, xmax=1466.2,
+# 	      x_ticks = np.arange(1463.8, 1468, 1), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
-# make_plot(noisy_ang, noisy_flux, 'noisy_line_ang.pdf', title='Convolved HI Spectra with S/N=10', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength (Angstroms)', xmin=1463, xmax=1467,
-# 	      x_ticks = np.arange(1463, 1467, 1), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
+make_plot(binned_wavelengths, binned_flux, 'binned_line_ang.pdf', title='Convolved HI Spectra with S/N=12', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength (Angstroms)', xmin=1463.8, xmax=1466.2,
+	      x_ticks = np.arange(1464, 1466.5, 0.5), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
+
+# make_plot(noisy_ang, noisy_flux, 'noisy_line_ang.pdf', title='Convolved HI Spectra with S/N=12', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength (Angstroms)', xmin=1463.8, xmax=1466.2,
+# 	      x_ticks = np.arange(1464, 1466.5, 0.5), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
 
 
