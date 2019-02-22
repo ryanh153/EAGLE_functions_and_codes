@@ -1170,7 +1170,7 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 	# 	raise ValueError('size of cos data and eagle data are different!')
 
 
-def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_widths, eagle_ids, cos_id_arr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, colorbar, bins_for_median, log_plots):
+def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_widths, eagle_ids, cos_id_arr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, cos_smass_data, colorbar, bins_for_median, log_plots):
 
 	one_sig_top = []
 	one_sig_bot = []
@@ -1187,6 +1187,14 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 	# equ_widths *= 1.e3
 	# plot_equ_widths *= 1.e3
 	# plot_W_errs *= 1.e3
+	print 'some info'
+	print np.shape(smasses)
+	print np.shape(equ_widths)
+	print np.shape(plot_equ_widths)
+	print np.shape(radii)
+	print np.shape(plot_equ_widths_radii)
+	print ''
+
 
 	# log equivalent widths for fits 
 	if log_plots:
@@ -1452,6 +1460,16 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 		plt.savefig(ion+'equ_width_virial_with_color_ssfr.pdf', bbox_inches='tight')
 
 	plt.close()
+
+	EAGLE_W_fit_residual = np.log10(equ_widths) - np.log10(eagle_params[0]*radii+eagle_params[1])
+	COS_W_fit_residual = np.log10(plot_equ_widths) - np.log10(cos_params[0]*plot_equ_widths_radii+cos_params[1])
+	fig, ax = plt.subplots(1)
+	ax.scatter(np.log10(smasses), EAGLE_W_fit_residual, s=5)
+	plt.hold(True)
+	ax.scatter(cos_smass_data, COS_W_fit_residual, c='g', s=10)
+	plt.hold(False)
+	fig.savefig("residual_test.pdf")
+	plt.close(fig)
 
 	# if np.shape(plot_equ_widths) != np.shape(equ_widths):
 	# 	print np.shape(plot_equ_widths)
@@ -3227,32 +3245,37 @@ def find_cord_for_interp(array, left_index, value):
 
 def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_depth, gals_num, spec_num, radius, gal_mass, gal_ssfr, col_dense, single_line_temp_bins, single_line_max_plots, single_line_num_plotted, make_realistic_bool, rest_wavelength=None, redshift=None, directory_with_COS_LSF='./'):
 	# parameters for making the spectra realistic
-	pix_per_bin = 8
-	snr = 10.
+	pix_per_bin = 3
+	snr = 7.9 # per pixel. snr per res is snr*pix_per_bin**0.38 for COS
 	cos_lsf_bool=True
-	correlated_pixels = True
-	if correlated_pixels:
-		snr_pow = 0.38
-	else:
-		snr_pow = 0.5
-	real_snr = snr*pix_per_bin**snr_pow
 	vel_kms=True
+	# only matter if cos_lsf_bool = false
 	std=20
 	num_sigma_in_gauss=3
 
 	# requirements for identifying a line, want it to be visible after convolved to (so, visible by COS)
-	depth_tol = 3./real_snr
-	prominence_tol = 3. # how far up a flux must go after min, must raise by 3*f_min/real_snr
+	if cos_lsf_bool:
+		snr_eff = 7.9*3.**0.38
+	else:
+		snr_eff = 7.9*3.**0.38
+	depth_tol = 2./snr_eff**0.5 # 0.57
+	prominence_tol = 2. # how far up a flux must go after min, must raise by prom_tol*f_min/snr**0.5 0.4 at f_min=0.7
 	min_val_limit = 1.0-depth_tol
 	EAGLE_delta_vel = 0.40
 	COS_delta_vel = 2.5
 	sim_px_per_cos_px = (COS_delta_vel*pix_per_bin)/(EAGLE_delta_vel)
-	seperation_tol = 2*COS_delta_vel*pix_per_bin # km/s, makes it so they must be seperated by twice the width of a bin in COS (trough, not trough, trough. as tight as I can do)
+	seperation_tol = 3*COS_delta_vel*pix_per_bin # km/s, makes it so they must be seperated by twice the width of a bin in COS (trough, not trough, trough. as tight as I can do)
 	extra_indices_bool = False
+	plt.plot(velocity, flux)
+	plt.savefig("before.pdf")
+	plt.close()
 
 	if make_realistic_bool:
-		velocity, wavelengths, flux = gen_lsf.do_it_all(velocity, flux, rest_wavelength, redshift, pix_per_bin, snr, cos_lsf_bool=cos_lsf_bool, correlated_pixels = correlated_pixels, vel_kms=vel_kms, chan=None, std=std, num_sigma_in_gauss=num_sigma_in_gauss, directory_with_COS_LSF=directory_with_COS_LSF)
+		velocity, wavelengths, flux = gen_lsf.do_it_all(velocity, flux, rest_wavelength, redshift, pix_per_bin, snr, cos_lsf_bool=cos_lsf_bool, vel_kms=vel_kms, chan=None, std=std, num_sigma_in_gauss=num_sigma_in_gauss, directory_with_COS_LSF=directory_with_COS_LSF)
 
+	plt.plot(velocity, flux)
+	plt.savefig("after.pdf")
+	plt.close()
 	# identifies if there are a bunch of zero points. If so adds a minima, because the rest of the script only catches if it's a strict minima (BELOW the ones on either side)
 	extra_indices = []
 	zero_indices = np.argwhere(flux == 0.0)
@@ -3280,7 +3303,7 @@ def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_
 		else:
 			### if real spectra make the same convolution that it would if it were made realistic, if this is < min_val_limit, let it through
 			### edit: didn't do much, removed
-			# if ((flux[i] < flux[i-1]) & (flux[i] < flux[i+1]) & (flux[i]-np.random.normal(0, flux[i]/(real_snr), 1) < min_val_limit)):
+			# if ((flux[i] < flux[i-1]) & (flux[i] < flux[i+1]) & (flux[i]-np.random.normal(0, flux[i]/(snr), 1) < min_val_limit)):
 			### Now ensure that the average flux over a velocity width of one COS pixel is below the depth tol. Works better
 			if ((flux[i] < flux[i-1]) & (flux[i] < flux[i+1]) & (np.mean(flux[i-int(sim_px_per_cos_px/2.):i+int(sim_px_per_cos_px/2.)]) < min_val_limit)):
 				min_indices.append(i)
@@ -3314,8 +3337,8 @@ def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_
 
 	for i in range(0,num_minima):
 		index = min_indices[i]
-		# how high does the flux have to climb before next min (i.e. how prominent must the trough be) based on snr at trough (2 sigma) or .1 where signal is low (still want unique trough)
-		min_recovery = np.max([flux[index] + prominence_tol*(flux[index]/real_snr), flux[index] + 0.05])
+		# how high does the flux have to climb before next min (i.e. how prominent must the trough be) based on snr at trough (2 sigma) or .2 where signal is low (still want unique trough)
+		min_recovery = np.max([flux[index] + prominence_tol*(flux[index]/snr_eff**0.5), flux[index] + 0.2])
 		missing_half = False
 
 		if index <= 1:
@@ -3330,7 +3353,6 @@ def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_
 				if velocity[j] >= centroid_vel[i+1]:
 
 					if depth[i] == depth[i+1]:
-						'triggered eq'
 						extra_index = int(np.mean([min_indices[i], min_indices[i+1]]))
 						prominence_mask[i+1] = 0
 						depth[i] = depth[i] # redundant, but clearer
@@ -3390,7 +3412,10 @@ def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_
 			FWHM.append(1.e6)
 		else:
 			try:
-				FWHM.append(velocity[right_index]-velocity[left_index])
+				if velocity[right_index]-velocity[left_index] < 5*COS_delta_vel*pix_per_bin:
+					prominence_mask[i] = 0
+				else:
+					FWHM.append(velocity[right_index]-velocity[left_index])
 			except:
 				plt.plot(velocity, flux)
 				plt.savefig('cause_error.pdf')
@@ -3434,23 +3459,23 @@ def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_
 		print np.shape(FWHM)
 		print ''
 
-	### if doing single line plots
+	# ## if doing single line plots
 	# for i, temp in enumerate(temps):
-	# 	if temp > 1.e6:
-	# 		for i in range(0,np.size(min_indices)):
-	# 			plt.plot(velocity, flux, 'k', label = 'velocity=%d, FWHM=%d, temp=%.2f' % (centroid_vel[i], FWHM[i], np.log10(temps[i])))
-	# 			plt.hold(True)
-	# 			plt.axvline(centroid_vel[i])
-	# 		plt.hold(False)
-	# 		plt.xlabel('Velocity (km/s)')
-	# 		plt.ylabel('Flux')
-	# 		plt.legend(loc='lower right')
-	# 		if make_realistic_bool:
-	# 			plt.title(r'Spectra w/ COS LSF: b=%.0d, $M_{200}=%.2E, sSFR=%.2f$' % (radius, gal_mass, gal_ssfr))
-	# 			plt.savefig('hot_lines_real_%d_%d.pdf' % (gals_num, spec_num))
-	# 		else:
-	# 			plt.title(r'Clean Spectra: b=%.0d, $M_{200}=%.2E, sSFR=%.2f$' % (radius, gal_mass, gal_ssfr))
-	# 			plt.savefig('hot_lines_%d_%d.pdf' % (gals_num, spec_num))
+	# 	for i in range(0,np.size(min_indices)):
+	# 		plt.plot(velocity, flux, 'k', label = 'velocity=%d, FWHM=%d, temp=%.2f' % (centroid_vel[i], FWHM[i], np.log10(temps[i])))
+	# 		plt.hold(True)
+	# 		plt.axvline(centroid_vel[i])
+	# 	plt.hold(False)
+	# 	plt.xlabel('Velocity (km/s)')
+	# 	plt.ylabel('Flux')
+	# 	plt.ylim([0.0,1.5])
+	# 	plt.legend(loc='lower right')
+	# 	if make_realistic_bool:
+	# 		plt.title(r'Spectra w/ COS LSF: b=%.0d, $M_{200}=%.2E, sSFR=%.2f$' % (radius, gal_mass, gal_ssfr))
+	# 		plt.savefig('lines_real_%d_%d.pdf' % (gals_num, spec_num))
+	# 	else:
+	# 		plt.title(r'Clean Spectra: b=%.0d, $M_{200}=%.2E, sSFR=%.2f$' % (radius, gal_mass, gal_ssfr))
+	# 		plt.savefig('lines_%d_%d.pdf' % (gals_num, spec_num))
 
 	# do_plot = True
 	# if ((col_dense > 14.25) & (col_dense < 14.75)):
@@ -3486,7 +3511,7 @@ def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_
 	# 			plt.savefig('14p5_cols_%s_%s.pdf' % (str(single_line_temp_bins[plot_temp_index])[0]+'p'+str(single_line_temp_bins[plot_temp_index])[-1], str(int(single_line_num_plotted[plot_temp_index]))))
 
 	# 		### make a realistic version of each line
-	# 		velocity, wavelengths, flux = gen_lsf.do_it_all(velocity, flux, rest_wavelength, redshift, pix_per_bin, snr, cos_lsf_bool=cos_lsf_bool, correlated_pixels = correlated_pixels, vel_kms=vel_kms, chan=None, std=std, num_sigma_in_gauss=num_sigma_in_gauss, directory_with_COS_LSF=directory_with_COS_LSF)
+	# 		velocity, wavelengths, flux = gen_lsf.do_it_all(velocity, flux, rest_wavelength, redshift, pix_per_bin, snr, cos_lsf_bool=cos_lsf_bool, vel_kms=vel_kms, chan=None, std=std, num_sigma_in_gauss=num_sigma_in_gauss, directory_with_COS_LSF=directory_with_COS_LSF)
 	# 		plt.plot(velocity, flux, 'k')
 	# 		plt.ylim([-0.2,1.2])
 	# 		plt.xlabel('Velocity (km/s)')
@@ -3495,7 +3520,6 @@ def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_
 	# 		ax.text(0.05, 0.93, 'b=%.0d, $M_{200}=%.2E, sSFR=%.2f, N_{HI}=%.2f$' % (radius, gal_mass, gal_ssfr, col_dense), transform = ax.transAxes, fontsize = 12., bbox=dict(boxstyle='round'))
 	# 		plt.title(r'HI Spectra w/ COS LSF')
 	# 		plt.savefig('14p5_cols_real_%s_%s.pdf' % (str(single_line_temp_bins[plot_temp_index])[0]+'p'+str(single_line_temp_bins[plot_temp_index])[-1], str(int(single_line_num_plotted[plot_temp_index]))))
-
 
 	return num_minima, centroid_vel, np.array(FWHM), depth, temps, line_ion_densities, line_nH, single_line_num_plotted
 
@@ -3987,37 +4011,37 @@ def kinematic_plots(num_minima, centroid_vel, depth, FWHM, radii, temps, line_io
 	# 	plot_labels=['Impact Parameter vs Velocity', 'b (kpc)', 'v (km/s)', r'$log_{10}(N_{components})$'], median=True, median_along='x',
 	# 	xlims=[0,250.], ylims=[0.,500.], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
-	make_2d_hist_plot(virial_radii_for_kin, np.abs(centroids_in_vir), hist_bins, 'vir_radius_vir_vel_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-		plot_labels=['Impact Parameter vs Velocity', r'$b/R_{200}$', r'$v_{centroid}$ $(v/v_{200})$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
-		xlims=[0,2.1], ylims=[0.,6.], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
+	# make_2d_hist_plot(virial_radii_for_kin, np.abs(centroids_in_vir), hist_bins, 'vir_radius_vir_vel_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
+	# 	plot_labels=['Impact Parameter vs Velocity', r'$b/R_{200}$', r'$v_{centroid}$ $(v/v_{200})$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+	# 	xlims=[0,2.1], ylims=[0.,6.], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
-	make_2d_hist_plot(plotting_radii, temps, hist_bins, 'radius_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-		plot_labels=['Impact Prameter vs Temperature', 'b (kpc)', r'$log_{10}(T)$ K', r'$log_{10}(N_{components})$'], median=True, median_along='x',
-		xlims=[0,250], ylims=[3.5,6.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
+	# make_2d_hist_plot(plotting_radii, temps, hist_bins, 'radius_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
+	# 	plot_labels=['Impact Prameter vs Temperature', 'b (kpc)', r'$log_{10}(T)$ K', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+	# 	xlims=[0,250], ylims=[3.5,6.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
-	make_2d_hist_plot(virial_radii_for_kin, temps_in_vir, hist_bins, 'vir_radius_vir_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-		plot_labels=['Impact Prameter vs Temperature', r'$b/R_{200}$', r'$log_{10}(T/T_{200})$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
-		xlims=[0,2.1], ylims=[-3.,0.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
+	# make_2d_hist_plot(virial_radii_for_kin, temps_in_vir, hist_bins, 'vir_radius_vir_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
+	# 	plot_labels=['Impact Prameter vs Temperature', r'$b/R_{200}$', r'$log_{10}(T/T_{200})$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+	# 	xlims=[0,2.1], ylims=[-3.,0.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
-	make_2d_hist_plot(virial_radii_for_kin, temps, hist_bins, 'vir_radius_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-		plot_labels=['Impact Prameter vs Temperature', r'$b/R_{200}$', r'$log_{10}(T)$ K', r'$log_{10}(N_{components})$'], median=True, median_along='x',
-		xlims=[0,2.1], ylims=[3.5,6.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
+	# make_2d_hist_plot(virial_radii_for_kin, temps, hist_bins, 'vir_radius_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
+	# 	plot_labels=['Impact Prameter vs Temperature', r'$b/R_{200}$', r'$log_{10}(T)$ K', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+	# 	xlims=[0,2.1], ylims=[3.5,6.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 	# make_2d_hist_plot(np.abs(centroid_vel), temps, hist_bins, 'vel_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
 	# 	plot_labels=['Centroid Velocity vs Temperature', r'$v_{centroid}$ (km/s)', r'$log_{10}(T)$ K', r'$log_{10}(N_{components})$'], median=True, median_along='x',
 	# 	xlims=[0,500], ylims=[3.5,6.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
-	make_2d_hist_plot(np.abs(centroids_in_vir), temps_in_vir, hist_bins, 'vir_vel_vir_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-		plot_labels=['Centroid Velocity vs Temperature', r'$v_{centroid}$ $(v/v_{200})$', r'$log_{10}(T/T_{200})$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
-		xlims=[0,6.0], ylims=[-3.,0.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
+	# make_2d_hist_plot(np.abs(centroids_in_vir), temps_in_vir, hist_bins, 'vir_vel_vir_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
+	# 	plot_labels=['Centroid Velocity vs Temperature', r'$v_{centroid}$ $(v/v_{200})$', r'$log_{10}(T/T_{200})$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+	# 	xlims=[0,6.0], ylims=[-3.,0.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 	make_2d_hist_plot(np.log10(halo_masses_for_kin), temps_in_vir, hist_bins, 'mass_vir_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
 		plot_labels=[r'$M_{200}$ vs Temperature', r'$log_{10}(M_{200}/M_{\odot})$', r'$log_{10}(T/T_{200})$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
 		xlims = [10.5,13.6], ylims=[-3.,0.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
-	# make_2d_hist_plot(np.log10(halo_masses_for_kin), temps, hist_bins, 'mass_vir_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-	# 	plot_labels=[r'$M_{200}$ vs Temperature', r'$log_{10}(M_{200}/M_{\odot})$', r'$log_{10}(T)$ K', r'$log_{10}(N_{components})$'], median=True, median_along='x',
-	# 	xlims = [10.5,13.6], ylims=[3.5,6.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
+	make_2d_hist_plot(np.log10(halo_masses_for_kin), temps, hist_bins, 'mass_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
+		plot_labels=[r'$M_{200}$ vs Temperature', r'$log_{10}(M_{200}/M_{\odot})$', r'$log_{10}(T)$ K', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+		xlims = [10.5,13.6], ylims=[3.5,6.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 	# make_2d_hist_plot(virial_radii_for_kin, line_ion_densities, hist_bins, 'vir_radii_ion_dens_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
 	# 	plot_labels=[r'Impact Parameter vs $n_{HI}$', r'$b$ $(b/R_{200})$', r'$log_{10}(n_{HI})$ ${\rm cm}^{-3}$', r'$log_{10}(N_{components})$'], median=True, median_along='x',

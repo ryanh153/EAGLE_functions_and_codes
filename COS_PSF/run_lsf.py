@@ -151,7 +151,7 @@ def make_plot(x,y, filename, title=None, color='b',step_bool=False, ylabel=None,
 	if title != None:
 		plt.title(title)
 	if xlabel != None:
-		plt.xlabel(xlabel)
+		plt.xlabel(r"%s" % (xlabel))
 	if ylabel != None:
 		plt.ylabel(ylabel)
 
@@ -164,25 +164,25 @@ def make_plot(x,y, filename, title=None, color='b',step_bool=False, ylabel=None,
 # make_plot(convolved_vel, convolved_flux, 'convolved_line_vel.pdf', color='b', step_bool=True, ymin=-0.1, ymax=2.0, xmin=-280, xmax=280,
 # 	      x_ticks = np.arange(-200,300,100), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
-make_plot(binned_vel, binned_flux, 'binned_line_vel.pdf', title='Convolved HI Spectra with S/N=12', color='b', step_bool=True, ymin=-0.1, ymax=2.0, xmin=-280, xmax=280,
+make_plot(binned_vel, binned_flux, 'binned_line_vel.pdf', title='Convolved HI Spectra with S/N=12', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Velocity (km/s)', xmin=-280, xmax=280,
 	      x_ticks = np.arange(-200,300,100), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
 # make_plot(noisy_vel, noisy_flux, 'noisy_line_vel.pdf', color='b', step_bool=True, ylabel='', ymin=-0.1, ymax=2.0, xlabel='', xmin=-280, xmax=280,
 # 	      x_ticks = np.arange(-200,300,100), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
-make_plot(simulated_ang, simulated_flux, 'simulated_line_ang.pdf', title='Simulated HI Spectra', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength (Angstroms)', xmin=1463.8, xmax=1466.2,
+make_plot(simulated_ang, simulated_flux, 'simulated_line_ang.pdf', title='Simulated HI Spectra', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength ($\AA{}$)', xmin=1463.8, xmax=1466.2,
 	      x_ticks = np.arange(1464, 1466.5, 0.5), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
-make_plot(convolved_wavelengths, convolved_flux, 'convolved_line_ang.pdf', title='Normalized Flux vs Wavelength', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength (Angstroms)', xmin=1463.8, xmax=1466.2,
+make_plot(convolved_wavelengths, convolved_flux, 'convolved_line_ang.pdf', title='Normalized Flux vs Wavelength', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength ($\AA{}$)', xmin=1463.8, xmax=1466.2,
 	      x_ticks = np.arange(1464, 1466.5, 0.5), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
 # make_plot(gauss_wavelengths, gauss_flux, 'gauss_line_ang.pdf', color='b', step_bool=True, ymin=-0.1, ymax=2.0, xmin=1463.8, xmax=1466.2,
 # 	      x_ticks = np.arange(1463.8, 1468, 1), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
-make_plot(binned_wavelengths, binned_flux, 'binned_line_ang.pdf', title='Convolved HI Spectra with S/N=12', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength (Angstroms)', xmin=1463.8, xmax=1466.2,
+make_plot(binned_wavelengths, binned_flux, 'binned_line_ang.pdf', title='Convolved HI Spectra with S/N=12', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength ($\AA{}$)', xmin=1463.8, xmax=1466.2,
 	      x_ticks = np.arange(1464, 1466.5, 0.5), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
-# make_plot(noisy_ang, noisy_flux, 'noisy_line_ang.pdf', title='Convolved HI Spectra with S/N=12', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength (Angstroms)', xmin=1463.8, xmax=1466.2,
+# make_plot(noisy_ang, noisy_flux, 'noisy_line_ang.pdf', title='Convolved HI Spectra with S/N=12', color='b', step_bool=True, ylabel='Normalized Flux', ymin=-0.1, ymax=2.0, xlabel='Wavelength ($\AA{}$)', xmin=1463.8, xmax=1466.2,
 # 	      x_ticks = np.arange(1464, 1466.5, 0.5), y_ticks = np.arange(0.0,3.0,1.0), relative_labels_bool=False, aspect_ratio=6./27., grid_bool=False)
 
 

@@ -49,8 +49,8 @@ plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['le
 cos_comparisons_file = 'cos_data.hdf5'
 
 # ### Super important to make sure these are right before each run. Don't overwrite stuff for the love of god. Especially on long runs
-cosma_bool = True
-summit_bool = False
+cosma_bool = False
+summit_bool = True
 ### old cosma locations
 if cosma_bool:
 	# this is the location of the gal output files that contain all the data you need from the eagle galaxies
@@ -93,9 +93,9 @@ elif summit_bool:
 	# where all that data is put and where created los live. Basically the home for the run you are doing. 
 	# don't make it the same for multiple runs and make sure if you're just running plotting stuff it looks in the right place
 
-	folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos_5rel_1')
-	folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass_5rel_1'))
-	folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs_5rel_1'))
+	folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/halos_5rel_1')
+	folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/gass_5rel_1'))
+	folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/dwarfs_5rel_1'))
 
 	# folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs*')
 	# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
@@ -147,9 +147,9 @@ mean_total_mass_bool = False
 virial_radii_bool = False
 make_realistic_bool = False
 new_lines = False
-col_con_bool = True
+col_con_bool = False
 equ_widths_bool = True
-log_plots = True
+log_plots = False
 
 # cut is 9.9 smass in cos, this will be 9.7 after read ins and 9.7 in eagle gals (IMF)
 if run_specwizard:
@@ -166,7 +166,7 @@ else:
 	min_ssfr = -15.
 
 starting_gal_id = int(0)
-realizations = 5
+realizations = 1
 bins_for_median= 2 # in scatter or maybe hist plots number of bins used to make running median/percentile lines
 max_abs_vel = 500. # km/s
 min_halo_mass = 10. # for plots. 
@@ -226,7 +226,9 @@ print "num"
 print cos_smass_data
 print np.size(cos_smass_data)
 print ""
-ordered_cos_radii = np.sort(cos_radii_data)
+ordered_indices = np.argsort(cos_radii_data)
+ordered_cos_radii = cos_radii_data[ordered_indices]
+ordered_cos_smass = cos_smass_data[ordered_indices]
 
 cos_smass_data -= 0.2
 max_smass -= 0.2
@@ -266,96 +268,98 @@ if run_specwizard:
 	print 'Number of gals Matched'
 	print np.size(gals_matched_for_each_cos_gal[gals_matched_for_each_cos_gal!=0])
 
-# h1_cols_indices, h1_W_indices, si3_cols_indices, si3_equ_widths_indices, o6_cols_indices, o6_equ_widths_indices, c4_cols_indices, c4_equ_widths_indices = real_data.cos_where_matched_in_EAGLE(AGN_bool, proch_bool, proch_ids, where_matched_bools, cos_smass_data, cos_ssfr_data, cos_radii_data, cos_id_arr, cos_h1_equ_widths, cos_h1_equ_widths_radii, cos_h1_cols, cos_h1_cols_radii, cos_si3_equ_widths, cos_si3_equ_widths_radii, cos_si3_cols, cos_si3_cols_radii, cos_o6_cols, cos_o6_cols_radii, cos_o6_equ_widths, cos_o6_equ_widths_radii, cos_c4_cols, cos_c4_cols_radii, cos_c4_equ_widths, cos_c4_equ_widths_radii, cos_AGN)
+h1_cols_indices, h1_W_indices, si3_cols_indices, si3_equ_widths_indices, o6_cols_indices, o6_equ_widths_indices, c4_cols_indices, c4_equ_widths_indices = real_data.cos_where_matched_in_EAGLE(AGN_bool, proch_bool, proch_ids, where_matched_bools, cos_smass_data, cos_ssfr_data, cos_radii_data, cos_id_arr, cos_h1_equ_widths, cos_h1_equ_widths_radii, cos_h1_cols, cos_h1_cols_radii, cos_si3_equ_widths, cos_si3_equ_widths_radii, cos_si3_cols, cos_si3_cols_radii, cos_o6_cols, cos_o6_cols_radii, cos_o6_equ_widths, cos_o6_equ_widths_radii, cos_c4_cols, cos_c4_cols_radii, cos_c4_equ_widths, cos_c4_equ_widths_radii, cos_AGN)
 
-# ### If you want KS tests and histrograms for each realization run in all directories passed (each KS test is on a single rel even if a folder is multiple)
-# # if equ_widths_bool:
-# # 	cos_functions.handle_single_realization_statistics(spec_output_directory, cos_smass_data[h1_W_indices], cos_ssfr_data[h1_W_indices], cos_id_arr[h1_W_indices],\
-# # 		cos_h1_equ_widths[h1_W_indices], cos_h1_W_flags[h1_W_indices], cos_h1_equ_widths_radii[h1_W_indices], cos_h1_cols[h1_W_indices], cos_h1_cols_flags[h1_W_indices], \
-# # 		cos_h1_cols_radii[h1_W_indices], equ_widths_bool)
+### If you want KS tests and histrograms for each realization run in all directories passed (each KS test is on a single rel even if a folder is multiple)
+# if equ_widths_bool:
+# 	cos_functions.handle_single_realization_statistics(spec_output_directory, cos_smass_data[h1_W_indices], cos_ssfr_data[h1_W_indices], cos_id_arr[h1_W_indices],\
+# 		cos_h1_equ_widths[h1_W_indices], cos_h1_W_flags[h1_W_indices], cos_h1_equ_widths_radii[h1_W_indices], cos_h1_cols[h1_W_indices], cos_h1_cols_flags[h1_W_indices], \
+# 		cos_h1_cols_radii[h1_W_indices], equ_widths_bool)
 
-# # else:
-# # 	cos_functions.handle_single_realization_statistics(spec_output_directory, cos_smass_data[h1_cols_indices], cos_ssfr_data[h1_cols_indices], cos_id_arr[h1_cols_indices],\
-# # 		cos_h1_equ_widths[h1_cols_indices], cos_h1_W_flags[h1_cols_indices], cos_h1_equ_widths_radii[h1_cols_indices], cos_h1_cols[h1_cols_indices], cos_h1_cols_flags[h1_cols_indices], \
-# # 		cos_h1_cols_radii[h1_cols_indices], equ_widths_bool)
-
-# if combined_plots_folder != None:
-# 	os.chdir(combined_plots_folder)
 # else:
-# 	os.chdir(spec_output_directory)
+# 	cos_functions.handle_single_realization_statistics(spec_output_directory, cos_smass_data[h1_cols_indices], cos_ssfr_data[h1_cols_indices], cos_id_arr[h1_cols_indices],\
+# 		cos_h1_equ_widths[h1_cols_indices], cos_h1_W_flags[h1_cols_indices], cos_h1_equ_widths_radii[h1_cols_indices], cos_h1_cols[h1_cols_indices], cos_h1_cols_flags[h1_cols_indices], \
+# 		cos_h1_cols_radii[h1_cols_indices], equ_widths_bool)
 
-# for i in range(0,np.size(ions)):
-# 	print 'doing new ion'
-# 	print ions[i]
-# 	print ''
-# 	ion = ions[i]
-# 	lookup_file = lookup_files+ions_short[i]+'.hdf5'
-# 	covering_frac_val = covering_frac_vals[i]
-# 	lambda_line = line_wavelengths[i]
+if combined_plots_folder != None:
+	os.chdir(combined_plots_folder)
+else:
+	os.chdir(spec_output_directory)
+
+for i in range(0,np.size(ions)):
+	print 'doing new ion'
+	print ions[i]
+	print ''
+	ion = ions[i]
+	lookup_file = lookup_files+ions_short[i]+'.hdf5'
+	covering_frac_val = covering_frac_vals[i]
+	lambda_line = line_wavelengths[i]
 	
-# 	if ion == 'HydrogenI':
-# 		plot_cols = cos_h1_cols[h1_cols_indices]
-# 		plot_cols_err = cos_h1_cols_errs[h1_cols_indices]
-# 		plot_cols_flags = cos_h1_cols_flags[h1_cols_indices]
-# 		plot_cols_radii = cos_h1_cols_radii[h1_cols_indices]
-# 		plot_equ_widths = cos_h1_equ_widths[h1_W_indices]
-# 		plot_W_errs = cos_h1_W_errs[h1_W_indices]
-# 		plot_W_flags = cos_h1_W_flags[h1_W_indices]
-# 		plot_equ_widths_radii = cos_h1_equ_widths_radii[h1_W_indices]
-# 		if equ_widths_bool:
-# 			curr_cos_id_arr = cos_id_arr[h1_W_indices]
-# 			curr_cos_smass = cos_smass_data[h1_W_indices]
-# 			curr_cos_ssfr = cos_ssfr_data[h1_W_indices]
-# 		else:
-# 			curr_cos_id_arr = cos_id_arr[h1_cols_indices]
-# 			curr_cos_id_arr = cos_id_arr[h1_cols_indices]
-# 			curr_cos_smass = cos_smass_data[h1_cols_indices]
-# 			curr_cos_ssfr = cos_ssfr_data[h1_cols_indices]
-# 	elif ion == 'SiliconIII':
-# 		plot_cols = cos_si3_cols[si3_cols_indices]
-# 		plot_cols_radii = cos_si3_cols_radii[si3_cols_indices]
-# 		plot_equ_widths = cos_si3_equ_widths[si3_equ_widths_indices]
-# 		plot_equ_widths_radii = cos_si3_equ_widths_radii[si3_equ_widths_indices]
-# 		if equ_widths_bool:
-# 			curr_cos_id_arr = cos_id_arr[si3_equ_widths_indices]
-# 		else:
-# 			curr_cos_id_arr = cos_id_arr[si3_cols_indices]
-# 	elif ion == 'OxygenVI':
-# 		plot_cols = cos_o6_cols[o6_cols_indices]
-# 		plot_cols_radii = cos_o6_cols_radii[o6_cols_indices]
-# 		plot_equ_widths = cos_o6_equ_widths[o6_equ_widths_indices]
-# 		plot_equ_widths_radii = cos_o6_equ_widths_radii[o6_equ_widths_indices]
-# 		if equ_widths_bool:
-# 			curr_cos_id_arr = cos_id_arr[o6_equ_widths_indices]
-# 		else:
-# 			curr_cos_id_arr = cos_id_arr[o6_cols_indices]
-# 	elif ion == 'CarbonIV':
-# 		plot_cols = cos_c4_cols[c4_cols_indices]
-# 		plot_cols_radii = cos_c4_cols_radii[c4_cols_indices]
-# 		plot_equ_widths = cos_c4_equ_widths[c4_equ_widths_indices]
-# 		plot_equ_widths_radii = cos_c4_equ_widths_radii[c4_equ_widths_indices]
-# 		if equ_widths_bool:
-# 			curr_cos_id_arr = cos_id_arr[c4_equ_widths_indices]
-# 		else:
-# 			curr_cos_id_arr = cos_id_arr[c4_cols_indices]
-# 	else: 
-# 		plot_cols = np.array([])
-# 		plot_cols_radii = np.array([])
-# 		plot_equ_widths = np.array([])
-# 		plot_equ_widths_radii = np.array([])
-# 		if equ_widths_bool:
-# 			curr_cos_id_arr = np.array([])
-# 		else:
-# 			curr_cos_id_arr = np.array([])
-# 		print 'warning: No COS data prepared for this ion'
+	if ion == 'HydrogenI':
+		plot_cols = cos_h1_cols[h1_cols_indices]
+		plot_cols_err = cos_h1_cols_errs[h1_cols_indices]
+		plot_cols_flags = cos_h1_cols_flags[h1_cols_indices]
+		plot_cols_radii = cos_h1_cols_radii[h1_cols_indices]
+		plot_equ_widths = cos_h1_equ_widths[h1_W_indices]
+		plot_W_errs = cos_h1_W_errs[h1_W_indices]
+		plot_W_flags = cos_h1_W_flags[h1_W_indices]
+		plot_equ_widths_radii = cos_h1_equ_widths_radii[h1_W_indices]
+		if equ_widths_bool:
+			curr_cos_id_arr = cos_id_arr[h1_W_indices]
+			curr_cos_smass = cos_smass_data[h1_W_indices]
+			curr_cos_ssfr = cos_ssfr_data[h1_W_indices]
+		else:
+			curr_cos_id_arr = cos_id_arr[h1_cols_indices]
+			curr_cos_id_arr = cos_id_arr[h1_cols_indices]
+			curr_cos_smass = cos_smass_data[h1_cols_indices]
+			curr_cos_ssfr = cos_ssfr_data[h1_cols_indices]
+	elif ion == 'SiliconIII':
+		plot_cols = cos_si3_cols[si3_cols_indices]
+		plot_cols_radii = cos_si3_cols_radii[si3_cols_indices]
+		plot_equ_widths = cos_si3_equ_widths[si3_equ_widths_indices]
+		plot_equ_widths_radii = cos_si3_equ_widths_radii[si3_equ_widths_indices]
+		if equ_widths_bool:
+			curr_cos_id_arr = cos_id_arr[si3_equ_widths_indices]
+		else:
+			curr_cos_id_arr = cos_id_arr[si3_cols_indices]
+	elif ion == 'OxygenVI':
+		plot_cols = cos_o6_cols[o6_cols_indices]
+		plot_cols_radii = cos_o6_cols_radii[o6_cols_indices]
+		plot_equ_widths = cos_o6_equ_widths[o6_equ_widths_indices]
+		plot_equ_widths_radii = cos_o6_equ_widths_radii[o6_equ_widths_indices]
+		if equ_widths_bool:
+			curr_cos_id_arr = cos_id_arr[o6_equ_widths_indices]
+		else:
+			curr_cos_id_arr = cos_id_arr[o6_cols_indices]
+	elif ion == 'CarbonIV':
+		plot_cols = cos_c4_cols[c4_cols_indices]
+		plot_cols_radii = cos_c4_cols_radii[c4_cols_indices]
+		plot_equ_widths = cos_c4_equ_widths[c4_equ_widths_indices]
+		plot_equ_widths_radii = cos_c4_equ_widths_radii[c4_equ_widths_indices]
+		if equ_widths_bool:
+			curr_cos_id_arr = cos_id_arr[c4_equ_widths_indices]
+		else:
+			curr_cos_id_arr = cos_id_arr[c4_cols_indices]
+	else: 
+		plot_cols = np.array([])
+		plot_cols_radii = np.array([])
+		plot_equ_widths = np.array([])
+		plot_equ_widths_radii = np.array([])
+		if equ_widths_bool:
+			curr_cos_id_arr = np.array([])
+		else:
+			curr_cos_id_arr = np.array([])
+		print 'warning: No COS data prepared for this ion'
 
 	# EagleFunctions.actual_cumulative_mass_for_EAGLE_gals('/gpfs/data/analyse/rhorton/opp_research/data/end_summer_gals/')
 
-	# covered, total, ssfr, masses, smasses, redshifts, radii, virial_radii, R200, cols, equ_widths, eagle_ids, flux_for_stacks, vel_for_stacks, virial_vel_for_stacks, cols, H_cols, num_minimas, depths, FWHMs, centroid_vels, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin, ion_num_densities, temperatues, gas_densities = cos_functions.get_EAGLE_data_for_plots(ions_short[i], lambda_line, curr_cos_id_arr, lambda_line, spec_output_directory, lookup_file, max_smass, min_smass, max_ssfr, min_ssfr, tols, hi_lo_tols, ordered_cos_radii, covering_frac_bool, covering_frac_val, max_abs_vel, mass_estimates_bool, kinematics_bool, make_realistic_bool = make_realistic_bool, offset = starting_gal_id)
+	covered, total, ssfr, masses, smasses, redshifts, radii, virial_radii, R200, cols, equ_widths, eagle_ids, flux_for_stacks, vel_for_stacks, virial_vel_for_stacks, cols, H_cols, num_minimas, depths, FWHMs, centroid_vels, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin, ion_num_densities, temperatues, gas_densities = cos_functions.get_EAGLE_data_for_plots(ions_short[i], lambda_line, curr_cos_id_arr, lambda_line, spec_output_directory, lookup_file, max_smass, min_smass, max_ssfr, min_ssfr, tols, hi_lo_tols, ordered_cos_radii, covering_frac_bool, covering_frac_val, max_abs_vel, mass_estimates_bool, kinematics_bool, make_realistic_bool = make_realistic_bool, offset = starting_gal_id)
 
 	# # can do both to compare num_minima with and without realistic spectra
 	# covered, total, ssfr, masses, smasses, redshifts, radii, virial_radii, R200, cols, equ_widths, eagle_ids, flux_for_stacks, vel_for_stacks, virial_vel_for_stacks, cols, H_cols, real_num_minimas, depths, FWHMs, centroid_vels, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin, ion_num_densities, temperatues, gas_densities = cos_functions.get_EAGLE_data_for_plots(ions_short[i], lambda_line, curr_cos_id_arr, lambda_line, spec_output_directory, lookup_file, max_smass, min_smass, max_ssfr, min_ssfr, tols, hi_lo_tols, ordered_cos_radii, covering_frac_bool, covering_frac_val, max_abs_vel, mass_estimates_bool, kinematics_bool, make_realistic_bool = True, offset = starting_gal_id)
 
+	# print real_num_minimas
+	# print num_minimas
 	# bins = np.arange(0,np.max(num_minimas)+2) - 0.5
 	# plt.hist(num_minimas, bins, alpha=0.5, color='b', label='Idealized Spectra')
 	# plt.hold(True)
@@ -378,20 +382,26 @@ if run_specwizard:
 	# print np.size(num_minimas[num_minimas==2])
 	# print np.size(num_minimas[num_minimas==3])
 	# print ''
+	# print np.size(real_num_minimas)
+	# print np.size(real_num_minimas[real_num_minimas==0])
+	# print np.size(real_num_minimas[real_num_minimas==1])
+	# print np.size(real_num_minimas[real_num_minimas==2])
+	# print np.size(real_num_minimas[real_num_minimas==3])
+	# print ''
 
 	# np.savez('/projects/ryho3446/snapshots/kin_outputs.npz', num_minimas, centroid_vels, depths, FWHMs, radii, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin)
 
-	# npzfile = np.load('/projects/ryho3446/snapshots/kin_outputs.npz')
- # 	num_minimas, centroid_vels, depths, FWHMs, radii, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin =  npzfile['arr_0'], npzfile['arr_1'], npzfile['arr_2'], npzfile['arr_3'], npzfile['arr_4'], npzfile['arr_5'], npzfile['arr_6'], npzfile['arr_7'], npzfile['arr_8'], npzfile['arr_9'], npzfile['arr_10'], npzfile['arr_11'], npzfile['arr_12'], npzfile['arr_13'] # [npzfile['arr_%s' % (i)] for i in range(np.size(npzfile))]
+	npzfile = np.load('/projects/ryho3446/snapshots/kin_outputs.npz')
+ 	num_minimas, centroid_vels, depths, FWHMs, radii, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin =  npzfile['arr_0'], npzfile['arr_1'], npzfile['arr_2'], npzfile['arr_3'], npzfile['arr_4'], npzfile['arr_5'], npzfile['arr_6'], npzfile['arr_7'], npzfile['arr_8'], npzfile['arr_9'], npzfile['arr_10'], npzfile['arr_11'], npzfile['arr_12'], npzfile['arr_13'] # [npzfile['arr_%s' % (i)] for i in range(np.size(npzfile))]
 
-	# cos_functions.kinematic_plots(num_minimas, centroid_vels, depths, FWHMs, radii, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin, bins_for_median)
+	cos_functions.kinematic_plots(num_minimas, centroid_vels, depths, FWHMs, radii, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin, bins_for_median)
 	
 	# cos_functions.neutral_columns_plot(cols, H_cols, radii, virial_radii, R200, smasses, masses, ssfr, ion_num_densities, gas_densities, temperatues, mean_total_mass_bool, virial_radii_bool, pop_str)
 
 	# if equ_widths_bool:
-	# 	# cos_functions.make_equ_width_plots(ions_short[i], ssfr, masses, smasses, radii, virial_radii, equ_widths, eagle_ids, curr_cos_id_arr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, colorbar, bins_for_median, log_plots) # line in Angst
+	# 	cos_functions.make_equ_width_plots(ions_short[i], ssfr, masses, smasses, radii, virial_radii, equ_widths, eagle_ids, curr_cos_id_arr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, curr_cos_smass, colorbar, bins_for_median, log_plots) # line in Angst
 
-	# 	cos_functions.make_equ_width_contour_plots(ions_short[i], radii, virial_radii, equ_widths, smasses, ssfr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, curr_cos_smass, curr_cos_ssfr, virial_radii_bool, log_plots)
+	# 	# cos_functions.make_equ_width_contour_plots(ions_short[i], radii, virial_radii, equ_widths, smasses, ssfr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, curr_cos_smass, curr_cos_ssfr, virial_radii_bool, log_plots)
 
 	# else:
 	# 	cos_functions.make_col_dense_plots(ions_short[i], covered, total, ssfr, masses, smasses, radii, virial_radii, cols, eagle_ids, curr_cos_id_arr, plot_cols, plot_cols_err, plot_cols_flags, plot_cols_radii, covering_frac_val, colorbar, bins_for_median)
@@ -418,11 +428,11 @@ if run_specwizard:
 
 # 	# cos_functions.fits(ions_short[i], which_survey, spec_output_directory, combined_plots_folder, plot_equ_widths, plot_equ_widths_radii, covering_frac_bool = True, covering_frac_val = 14.0, lambda_line = lambda_line, colorbar = colorbar, offset = starting_gal_id) # line in Angst
 
-list_for_all_id_data = particle_tracking_functions.get_all_id_data(spec_output_directory)
-print 'got list'
-print list_for_all_id_data
-print ''
-particle_tracking_functions.get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lookup_files, new_lines, col_con_bool)
+# list_for_all_id_data = particle_tracking_functions.get_all_id_data(spec_output_directory)
+# print 'got list'
+# print list_for_all_id_data
+# print ''
+# particle_tracking_functions.get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lookup_files, new_lines, col_con_bool)
 
 
 # ########################################

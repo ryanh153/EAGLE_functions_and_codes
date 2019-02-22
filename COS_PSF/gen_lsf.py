@@ -125,7 +125,7 @@ def add_noise(input_x, input_flux, rest_wavelength, redshift, snr, vel_kms=True)
 
 	noise_vector = np.zeros(np.size(input_flux))
 	for i in range(np.size(input_flux)):
-		noise_vector[i] = np.random.normal(0.,(input_flux[i]/snr)**0.5)
+		noise_vector[i] = np.random.normal(0.,(input_flux[i]/snr)**0.5) # should this be square rooted? 
 
 	noisy_flux = input_flux + noise_vector
 
@@ -174,15 +174,17 @@ def do_it_all(simulated_x, simulated_flux, rest_wavelength, redshift, pix_per_bi
 			convolved_vel, convolved_wavelengths, convolved_flux = convolve_spectra_with_gaussian(simulated_x, simulated_flux, std, rest_wavelength, redshift, vel_kms=vel_kms, num_sigma_in_gauss=num_sigma_in_gauss)
 
 	if vel_kms:
-		binned_vel, binned_wavelengths, binned_flux = bin_data(convolved_vel, convolved_flux, pix_per_bin, rest_wavelength, redshift, vel_kms=vel_kms)
+		noisy_flux = add_noise(convolved_vel, convolved_flux, rest_wavelength, redshift, snr, vel_kms=vel_kms)
 
-		noisy_flux = add_noise(binned_vel, binned_flux, rest_wavelength, redshift, snr, vel_kms=vel_kms)
+		binned_vel, binned_wavelengths, binned_flux = bin_data(convolved_vel, noisy_flux, pix_per_bin, rest_wavelength, redshift, vel_kms=vel_kms)
+
 	else:
-		binned_vel, binned_wavelengths, binned_flux = bin_data(convolved_wavelengths, convolved_flux, pix_per_bin, rest_wavelength, redshift, vel_kms=vel_kms)
+		noisy_flux = add_noise(convoloved_wavelengths, convoloved_flux, rest_wavelength, redshift, snr, vel_kms=vel_kms)
 
-		noisy_flux = add_noise(binned_wavelengths, binned_flux, rest_wavelength, redshift, snr, vel_kms=vel_kms)
+		binned_vel, binned_wavelengths, binned_flux = bin_data(convolved_wavelengths, noisy_flux, pix_per_bin, rest_wavelength, redshift, vel_kms=vel_kms)
 
-	return binned_vel, binned_wavelengths, noisy_flux
+
+	return binned_vel, binned_wavelengths, binned_flux
 
 
 
