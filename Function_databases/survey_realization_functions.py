@@ -3266,16 +3266,10 @@ def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_
 	sim_px_per_cos_px = (COS_delta_vel*pix_per_bin)/(EAGLE_delta_vel)
 	seperation_tol = 3*COS_delta_vel*pix_per_bin # km/s, makes it so they must be seperated by twice the width of a bin in COS (trough, not trough, trough. as tight as I can do)
 	extra_indices_bool = False
-	plt.plot(velocity, flux)
-	plt.savefig("before.pdf")
-	plt.close()
 
 	if make_realistic_bool:
 		velocity, wavelengths, flux = gen_lsf.do_it_all(velocity, flux, rest_wavelength, redshift, pix_per_bin, snr, cos_lsf_bool=cos_lsf_bool, vel_kms=vel_kms, chan=None, std=std, num_sigma_in_gauss=num_sigma_in_gauss, directory_with_COS_LSF=directory_with_COS_LSF)
 
-	plt.plot(velocity, flux)
-	plt.savefig("after.pdf")
-	plt.close()
 	# identifies if there are a bunch of zero points. If so adds a minima, because the rest of the script only catches if it's a strict minima (BELOW the ones on either side)
 	extra_indices = []
 	zero_indices = np.argwhere(flux == 0.0)

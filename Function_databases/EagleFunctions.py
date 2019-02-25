@@ -40,8 +40,10 @@ e_mass = 1.0/1836.0
 atom_mass_array = np.asarray([H_atom_mass,He_atom_mass,C_atom_mass,Fe_atom_mass,Mg_atom_mass,Ne_atom_mass,N_atom_mass,O_atom_mass,Si_atom_mass,e_mass])
 
 ### functions
-
-def get_snap_files(snap_directory, particles_included_keyword):
+# get snap files from a directory that have the particles included keyword. 
+# usually we only want the specific directory passes (snap_directory+particles_included_keyword basically) but sometimes a weird naming conveneiton (rot for example)
+# means we want to get everything with the right name/redshift. all_directories should be set to true in this case. 
+def get_snap_files(snap_directory, particles_included_keyword, all_directories=False):
 	glob_snap_directory = str(snap_directory) # makes directory a string so it can be passed to glob (python function)
 	if glob_snap_directory[-1] != '/': # checks is directory passed included a '\' character and then makes sure it only looks at .hdf5 files
 		glob_snap_directory += '/'
@@ -50,8 +52,10 @@ def get_snap_files(snap_directory, particles_included_keyword):
 	# removed a wildcard in the two lines of code below this to get rid of directories ending in .ioneq
 	# if this causes problems look into another solution. 
 	# old line
-	# snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+str(particles_included_keyword[0:4])+'shot'+str(particles_included_keyword[4::])+'*/'+str(particles_included_keyword)+'*')])
-	snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+str(particles_included_keyword[0:4])+'shot'+str(particles_included_keyword[4::])+'/'+str(particles_included_keyword)+'*')])
+	if all_directories:
+		snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+str(particles_included_keyword[0:4])+'shot'+str(particles_included_keyword[4::])+'*/'+str(particles_included_keyword)+'*')])
+	else:
+		snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+str(particles_included_keyword[0:4])+'shot'+str(particles_included_keyword[4::])+'/'+str(particles_included_keyword)+'*')])
 	# in case there are _noneq_ files in a folder without the noneq keyword. It was done apparently before the naming convention was there
 	snap_files = np.concatenate([snap_files,glob.glob(glob_snap_directory+str(particles_included_keyword[0:4])+'shot'+str(particles_included_keyword[4::])+'/'+ str(particles_included_keyword[0:4])+'_noneq'+str(particles_included_keyword[4::])+'*')])
 	snap_files = np.concatenate([snap_files, glob.glob(glob_snap_directory+'groups_'+str(particles_included_keyword[-12::])+'/*hdf5')])

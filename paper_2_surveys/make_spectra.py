@@ -58,6 +58,8 @@ omega_b = 0.04825
 # group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] 
 # subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end for keyword_end in keyword_ends]
 # redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
+# special_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/paper_2/data_002_x001/full_run/"
+# all_directories = True
 
 ### box ben gave me. Can pick different subhaloes
 dirs = ["/cosma5/data/dp004/dc-oppe1/data/L034box/data_L034N1034/snapshot_028_z000p000/"] # this might actually be one too deep here. Check that if it fails
@@ -71,13 +73,14 @@ particles_included_keyword = ["snap_rot_" + keyword_end for keyword_end in keywo
 group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] # I don't see a groups folder for this box...?
 subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end for keyword_end in keyword_ends]
 redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
+special_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/paper_2/L034N1034_sh11/"
+all_directories = True
 
 ### survey properties
-
 ### Check these for errors in data size or related  issues
-points_per_radius = 1
-radii_start, radii_stop, radii_step = 20., 40., 10. # stop not inclusive
-cores = 1 # max number, use this is points per radius is divisable by 16
+points_per_radius = 72
+radii_start, radii_stop, radii_step = 20., 260., 5 # stop not inclusive
+cores = 12 # max number, use this is points per radius is divisable by 16
 ###
 
 radii =  np.arange(radii_start, radii_stop, radii_step) # kpc
@@ -88,8 +91,9 @@ angle_off = np.array(['y', 'z', 'x'])
 covering_frac_vals = np.array([14., 16., 18.])
 
 ### For specwizard
-run_specwizard = True
+run_specwizard = False
 making_npz_file = False
+output_in_special_dir = True
 if run_specwizard:
 	print "Running on %s cores. %s sightlines per core" % (str(cores), str(3*np.size(radii)))
 	print ''
@@ -102,11 +106,11 @@ h1_lookup_file = "/cosma/home/analyse/rhorton/Ali_Spec_src/IonizationTables/HM01
 
 ### Check these for errors in data size or related  issues
 bin_stagger = 0.25 # so that we don't count things on both sides of a bin. Ex: some radii at 30 are read as  29.997 and some at 30.012
-radii_step = 40. # Use same start/stop as above
-angle_start, angle_step, ang_step_2_fold, ang_step_4_fold = 0., 30., 20., 10. # stop not inclusive, end set by which arr used
+radii_step = 15. # stops are made inclusive. Use same start/stop as above
+angle_start, angle_stop, angle_step, ang_step_2_fold, ang_step_4_fold = 0., 360., 30., 20., 10. # stop not inclusive
 ###
 npz_filename = "survey_results.npz"
-make_realistic_bool = True
+make_realistic_bool = False
 directory_with_COS_LSF = "/cosma/home/analyse/rhorton/snapshots/COS_PSF"
 ###
 
@@ -262,40 +266,30 @@ def get_radius_and_angle_of_line(line, gal, axis):
 
 def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_depth, make_realistic_bool, rest_wavelength=None, redshift=None, directory_with_COS_LSF='./'):
 	# parameters for making the spectra realistic
-	pix_per_bin = 8
-	snr = 10.
+	pix_per_bin = 3
+	snr = 7.9 # per pixel. snr per res is snr*pix_per_bin**0.38 for COS
 	cos_lsf_bool=True
-	correlated_pixels = True
-	if correlated_pixels:
-		snr_pow = 0.38
-	else:
-		snr_pow = 0.5
-	real_snr = snr*pix_per_bin**snr_pow
 	vel_kms=True
+	# only matter if cos_lsf_bool = false
 	std=20
 	num_sigma_in_gauss=3
 
 	# requirements for identifying a line, want it to be visible after convolved to (so, visible by COS)
-	depth_tol = 3./real_snr
-	prominence_tol = 3. # how far up a flux must go after min, must raise by 3*f_min/real_snr
+	if cos_lsf_bool:
+		snr_eff = 7.9*3.**0.38
+	else:
+		snr_eff = 7.9*3.**0.38
+	depth_tol = 2./snr_eff**0.5 # 0.57
+	prominence_tol = 2. # how far up a flux must go after min, must raise by prom_tol*f_min/snr**0.5 0.4 at f_min=0.7
 	min_val_limit = 1.0-depth_tol
 	EAGLE_delta_vel = 0.40
 	COS_delta_vel = 2.5
 	sim_px_per_cos_px = (COS_delta_vel*pix_per_bin)/(EAGLE_delta_vel)
-	seperation_tol = 2*COS_delta_vel*pix_per_bin # km/s, makes it so they must be seperated by twice the width of a bin in COS (trough, not trough, trough. as tight as I can do)
+	seperation_tol = 3*COS_delta_vel*pix_per_bin # km/s, makes it so they must be seperated by twice the width of a bin in COS (trough, not trough, trough. as tight as I can do)
 	extra_indices_bool = False
 
 	if make_realistic_bool:
-		velocity, wavelengths, flux = gen_lsf.do_it_all(velocity, flux, rest_wavelength, redshift, pix_per_bin, snr, cos_lsf_bool=cos_lsf_bool, correlated_pixels = correlated_pixels, vel_kms=vel_kms, chan=None, std=std, num_sigma_in_gauss=num_sigma_in_gauss, directory_with_COS_LSF=directory_with_COS_LSF)
-		### TODO need to resample all the quantities at the same velocities as the flux has been resampled at
-		### resample the same bounds as 
-		num_pts = np.size(velocity)
-		temperature, ion_densities, nH, optical_depth = scipy.signal.resample(temperature, num_pts), scipy.signal.resample(ion_densities, num_pts), scipy.signal.resample(nH, num_pts), scipy.signal.resample(optical_depth, num_pts)
-
-	fig, ax = plt.subplots(1)
-	ax.plot(velocity, flux)
-	fig.savefig("convolved.pdf", bbox_inches="tight")
-	plt.close(fig)
+		velocity, wavelengths, flux = gen_lsf.do_it_all(velocity, flux, rest_wavelength, redshift, pix_per_bin, snr, cos_lsf_bool=cos_lsf_bool, vel_kms=vel_kms, chan=None, std=std, num_sigma_in_gauss=num_sigma_in_gauss, directory_with_COS_LSF=directory_with_COS_LSF)
 
 	# identifies if there are a bunch of zero points. If so adds a minima, because the rest of the script only catches if it's a strict minima (BELOW the ones on either side)
 	extra_indices = []
@@ -324,7 +318,7 @@ def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_
 		else:
 			### if real spectra make the same convolution that it would if it were made realistic, if this is < min_val_limit, let it through
 			### edit: didn't do much, removed
-			# if ((flux[i] < flux[i-1]) & (flux[i] < flux[i+1]) & (flux[i]-np.random.normal(0, flux[i]/(real_snr), 1) < min_val_limit)):
+			# if ((flux[i] < flux[i-1]) & (flux[i] < flux[i+1]) & (flux[i]-np.random.normal(0, flux[i]/(snr), 1) < min_val_limit)):
 			### Now ensure that the average flux over a velocity width of one COS pixel is below the depth tol. Works better
 			if ((flux[i] < flux[i-1]) & (flux[i] < flux[i+1]) & (np.mean(flux[i-int(sim_px_per_cos_px/2.):i+int(sim_px_per_cos_px/2.)]) < min_val_limit)):
 				min_indices.append(i)
@@ -358,8 +352,8 @@ def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_
 
 	for i in range(0,num_minima):
 		index = min_indices[i]
-		# how high does the flux have to climb before next min (i.e. how prominent must the trough be) based on snr at trough (2 sigma) or .1 where signal is low (still want unique trough)
-		min_recovery = np.max([flux[index] + prominence_tol*(flux[index]/real_snr), flux[index] + 0.05])
+		# how high does the flux have to climb before next min (i.e. how prominent must the trough be) based on snr at trough (2 sigma) or .2 where signal is low (still want unique trough)
+		min_recovery = np.max([flux[index] + prominence_tol*(flux[index]/snr_eff**0.5), flux[index] + 0.2])
 		missing_half = False
 
 		if index <= 1:
@@ -374,7 +368,6 @@ def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_
 				if velocity[j] >= centroid_vel[i+1]:
 
 					if depth[i] == depth[i+1]:
-						'triggered eq'
 						extra_index = int(np.mean([min_indices[i], min_indices[i+1]]))
 						prominence_mask[i+1] = 0
 						depth[i] = depth[i] # redundant, but clearer
@@ -434,7 +427,10 @@ def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_
 			FWHM.append(1.e6)
 		else:
 			try:
-				FWHM.append(velocity[right_index]-velocity[left_index])
+				if velocity[right_index]-velocity[left_index] < 5*COS_delta_vel*pix_per_bin:
+					prominence_mask[i] = 0
+				else:
+					FWHM.append(velocity[right_index]-velocity[left_index])
 			except:
 				plt.plot(velocity, flux)
 				plt.savefig('cause_error.pdf')
@@ -589,9 +585,9 @@ def find_cord_for_interp(array, left_index, value):
 ### Main
 if run_specwizard:
 	for gal_index in range(0,np.size(dirs)):
-		snap_files = EagleFunctions.get_snap_files(dirs[gal_index], particles_included_keyword[gal_index])
+		snap_files = EagleFunctions.get_snap_files(dirs[gal_index], particles_included_keyword[gal_index], all_directories)
 		# because particle included keyword is different in rotated snapshots have to grab the groups_ files seperately
-		snap_files = np.concatenate((snap_files, EagleFunctions.get_snap_files(dirs[gal_index], group_included_keyword[gal_index])))
+		snap_files = np.concatenate((snap_files, EagleFunctions.get_snap_files(dirs[gal_index], group_included_keyword[gal_index], all_directories)))
 
 		for ax in axis:
 			los_filename = run_output_dir + "los_%s_axis_%s.txt" % (designator[gal_index], str(ax))
@@ -611,24 +607,28 @@ if run_specwizard:
 			EagleFunctions.edit_text(path_to_param_template, param_filename, param_keywords, param_replacements)
 
 			# run specwizard (in parallel)
-			# can not seperatre module loads and specwizard runs. Different calls of os.system() seem to happen in different environments!
+			# can not seperatre module loads and specwizard runs. Different calls of system() seem to happen in different environments!
 			os.system("module load intel_comp/2018-update2 intel_mpi/2018 hdf5/1.8.20 && mpirun -np %s %s %s" % (str(cores), path_to_specwizard_executable, param_filename)) # make sure all the right modules are installed
-			raise ValueError("only doing one line right now")
 			# if 8 lines per core it's about twice as fast. 1 or 2 lines it is slower by like 10%. Not perfeclty uniform though
 
 			# store files
 			os.system("mv %sspec.%s.0.hdf5 %sspec.%s_axis_%s.hdf5" % (run_output_dir, snap_bases[gal_index], run_output_dir, designator[gal_index], str(ax)))
-else:
+elif making_npz_file:
 	for gal_index in range(0,np.size(dirs)):
-		snap_files = EagleFunctions.get_snap_files(dirs[gal_index], particles_included_keyword[gal_index])
+		snap_files = EagleFunctions.get_snap_files(dirs[gal_index], particles_included_keyword[gal_index], all_directories)
 		# because particle included keyword is different in rotated snapshots have to grab the groups_ files seperately
-		snap_files = np.concatenate((snap_files, EagleFunctions.get_snap_files(dirs[gal_index], group_included_keyword[gal_index])))
+		snap_files = np.concatenate((snap_files, EagleFunctions.get_snap_files(dirs[gal_index], group_included_keyword[gal_index], all_directories)))
 
 		gal_coords, box_size = get_gal_coords_and_box_size(snap_files, particles_included_keyword[gal_index], subfind_included_keyword[gal_index], known_gal_coords[gal_index])
 
 if making_npz_file:
+	if output_in_special_dir:
+		os.chdir(special_dir)
 	lines_gone_through = 0
-	spec_files = glob.glob(run_output_dir+"spec.*")
+	if output_in_special_dir:
+		spec_files = glob.glob(special_dir+"spec.*")
+	else:
+		spec_files = glob.glob(run_output_dir+"spec.*")
 	num_files = np.size(spec_files)
 	file_id_arr, col_dens_arr, H_col_dens_arr, W_arr = np.zeros(num_files*points_per_file), np.zeros(num_files*points_per_file), np.zeros(num_files*points_per_file),  np.zeros(num_files*points_per_file)
 	radii_arr, angle_arr, axis_arr = np.zeros(num_files*points_per_file), np.zeros(num_files*points_per_file), np.zeros(num_files*points_per_file)
@@ -636,7 +636,10 @@ if making_npz_file:
 	specwizard_velocity_list = [[] for _ in xrange(num_files)]
 
 	for file_index, file in enumerate(spec_files):
-		los_file = run_output_dir+"los_" + file[len(run_output_dir)+5:-4] + "txt"
+		if output_in_special_dir:
+			los_file = special_dir+"los_" + file[len(special_dir)+5:-4] + "txt"
+		else:
+			los_file = run_output_dir+"los_" + file[len(run_output_dir)+5:-4] + "txt"
 		lines = np.genfromtxt(los_file, skip_header=1)
 
 		with h5py.File(file, 'r') as hf:
@@ -691,11 +694,12 @@ if making_npz_file:
 	specwizrd_velocity_array = np.hstack(specwizard_velocity_list)
 	expected_per_bin = (points_per_file*num_files)/(np.size(axis)*(np.size(radii_bins_for_data)-1)*(np.size(angle_bins_for_data)-1))
 
-	np.savez(run_output_dir+npz_filename, file_id_arr, axis_arr, radii_arr, angle_arr, col_dens_arr, H_col_dens_arr, W_arr, np.hstack(line_num_minima_arr), np.hstack(line_centroid_vel_arr), np.hstack(line_FWHM_arr), np.hstack(line_depth_arr), np.hstack(line_temps_arr), np.hstack(line_ion_densities_arr), np.hstack(line_nH_arr), specwizrd_velocity_array)
+	np.savez(run_output_dir+npz_filename, gal_coords, box_size, file_id_arr, axis_arr, radii_arr, angle_arr, col_dens_arr, H_col_dens_arr, W_arr, np.hstack(line_num_minima_arr), np.hstack(line_centroid_vel_arr), np.hstack(line_FWHM_arr), np.hstack(line_depth_arr), np.hstack(line_temps_arr), np.hstack(line_ion_densities_arr), np.hstack(line_nH_arr), specwizrd_velocity_array)
 else:
 	npz_file = np.load(run_output_dir+npz_filename)
-	file_id_arr, axis_arr, radii_arr, angle_arr, col_dens_arr, H_col_dens_arr, W_arr, line_num_minima_arr, line_centroid_vel_arr, line_FWHM_arr, line_depth_arr, line_temps_arr, line_ion_densities_arr, line_nH_arr, specwizrd_velocity_array = npz_file["arr_0"], \
-	npz_file["arr_1"], npz_file["arr_2"], npz_file["arr_3"], npz_file["arr_4"], npz_file["arr_5"], npz_file["arr_6"], npz_file["arr_7"], npz_file["arr_8"], npz_file["arr_9"], npz_file["arr_10"], npz_file["arr_11"], npz_file["arr_12"], npz_file["arr_13"], npz_file["arr_14"]
+	gal_coords, box_size, file_id_arr, axis_arr, radii_arr, angle_arr, col_dens_arr, H_col_dens_arr, W_arr, line_num_minima_arr, line_centroid_vel_arr, line_FWHM_arr, line_depth_arr, line_temps_arr, line_ion_densities_arr, line_nH_arr, specwizrd_velocity_array = npz_file["arr_0"], \
+	npz_file["arr_1"], npz_file["arr_2"], npz_file["arr_3"], npz_file["arr_4"], npz_file["arr_5"], npz_file["arr_6"], npz_file["arr_7"], npz_file["arr_8"], npz_file["arr_9"], npz_file["arr_10"], npz_file["arr_11"], npz_file["arr_12"], npz_file["arr_13"], npz_file["arr_14"], \
+	npz_file["arr_15"], npz_file["arr_16"]
 	expected_per_bin = (np.size(col_dens_arr))/(np.size(axis)*(np.size(radii_bins_for_data)-1)*(np.size(angle_bins_for_data)-1))
 
 # map angles to degrees from disk of galaxy, 2 fold if we care about which side (vel for example) 4 fold otherwise
