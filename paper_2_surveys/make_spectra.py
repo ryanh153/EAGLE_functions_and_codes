@@ -26,6 +26,7 @@ import h5py
 import gen_lsf
 import scipy.signal
 import bisect
+import subprocess
 
 ### my libraries
 import EagleFunctions
@@ -58,7 +59,6 @@ omega_b = 0.04825
 # group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] 
 # subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end for keyword_end in keyword_ends]
 # redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
-# special_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/paper_2/data_002_x001/full_run/"
 # all_directories = True
 
 ### box ben gave me. Can pick different subhaloes
@@ -73,7 +73,6 @@ particles_included_keyword = ["snap_rot_" + keyword_end for keyword_end in keywo
 group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] # I don't see a groups folder for this box...?
 subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end for keyword_end in keyword_ends]
 redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
-special_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/paper_2/L034N1034_sh11/"
 all_directories = True
 
 ### survey properties
@@ -91,14 +90,13 @@ angle_off = np.array(['y', 'z', 'x'])
 covering_frac_vals = np.array([14., 16., 18.])
 
 ### For specwizard
-run_specwizard = False
-making_npz_file = False
-output_in_special_dir = True
+run_specwizard = True
+making_npz_file = True
 if run_specwizard:
-	print "Running on %s cores. %s sightlines per core" % (str(cores), str(3*np.size(radii)))
-	print ''
+   print "Running on %s cores. %s sightlines per core" % (str(cores), str(3*np.size(radii)))
+   print ''
 path_to_param_template = "/cosma/home/analyse/rhorton/Ali_Spec_src/CGM_template.par"
-run_output_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/"
+run_output_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/paper_2/L034N1034_sh11/full_run"
 path_to_specwizard_executable = "/cosma/home/analyse/rhorton/Ali_Spec_src/specwizard"
 h1_lookup_file = "/cosma/home/analyse/rhorton/Ali_Spec_src/IonizationTables/HM01G+C+SSH/h1.hdf5"
 
@@ -588,7 +586,6 @@ if run_specwizard:
 		snap_files = EagleFunctions.get_snap_files(dirs[gal_index], particles_included_keyword[gal_index], all_directories)
 		# because particle included keyword is different in rotated snapshots have to grab the groups_ files seperately
 		snap_files = np.concatenate((snap_files, EagleFunctions.get_snap_files(dirs[gal_index], group_included_keyword[gal_index], all_directories)))
-
 		for ax in axis:
 			los_filename = run_output_dir + "los_%s_axis_%s.txt" % (designator[gal_index], str(ax))
 			gal_coords, box_size = get_gal_coords_and_box_size(snap_files, particles_included_keyword[gal_index], subfind_included_keyword[gal_index], known_gal_coords[gal_index])
@@ -613,6 +610,9 @@ if run_specwizard:
 
 			# store files
 			os.system("mv %sspec.%s.0.hdf5 %sspec.%s_axis_%s.hdf5" % (run_output_dir, snap_bases[gal_index], run_output_dir, designator[gal_index], str(ax)))
+			subprocess.call("mkdir %s/particle_id_files_%s" % (run_output_dir, str(ax)), shell=True)
+			subprocess.call("mv %s/eagle_particles_hit* %s/particle_id_files_%s" % (run_output_dir, run_output_dir, str(ax)), shell=True)
+
 elif making_npz_file:
 	for gal_index in range(0,np.size(dirs)):
 		snap_files = EagleFunctions.get_snap_files(dirs[gal_index], particles_included_keyword[gal_index], all_directories)
@@ -622,13 +622,8 @@ elif making_npz_file:
 		gal_coords, box_size = get_gal_coords_and_box_size(snap_files, particles_included_keyword[gal_index], subfind_included_keyword[gal_index], known_gal_coords[gal_index])
 
 if making_npz_file:
-	if output_in_special_dir:
-		os.chdir(special_dir)
 	lines_gone_through = 0
-	if output_in_special_dir:
-		spec_files = glob.glob(special_dir+"spec.*")
-	else:
-		spec_files = glob.glob(run_output_dir+"spec.*")
+	spec_files = glob.glob(run_output_dir+"spec.*")
 	num_files = np.size(spec_files)
 	file_id_arr, col_dens_arr, H_col_dens_arr, W_arr = np.zeros(num_files*points_per_file), np.zeros(num_files*points_per_file), np.zeros(num_files*points_per_file),  np.zeros(num_files*points_per_file)
 	radii_arr, angle_arr, axis_arr = np.zeros(num_files*points_per_file), np.zeros(num_files*points_per_file), np.zeros(num_files*points_per_file)
@@ -636,10 +631,7 @@ if making_npz_file:
 	specwizard_velocity_list = [[] for _ in xrange(num_files)]
 
 	for file_index, file in enumerate(spec_files):
-		if output_in_special_dir:
-			los_file = special_dir+"los_" + file[len(special_dir)+5:-4] + "txt"
-		else:
-			los_file = run_output_dir+"los_" + file[len(run_output_dir)+5:-4] + "txt"
+		los_file = run_output_dir+"los_" + file[len(run_output_dir)+5:-4] + "txt"
 		lines = np.genfromtxt(los_file, skip_header=1)
 
 		with h5py.File(file, 'r') as hf:
@@ -673,13 +665,11 @@ if making_npz_file:
 				W_arr[file_index*points_per_file+spec_index] = np.sum(1.-flux)*(delta_v/c_kms)*lambda_h1
 
 				### get full line kinematics
-				fig, ax = plt.subplots(1)
-				ax.plot(specwizard_velocity, flux)
-				fig.savefig("what_line.pdf", bbox_inches="tight")
-				plt.close(fig)
 				line_num_minima, line_centroid_vel, line_FWHM, line_depth, line_temps, line_ion_densities, line_nH = get_line_kinematics(flux, specwizard_velocity, temperature, ion_densities, nH, optical_depth, make_realistic_bool, lambda_h1, redshift, directory_with_COS_LSF)
-				line_num_minima_arr.append(line_num_minima); line_centroid_vel_arr.append(line_centroid_vel); line_FWHM_arr.append(line_FWHM); line_depth_arr.append(line_depth); line_temps_arr.append(line_temps); line_ion_densities_arr.append(line_ion_densities); line_nH_arr.append(line_nH)
-
+				if line_num_minima != 0:
+					line_num_minima_arr.append(line_num_minima); line_centroid_vel_arr.append(line_centroid_vel); line_FWHM_arr.append(line_FWHM); line_depth_arr.append(line_depth); line_temps_arr.append(line_temps); line_ion_densities_arr.append(line_ion_densities); line_nH_arr.append(line_nH)
+				else: 
+					line_num_minima_arr.append(0); line_centroid_vel_arr.append(1.e10); line_FWHM_arr.append(1.e10); line_depth_arr.append(1.e10); line_temps_arr.append(1.e10); line_ion_densities_arr.append(1.e10); line_nH_arr.append(1.e10)
 				lines_gone_through += 1
 				if lines_gone_through % 10 == 0:
 					print "Gone through %d out of %d lines" % (lines_gone_through, num_files*points_per_file)
@@ -723,7 +713,6 @@ for i in range(np.size(covering_frac_vals)):
 		raise ValueError("you changed the covering frac vals in the headers but didn not alter the way the arrays are made in main! Sorry for this not happening automatically...")
 covering_fracs = [np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size)), np.zeros((dir_size,axis_size, radii_size, ang_4_fold_size))]
 
-
 for gal_index in range(0,np.size(dirs)):
 	for axis_index in range(0,np.size(axis)):
 		for radii_index in range(0,np.size(radii_bins_for_data)-1):
@@ -731,6 +720,7 @@ for gal_index in range(0,np.size(dirs)):
 				data_indices = (gal_index, axis_index, radii_index, angle_index)
 				curr_indices = np.where(((axis_arr == axis[axis_index]) & (radii_arr > radii_bins_for_data[radii_index]-bin_stagger) & (radii_arr < radii_bins_for_data[radii_index+1]-bin_stagger) & 
 										(angle_arr > angle_bins_for_data[angle_index]-bin_stagger) & (angle_arr < angle_bins_for_data[angle_index+1]-bin_stagger)))
+
 				if angle_index < ang_2_fold_size: # put quantities here that map to two quadrants (2 fold)
 					ang_2_fold_ind = np.where(((axis_arr == axis[axis_index]) & (radii_arr > radii_bins_for_data[radii_index]-bin_stagger) & (radii_arr < radii_bins_for_data[radii_index+1]-bin_stagger) & 
 										(ang_arr_2_fold > ang_bins_2_fold_for_data[angle_index]-bin_stagger) & (ang_arr_2_fold < ang_bins_2_fold_for_data[angle_index+1]-bin_stagger)))
