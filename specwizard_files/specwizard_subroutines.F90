@@ -1838,7 +1838,7 @@ subroutine projectdata(file_number)
   END IF
 
    !RH_ids these flags (RH_ids) are just to tell me when what to turn off/on
-   write(filename, '(A,I3.3,A)') 'eagle_particles_hit_',file_number,'.txt'
+   write(filename, '(A,I4.4,A)') 'eagle_particles_hit_',file_number,'.txt'
 
    open(unit = 1, file=filename) 
    encountered_ids_loop: do i= 1, NGas

@@ -90,13 +90,13 @@ angle_off = np.array(['y', 'z', 'x'])
 covering_frac_vals = np.array([14., 16., 18.])
 
 ### For specwizard
-run_specwizard = True
-making_npz_file = True
+run_specwizard = False
+making_npz_file = False
 if run_specwizard:
    print "Running on %s cores. %s sightlines per core" % (str(cores), str(3*np.size(radii)))
    print ''
 path_to_param_template = "/cosma/home/analyse/rhorton/Ali_Spec_src/CGM_template.par"
-run_output_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/paper_2/L034N1034_sh11/full_run"
+run_output_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/paper_2/L034N1034_sh11/full_run/"
 path_to_specwizard_executable = "/cosma/home/analyse/rhorton/Ali_Spec_src/specwizard"
 h1_lookup_file = "/cosma/home/analyse/rhorton/Ali_Spec_src/IonizationTables/HM01G+C+SSH/h1.hdf5"
 
@@ -104,7 +104,7 @@ h1_lookup_file = "/cosma/home/analyse/rhorton/Ali_Spec_src/IonizationTables/HM01
 
 ### Check these for errors in data size or related  issues
 bin_stagger = 0.25 # so that we don't count things on both sides of a bin. Ex: some radii at 30 are read as  29.997 and some at 30.012
-radii_step = 15. # stops are made inclusive. Use same start/stop as above
+radii_step = 30. # stops are made inclusive. Use same start/stop as above
 angle_start, angle_stop, angle_step, ang_step_2_fold, ang_step_4_fold = 0., 360., 30., 20., 10. # stop not inclusive
 ###
 npz_filename = "survey_results.npz"
