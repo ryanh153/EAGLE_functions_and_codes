@@ -20,6 +20,8 @@ import scipy.stats
 from matplotlib import rc
 import random
 import scipy.interpolate
+from scipy.optimize import least_squares
+import scipy.stats 
 
 
 ### constants
@@ -1187,14 +1189,8 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 	# equ_widths *= 1.e3
 	# plot_equ_widths *= 1.e3
 	# plot_W_errs *= 1.e3
-	print 'some info'
-	print np.shape(smasses)
-	print np.shape(equ_widths)
-	print np.shape(plot_equ_widths)
-	print np.shape(radii)
-	print np.shape(plot_equ_widths_radii)
-	print ''
 
+	sorted_radii_indices = np.argsort(plot_equ_widths_radii)
 
 	# log equivalent widths for fits 
 	if log_plots:
@@ -1236,19 +1232,20 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 	high_frac = float(np.size(cos_percentiles[cos_percentiles > 95.]))/np.size(cos_percentiles)
 
 	### Linear fits for EAGLE and COS
-	print np.size(plot_equ_widths_radii)
-	print np.size(median)
-	print np.size(plot_radii)
-	print np.size(temp_plot_equ_widths)
-	print ''
-	eagle_params, eagle_errs = np.polyfit(plot_equ_widths_radii, median, 1 ,cov=True)
+	### not robust
+	# eagle_params, eagle_errs = np.polyfit(plot_equ_widths_radii, median, 1 ,cov=True)
+	### robust
+	eagle_robust_fit = least_squares(fun_linear, [1.,1.], loss = "cauchy", args=(radii, temp_equ_widths))
+	eagle_params, eagle_errs = eagle_robust_fit.x, np.linalg.inv(np.matmul(eagle_robust_fit.jac.T,eagle_robust_fit.jac))
+	###
 	eagle_fit_arr = eagle_params[0]*plot_equ_widths_radii+eagle_params[1]
 
-	# ignore_low_indices = np.where(temp_plot_equ_widths > np.log10(0.05)) # get all indices excpet the 7 very low EW points that are all upper limits in column density 
-	# print "how many low indices?"
-	# print np.size(temp_plot_equ_widths)-np.size(ignore_low_indices)
-	# print ''
-	cos_params, cos_errs = np.polyfit(plot_equ_widths_radii, temp_plot_equ_widths, 1, cov=True)
+	### not robust
+	# cos_params, cos_errs = np.polyfit(plot_equ_widths_radii, temp_plot_equ_widths, 1, cov=True)
+	### robust
+	cos_robust_fit = least_squares(fun_linear, [1.,1.], loss = "cauchy", args=(plot_equ_widths_radii, temp_plot_equ_widths))
+	cos_params, cos_errs = cos_robust_fit.x, np.linalg.inv(np.matmul(cos_robust_fit.jac.T,cos_robust_fit.jac))
+	###
 	cos_fit_arr = cos_params[0]*plot_equ_widths_radii + cos_params[1]
 
 	### move back to linear units because the plot will automatically to logy for everthing that goes into it. 
@@ -1302,19 +1299,20 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 		# plt.hold(True)
 
 		### err bars/multi rel block
-		bins = []
-		indices = np.argsort(plot_equ_widths_radii)
-		bins_radii_arr = plot_equ_widths_radii[indices]
-		for i in range(0,np.size(plot_equ_widths_radii)):
-			if i == 0:
-				bins.append(int(round(bins_radii_arr[i]))-0.5)
-			elif int(round(bins_radii_arr[i])) != int(round(bins_radii_arr[i-1])):
-				bins.append(int(round(bins_radii_arr[i]))-0.5)
-		bins.append(int(round(bins_radii_arr[-1]))+0.5)
+		### semi_rand
+		# bins = []
+		# indices = np.argsort(plot_equ_widths_radii)
+		# bins_radii_arr = plot_equ_widths_radii[indices]
+		# for i in range(0,np.size(plot_equ_widths_radii)):
+		# 	if i == 0:
+		# 		bins.append(int(round(bins_radii_arr[i]))-0.5)
+		# 	elif int(round(bins_radii_arr[i])) != int(round(bins_radii_arr[i-1])):
+		# 		bins.append(int(round(bins_radii_arr[i]))-0.5)
+		# bins.append(int(round(bins_radii_arr[-1]))+0.5)
 
-		plot_x, plot_median, plot_84, plot_16, plot_95, plot_5 = percentile_array(bins, radii, equ_widths)
+		# plot_x, plot_median, plot_84, plot_16, plot_95, plot_5 = percentile_array(bins, radii, equ_widths)
 
-		ax.errorbar(plot_radii, median, yerr=[median-two_sig_bot, two_sig_top-median], color='k', fmt = '.', ecolor = 'r')
+		# ax.errorbar(plot_radii, median, yerr=[median-two_sig_bot, two_sig_top-median], color='k', fmt = '.', ecolor = 'r')
 		if log_plots:
 			ax.set_yscale('log')
 		plt.hold(True)
@@ -1333,10 +1331,13 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 		# plt.plot(plot_x, plot_84, c='#00FF00', linestyle = '-.')
 		# plt.plot(plot_x, plot_16, c='#00FF00', linestyle = '-.')
 
-		norm_radii = plot_equ_widths_radii[plot_W_flags > 0.]
-		norm_equ_widths = plot_equ_widths[plot_W_flags > 0.]
-		norm_err = plot_W_errs[plot_W_flags > 0.]
-		cos_data_object = ax.errorbar(norm_radii, norm_equ_widths, yerr=norm_err, fmt='*', c='#00FF00', markersize = 8.5, markeredgecolor = 'k', markeredgewidth = 0.5, label = 'COS')#: high=%.2f, low=%.2f' % (high_frac, low_frac))
+		norm_indices = np.argwhere(plot_W_flags == 1.)[:,0]
+		upper_indices = np.argwhere(plot_W_flags == 3.)[:,0]
+		lower_indices = np.argwhere(plot_W_flags == 2.)[:,0]
+
+		cos_data_object = ax.errorbar(plot_equ_widths_radii[norm_indices], plot_equ_widths[norm_indices], yerr=plot_W_errs[norm_indices], fmt='*', c='#00FF00', markersize = 8.5, markeredgecolor = 'k', markeredgewidth = 0.5, label = 'COS: high=%.2f, low=%.2f' % (high_frac, low_frac))
+		ax.errorbar(plot_equ_widths_radii[upper_indices], plot_equ_widths[upper_indices], yerr=plot_W_errs[upper_indices], fmt='v', c='#00FF00', markersize = 8.5, markeredgecolor = 'k', markeredgewidth = 0.5)
+		ax.errorbar(plot_equ_widths_radii[lower_indices], plot_equ_widths[lower_indices], yerr=plot_W_errs[lower_indices], fmt='^', c='#00FF00', markersize = 8.5, markeredgecolor = 'k', markeredgewidth = 0.5)
 
 		data_legend = ax.legend(handles=[eagle_data_object, cos_data_object], loc='upper right')
 
@@ -1345,10 +1346,8 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 		# plt.plot(sim_radius_max, sim_value_max, 'k.', markersize = 15., label = sim_quad)
 
 		### Linear fit stuff
-		# plt.plot(plot_equ_widths_radii, eagle_fit_arr, color='k', label=r'm=%.2e $\pm$ %.0e' % (eagle_params[0], np.sqrt(eagle_errs[0,0])) + '\n' + r'b=%.2e $\pm$ %.0e' % (np.power(10.,eagle_params[1]), (1.0/(np.abs(eagle_params[1])*np.log(10.)))*np.sqrt(eagle_errs[1,1])))
-		# plt.plot(plot_equ_widths_radii, cos_fit_arr, color='#00FF00', label=r'm=%.2e $\pm$ %.0e' % (cos_params[0], np.sqrt(cos_errs[0,0])) + '\n' + r'b=%.2e $\pm$ %.0e' % (np.power(10.,cos_params[1]), (1.0/(np.abs(cos_params[1])*np.log(10.)))*np.sqrt(cos_errs[1,1])))
-		eagle_fit_object = ax.plot(plot_equ_widths_radii, eagle_fit_arr, color='k', label=r'm=%.1e $\pm$ %.0e' % (eagle_params[0], np.sqrt(eagle_errs[0,0])) + '\n' + r'b=%.1e $\pm$ %.0e' % (eagle_params[1], np.sqrt(eagle_errs[1,1])))
-		cos_fit_object = ax.plot(plot_equ_widths_radii, cos_fit_arr, color='#00FF00', label=r'm=%.1e $\pm$ %.0e' % (cos_params[0], np.sqrt(cos_errs[0,0])) + '\n' + r'b=%.1e $\pm$ %.0e' % (cos_params[1], np.sqrt(cos_errs[1,1])))
+		eagle_fit_object = ax.plot(plot_equ_widths_radii[sorted_radii_indices], eagle_fit_arr[sorted_radii_indices], color='k', label=r'm=%.1e $\pm$ %.0e' % (eagle_params[0], np.sqrt(eagle_errs[0,0])) + '\n' + r'b=%.1e $\pm$ %.0e' % (eagle_params[1], np.sqrt(eagle_errs[1,1])))
+		cos_fit_object = ax.plot(plot_equ_widths_radii[sorted_radii_indices], cos_fit_arr[sorted_radii_indices], color='#00FF00', label=r'm=%.1e $\pm$ %.0e' % (cos_params[0], np.sqrt(cos_errs[0,0])) + '\n' + r'b=%.1e $\pm$ %.0e' % (cos_params[1], np.sqrt(cos_errs[1,1])))
 		plt.hold(False)
 
 		### [0] is necessary because plt.plot returns a list since it can make multiple plots per call. It's a length one list here but we still need to select an element
@@ -1357,7 +1356,7 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 		plt.rcParams['legend.fontsize'] = 14
 
 		# plt.title('Red W vs b, Rejection at: %s' % (str(reject_val)))
-		ax.set_title('EAGLE vs COS-Halos, Dwarfs, & GASS')
+		ax.set_title('All Surveys: W vs b for %s' % (ion))
 		ax.add_artist(fit_legend)
 		ax.add_artist(data_legend)
 
@@ -1724,12 +1723,19 @@ def make_equ_width_contour_plots(ion, radii, virial_radii, equ_widths, smasses, 
 
 	### overplot cos data
 	if virial_radii_bool == False:
-		norm_W = plot_equ_widths[plot_W_flags > 0.]
-		norm_radii = plot_equ_widths_radii[plot_W_flags > 0.]
-		plot_W_errs = plot_W_errs[plot_W_flags > 0.]
+		norm_indices = np.argwhere(plot_W_flags == 1.)[:,0]
+		upper_indices = np.argwhere(plot_W_flags == 3.)[:,0]
+		lower_indices = np.argwhere(plot_W_flags == 2.)[:,0]
+
 		for i in  range(0,np.size(upper_mass)):
-			indices = np.where(((curr_cos_smass < upper_mass[i]) & (curr_cos_smass > lower_mass[i]) & (curr_cos_ssfr < upper_ssfr[i]) & (curr_cos_ssfr > lower_ssfr[i])))
-			cos_fit_objects[i] = ax.errorbar(norm_radii[indices], norm_W[indices], yerr=plot_W_errs[indices],linestyle='None', marker='*', c=colors[i], markersize=6., label=labels[i])
+			curr_indices = np.where(((curr_cos_smass < upper_mass[i]) & (curr_cos_smass > lower_mass[i]) & (curr_cos_ssfr < upper_ssfr[i]) & (curr_cos_ssfr > lower_ssfr[i])))
+			curr_norm_indices = np.intersect1d(curr_indices, norm_indices)
+			curr_upper_indices = np.intersect1d(curr_indices, upper_indices)
+			curr_lower_indices = np.intersect1d(curr_indices, lower_indices)
+
+			cos_fit_objects[i] = ax.errorbar(plot_equ_widths_radii[curr_norm_indices], temp_plot_equ_widths[curr_norm_indices], yerr=plot_W_errs[curr_norm_indices],linestyle='None', marker='*', c=colors[i], markersize=6., label=labels[i])
+			ax.errorbar(plot_equ_widths_radii[curr_upper_indices], temp_plot_equ_widths[curr_upper_indices], yerr=plot_W_errs[curr_upper_indices],linestyle='None', marker='v', c=colors[i], markersize=6.)
+			ax.errorbar(plot_equ_widths_radii[curr_lower_indices], temp_plot_equ_widths[curr_lower_indices], yerr=plot_W_errs[curr_lower_indices],linestyle='None', marker='^', c=colors[i], markersize=6.)
 		data_legned = ax.legend(handles = cos_fit_objects, loc='lower right', title='Binned COS Data')
 		data_legned.set_title('Binned COS Data', prop={'size':15})
 		ax.add_artist(data_legned)
@@ -3216,7 +3222,7 @@ def mass_estimates(lookup_file, spec_output_file, spectrum, ion, redshift):
 	if np.size(optical_depth[optical_depth >= tol]) > 0:
 		H_column = np.log10(np.sum(H_col_dense_arr))
 	else:
-		H_column = col_dense # changing this to zero did not have an effect
+		H_column = float('nan') # changing this to zero did not have an effect
 
 	return H_column
 
@@ -3590,6 +3596,10 @@ def neutral_columns_plot(cols, H_cols, radii, virial_radii, R200, smasses, masse
 		delta_r = 0.05
 		stagger = [0.0, -0.01, 0.01]
 		bins = np.arange(np.min(virial_radii), np.max(virial_radii), delta_r)
+		print "what are we looking at?"
+		print bins
+		print ''
+		# raise ValueError("printed virial radii bins")
 	else:
 		delta_r = 10
 		stagger = [0.0, -1.5, 1.5]
@@ -3663,7 +3673,8 @@ def neutral_columns_plot(cols, H_cols, radii, virial_radii, R200, smasses, masse
 				temp_cols = H_cols[((radii >= bins[j]) & (radii < bins[j+1]) & (used_mass > lower_mass[i]) & (used_mass < upper_mass[i]) & (ssfr > lower_ssfr[i]) & (ssfr < upper_ssfr[i]))]
 				temp_neut_cols = cols[((radii >= bins[j]) & (radii < bins[j+1]) & (used_mass > lower_mass[i]) & (used_mass < upper_mass[i]) & (ssfr > lower_ssfr[i]) & (ssfr < upper_ssfr[i]))]
 
-
+			# because lines without a strong HI absorber (tau is never > 0.3) have a nan for their H column we have to filter these out
+			temp_cols = temp_cols[np.isnan(temp_cols) == False]
 			if np.size(temp_cols) > 0:
 				if mean_bool == False:
 					med_neut_cols[j], neut_col_err_top[j], neut_col_err_bot[j]= np.median(temp_neut_cols), np.percentile(temp_neut_cols,84.), np.percentile(temp_neut_cols,16.)
@@ -3901,7 +3912,7 @@ def neutral_columns_plot(cols, H_cols, radii, virial_radii, R200, smasses, masse
 		'neut_cols', 'neut_cols_top', 'neut_cols_bot', 'neut_ann_mass', 'neut_ann_mass_top', 'neut_ann_mass_bot', 'neut_cum_mass', 'neut_cum_mass_top', \
 		'neut_cum_mass_bot', 'cum_mass_jack', 'cum_mass_jack_top', 'cum_mass_jack_bot', 'neut_cum_mass_jack', 'neut_cum_mass_jack_top', 'neut_cum_mass_jack_bot']
 
-	opening_lines = 'import numpy as np \n # all the values \n # only the semi random radii\n # median \n'
+	opening_lines = 'import numpy as np \n # All semi-rand lines. Switched H_cols to nan where no strong HI absorber is found. Median \n'
 	filename = '/projects/ryho3446/snapshots/spec_cum_data_semi.py'
 	print_data(filename, opening_lines, arrays_to_print, var_prefaces)
 	np.set_printoptions(threshold=1000)
@@ -4482,6 +4493,37 @@ def print_data(filename, opening_lines, arrays_to_print, var_prefaces):
 
 	f.close()
 	final.close()
+
+### I know the order of params seems backwards, but it matched np.polyfit so...
+def fun_linear(params, x, y):
+	return (params[0]*x+params[1]) - y
+
+def KS_test(cos_Ws, sim_Ws):
+	D, p = scipy.stats.ks_2samp(cos_Ws, sim_Ws)
+
+	sorted_cos_Ws = np.sort(cos_Ws)
+	sorted_sim_Ws = np.sort(sim_Ws)
+	p1 = np.linspace(0., 1., len(cos_Ws))
+	p2 = np.linspace(0., 1., len(sim_Ws))
+	print D
+	print p
+	print ''
+	fig, ax = plt.subplots(1)
+	ax.plot(sorted_cos_Ws, p1, color="#00FF00", label = "COS")
+	plt.hold(True)
+	ax.plot(sorted_sim_Ws, p2, color = 'b', label = "EAGLE")
+	plt.hold(False)
+	ax.legend(loc="lower right")
+	ax.set_title("KS Test for All Galaxies: p=%.1e" % (p))
+	ax.set_xlabel(r"W ($\AA{}$)")
+	ax.set_ylabel("p(W<x)")
+	ax.set_xlim(0.0, 2.5)
+	ax.set_ylim(0.0, 1.05)
+	fig.tight_layout()
+	fig.savefig("cdf_comp.pdf")
+	plt.close(fig)
+
+	return D, p
 
 
 

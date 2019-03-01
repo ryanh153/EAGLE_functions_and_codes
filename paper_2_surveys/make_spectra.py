@@ -59,15 +59,17 @@ omega_b = 0.04825
 # group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] 
 # subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end for keyword_end in keyword_ends]
 # redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
-# all_directories = True
+# all_directories = False
 
 ### box ben gave me. Can pick different subhaloes
 dirs = ["/cosma5/data/dp004/dc-oppe1/data/L034box/data_L034N1034/snapshot_028_z000p000/"] # this might actually be one too deep here. Check that if it fails
-gal_folders = ["snapshot_rot_028_z000p000_shalo_11_12.50_10.52_0.859/"]
-snap_bases = ["snap_rot_028_z000p000_shalo_11_12.50_10.52_0.859"]
-designator = ["L034N1034_sh11"]
+# gal_folders = ["snapshot_rot_028_z000p000_shalo_11_12.50_10.52_0.859/"]
+# snap_bases = ["snap_rot_028_z000p000_shalo_11_12.50_10.52_0.859"]
+gal_folders = ["snapshot_rot_028_z000p000_shalo_112_11.80_10.03_1.055/"]
+snap_bases = ["snap_rot_028_z000p000_shalo_112_11.80_10.03_1.055"]
+designator = ["L034N1034_sh13"]
 keyword_ends = ["028_z000p000"]
-group_numbers =  [11] # is this the same as subhalo number? assume yes and see if it works. 
+group_numbers =  [13] # is this the same as subhalo number? assume yes and see if it works. 
 known_gal_coords = [[(25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.)]] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
 particles_included_keyword = ["snap_rot_" + keyword_end for keyword_end in keyword_ends] # these rotated ones have a different naming convention. May do case by case because only a few gals for this paper
 group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] # I don't see a groups folder for this box...?
@@ -96,7 +98,7 @@ if run_specwizard:
    print "Running on %s cores. %s sightlines per core" % (str(cores), str(3*np.size(radii)))
    print ''
 path_to_param_template = "/cosma/home/analyse/rhorton/Ali_Spec_src/CGM_template.par"
-run_output_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/paper_2/L034N1034_sh11/full_run/"
+run_output_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/paper_2/L034N1034_sh112/full_run/"
 path_to_specwizard_executable = "/cosma/home/analyse/rhorton/Ali_Spec_src/specwizard"
 h1_lookup_file = "/cosma/home/analyse/rhorton/Ali_Spec_src/IonizationTables/HM01G+C+SSH/h1.hdf5"
 
@@ -132,14 +134,14 @@ radii_plot_stagger = np.linspace((-1.*radii_step)/4., (radii_step)/4., np.size(p
 plt.rcParams["axes.labelsize"], plt.rcParams["axes.titlesize"], plt.rcParams["legend.fontsize"], plt.rcParams["xtick.labelsize"],  plt.rcParams["ytick.labelsize"] = 14., 18., 12., 12., 12.
 
 ### plot bools
-col_rad, col_ang  = True, True
-H_col_rad, H_col_ang = True, True
-W_rad, W_ang = True, True
-vel_rad, vel_ang = True, True
-ann_mass_rad, ann_mass_ang = True, True
-H_ann_mass_rad, H_ann_mass_ang = True, True
-cum_mass, H_cum_mass = True, True
-cover_rad, cover_ang = True, True
+col_rad, col_ang  = True, False
+H_col_rad, H_col_ang = True, False
+W_rad, W_ang = False, False
+vel_rad, vel_ang = False, False
+ann_mass_rad, ann_mass_ang = True, False
+H_ann_mass_rad, H_ann_mass_ang = True, False
+cum_mass, H_cum_mass = False, False
+cover_rad, cover_ang = True, False
 
 
 ### Given an array of radii and a number of points per radius (and an axis) creates los in cricles around given axis at equally spaced angles
@@ -856,7 +858,7 @@ if W_rad:
 			ax.legend(ncol=2, loc="upper right")
 			ax.set_ylim([0.,1.5])
 			ax.set_xlabel("Impact Parameter (kpc)")
-			ax.set_ylabel(r"${\rm log_{10}}(N_{HI})$  ${\rm cm^{-2}}$")
+			ax.set_ylabel(r"${\rm log_{10}}(W_{HI})$  $\AA{}$")
 			ax.set_title(r"N vs b: Axis=%s, $\theta$ Relative to %s" % (axis_letters[axis_index], angle_off[axis_index]))
 			fig.savefig('binned_Ws_radius_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
 			plt.close(fig)
@@ -874,7 +876,7 @@ if W_ang:
 			ax.legend(ncol=4, loc="upper center")
 			ax.set_ylim([0.,1.5])
 			ax.set_xlabel(r"$\theta$ Relative to %s Axis (degrees)" % (angle_off[axis_index]))
-			ax.set_ylabel(r"${\rm log_{10}}(N_{HI})$  ${\rm cm^{-2}}$")
+			ax.set_ylabel(r"${\rm log_{10}}(W_{HI})$  $\AA{}$")
 			ax.set_title(r"N vs $\theta$: Axis=%s" % (axis_letters[axis_index]))
 			fig.savefig('binned_Ws_angle_%s.pdf' % (axis_letters[axis_index]), bbox_inches="tight")
 			plt.close(fig)

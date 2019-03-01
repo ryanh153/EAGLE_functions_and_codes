@@ -6,12 +6,11 @@ import bisect
 import os
 import subprocess
 
-do_cum_mass_plots = False
-do_kin_plots = True
+do_cum_mass_plots = True
+do_kin_plots = False
 
 if do_cum_mass_plots:
-   import sim_ann_mass_data_vir_t_cut as cool_sim_data
-   import spec_cum_data_semi_test as mock_spectra_data
+   import spec_cum_data_semi as mock_spectra_data
 if do_kin_plots:
    import survey_realization_functions
 
@@ -58,8 +57,8 @@ if do_cum_mass_plots:
    stagger = [0.0, -1.5, 1.5]
 
    mean_bool = False
-   cool_bool = False
-   to_virial = False
+   cool_bool = True
+   to_virial = True
 
    ### to 160 for cos or to virial for more theoretical stuff?
    if to_virial:
@@ -147,13 +146,13 @@ if do_cum_mass_plots:
 
       if i == 0:
          mock_cum_ax.plot(0.,0., color=colors[i], label=labels2[0])
-      mock_cum_ax.plot(mock_radii[i], mock_cum_mass[i], color=colors[i], label=labels[i])
+      mock_cum_ax.plot(mock_radii[i], mock_cum_mass[i], color=colors[i], label=labels[i], alpha=0.5)
       mock_cum_ax.fill_between(mock_radii[i], mock_cum_mass_bot[i], mock_cum_mass_top[i], color=colors[i], alpha=0.33)
 
       if i == 0:
-         mock_cum_ax.plot(mock_radii[i], mock_neut_cum_mass[i], color=colors[i], linestyle='dotted', label=labels2[1])
+         mock_cum_ax.plot(mock_radii[i], mock_neut_cum_mass[i], color=colors[i], linestyle='dotted', label=labels2[1], alpha=0.5)
       else:
-         mock_cum_ax.plot(mock_radii[i], mock_neut_cum_mass[i], color=colors[i], linestyle='dotted')
+         mock_cum_ax.plot(mock_radii[i], mock_neut_cum_mass[i], color=colors[i], linestyle='dotted', alpha=0.5)
       mock_cum_ax.fill_between(mock_radii[i], mock_neut_cum_mass_bot[i], mock_neut_cum_mass_top[i], color=colors[i], alpha=0.33)
 
       if i == 0:
@@ -270,9 +269,10 @@ if do_cum_mass_plots:
 
    # mock_cum_ax.plot(proch_radii, adj_proch_cum_mass, color='lime')
    # mock_cum_ax.fill_between(proch_radii, adj_proch_cum_mass-proch_cum_mass_err, adj_proch_cum_mass+proch_cum_mass_err, color='lime', alpha=0.33)
-   mock_cum_ax.plot(proch_radii, proch_cum_mass, color='limegreen', label = 'Prochaska 2017')
-   mock_cum_ax.fill_between(proch_radii, proch_cum_mass-proch_cum_mass_err, proch_cum_mass+proch_cum_mass_err, color='limegreen', alpha=0.33)
-   mock_cum_ax.plot(145., 2.0e10, linestyle='None', marker='.', markersize=12.5, color='darkviolet', markeredgecolor='k', label='Werk 2014')
+   mock_cum_ax.errorbar(proch_radii, proch_cum_mass, yerr=proch_cum_mass_err, elinewidth=2, marker='*', markersize=15., color='limegreen', label="P")
+   mock_cum_ax.plot(proch_radii, proch_cum_mass, marker='*', markersize=15., color='limegreen', label="Prochaska 2017")
+   # mock_cum_ax.fill_between(proch_radii, proch_cum_mass-proch_cum_mass_err, proch_cum_mass+proch_cum_mass_err, color='limegreen', alpha=0.33)
+   mock_cum_ax.plot(145., 2.0e10, linestyle='None', marker='^', markersize=15., color='darkviolet', markeredgecolor='k', label='Werk 2014')
 
    # mock_ann_ax.errorbar(proch_radii+0.75, adj_proch_ann_mass, yerr=proch_mass_err, color='lime', linestyle='None', marker='.')
    mock_ann_plots[-1] = mock_ann_ax.errorbar(proch_radii+0.75, proch_ann_mass, yerr=proch_mass_err, color='limegreen', label='Prochaska 2017', markersize = 12., linestyle='None', marker='.')
@@ -319,11 +319,12 @@ if do_cum_mass_plots:
    plt.close(col_comp_H_dens_fig)
 
 
-   ### Fancy legend
+   ## Fancy legend
    lines = mock_cum_ax.get_lines()
-   leg1 = plt.legend(handles=[lines[i] for i in [1,3,5]], loc=[0.015,0.775])
-   leg2 = plt.legend(handles=[lines[i] for i in [0,2]], loc=[0.35,0.843])
-   leg3 = plt.legend(handles=[lines[i] for i in [7,8]], loc=[0.585,0.02], numpoints=1)
+
+   leg1 = plt.legend([lines[i] for i in [1,3,5]], [lines[i].get_label() for i in [1,3,5]], loc=[0.015,0.775])
+   leg2 = plt.legend([lines[i] for i in [0,2]], [lines[i].get_label() for i in [0,2]], loc=[0.35,0.843])
+   leg3 = plt.legend([lines[i] for i in [9,11]], [lines[i].get_label() for i in [10,11]], loc=[0.585,0.02], numpoints=1)
    mock_cum_ax.add_artist(leg1)
    mock_cum_ax.add_artist(leg2)
    mock_cum_ax.add_artist(leg3)
@@ -331,14 +332,14 @@ if do_cum_mass_plots:
    mock_cum_ax.set_ylabel(r'$M_{cum}$ $(M_{\odot})$')
    mock_cum_ax.set_title('Cumulative H Mass vs Radius')
    mock_cum_ax.set_yscale('log')
-   mock_cum_ax.set_ylim([10**4.0,10**12.2])
+   mock_cum_ax.set_ylim([10**4.0,10**12.5])
    mock_cum_ax.set_xlim([20.,160.])
    mock_cum_fig.savefig('jacknife_mass.pdf')
    plt.close(mock_cum_fig)
 
    # fancy legend
-   leg1 = plt.legend(handles=[mock_ann_plots[i] for i in [1,3,5]], loc=[0.02,0.775])
-   leg2 = plt.legend(handles=[mock_ann_plots[i] for i in [0,2,7]], loc = [0.55,0.775])
+   leg1 = plt.legend([mock_ann_plots[i] for i in [1,3,5]], [mock_ann_plots[i].get_label() for i in [1,3,5]], loc=[0.02,0.775])
+   leg2 = plt.legend([mock_ann_plots[i] for i in [0,2,7]], [mock_ann_plots[i].get_label() for i in [0,2,7]], loc = [0.55,0.775])
    mock_ann_ax.add_artist(leg1)
    mock_ann_ax.add_artist(leg2)
    mock_ann_ax.set_xlabel('Radius (kpc)')
@@ -350,8 +351,8 @@ if do_cum_mass_plots:
    mock_ann_fig.savefig('mock_ann_mass.pdf')
    plt.close(mock_ann_fig)
 
-   leg1 = plt.legend(handles=[mock_col_plots[i] for i in [1,3,5]], loc = [0.02, 0.02])
-   leg2 = plt.legend(handles=[mock_col_plots[i] for i in [0,2]], loc=[0.35,0.02])
+   leg1 = plt.legend([mock_col_plots[i] for i in [1,3,5]], [mock_col_plots[i].get_label() for i in [1,3,5]], loc = [0.02, 0.02])
+   leg2 = plt.legend([mock_col_plots[i] for i in [0,2]], [mock_col_plots[i].get_label() for i in [0,2]], loc=[0.35,0.02])
    mock_col_ax.add_artist(leg1)
    mock_col_ax.add_artist(leg2)
    mock_col_ax.set_xlabel('Radius (kpc)')
@@ -427,8 +428,8 @@ if do_cum_mass_plots:
 
       else:
          # fancy legend
-         leg1 = plt.legend(handles=[ann_med_plots[i] for i in [1,3,5]], loc = [0,0.68])
-         leg2 = plt.legend(handles=[ann_med_plots[i] for i in [0,2]], loc = [0.3,0.74])
+         leg1 = plt.legend([ann_med_plots[i] for i in [1,3,5]], [ann_med_plots[i].get_label() for i in [1,3,5]], loc = [0,0.68])
+         leg2 = plt.legend([ann_med_plots[i] for i in [0,2]], [ann_med_plots[i].get_label() for i in [0,2]], loc = [0.3,0.74])
          ann_med_ax.add_artist(leg1)
          ann_med_ax.add_artist(leg2)
          ann_med_ax.set_xlabel('Radius (kpc)')
@@ -442,8 +443,8 @@ if do_cum_mass_plots:
 
          ### Fancy legend
          lines = cum_med_ax.get_lines()
-         leg1 = plt.legend(handles = [lines[i] for i in [1,3,5]], loc = [0.015,0.68])
-         leg2 = plt.legend(handles = [lines[i] for i in [0,2]], loc= [0.3,0.74])
+         leg1 = plt.legend([lines[i] for i in [1,3,5]], [lines[i].get_label() for i in [1,3,5]], loc = [0.015,0.68])
+         leg2 = plt.legend([lines[i] for i in [0,2]], [lines[i].get_label() for i in [0,2]], loc= [0.3,0.74])
          cum_med_ax.add_artist(leg1)
          cum_med_ax.add_artist(leg2)
          cum_med_ax.set_xlabel('Radius (kpc)')
@@ -471,7 +472,24 @@ if do_cum_mass_plots:
       ax.set_xlabel(r'$M_{halo}$ $(M_{\odot})$',fontsize=18.)
       ax.set_ylabel(r'$M_{<R_{vir}}$ $(M_{\odot})$', fontsize=18.)
       ax.set_title(r'Hydrogen Masses Within $R_{vir}$', fontsize=20.)
+      fig.set_tight_layout(True)
       fig.savefig('cum_H_vs_halo.pdf')
+      plt.close(fig)
+
+      fig, ax = plt.subplots()
+      ax.scatter(plot_hmass , cool_plot_cum_masses/plot_cum_masses, color='fuchsia', marker='s', edgecolors='k', linewidth=0.75, s=30., label='Cool H')
+      ax.scatter(plot_hmass , plot_neut_cum_mases/plot_cum_masses, color='gold', marker='^', edgecolors='k', linewidth=0.75, s=30., label='Neutral H')
+      ax.legend(loc='lower center',fontsize=16., ncol=3)
+      ax.set_yscale('log')
+      ax.set_xscale('log')
+      ax.set_ylim([10**-4, 10**0.5])
+      ax.set_xlim([10**10.5,10**14.0])
+      ax.set_xlabel(r'$M_{halo}$ $(M_{\odot})$',fontsize=18.)
+      ax.set_ylabel(r'$M_{x}/M_{H}$ $(M_{\odot})$', fontsize=18.)
+      ax.set_title(r'$M_{x}/M_{H}$ in $R_{vir}$', fontsize=20.)
+      fig.set_tight_layout(True)
+      fig.savefig('frac_cum_H_vs_halo.pdf')
+      plt.close(fig)
 
 
 

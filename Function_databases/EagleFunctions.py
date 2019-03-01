@@ -514,10 +514,10 @@ def get_star_props(snap_directory, radius, group_number, particles_included_keyw
 
 	return star_coords_in_R, star_distance_in_R, star_mass_in_R, star_velocity_in_R, star_speed_in_R
 
-def get_props_for_coldens(species, snap_directory, group_number, particles_included_keyword, group_included_keyword, subfind_included_keyword, groups_dir=None):
+def get_props_for_coldens(species, snap_directory, group_number, particles_included_keyword, group_included_keyword, subfind_included_keyword, groups_dir=None, all_directories = False):
 	# create array of files
 	print "in get props"
-	snap_files = get_snap_files(snap_directory, particles_included_keyword)
+	snap_files = get_snap_files(snap_directory, particles_included_keyword, all_directories=all_directories)
 	# because particle included keyword is different in rotated snapshots have to grab the groups_ files seperately
 	if groups_dir == None:
 		snap_files = np.concatenate((snap_files, get_snap_files(snap_directory, group_included_keyword)))
@@ -528,10 +528,10 @@ def get_props_for_coldens(species, snap_directory, group_number, particles_inclu
 	p = pool(12)
 	print "pool opened"
 
-	# gas_coords_test = read_array(snap_files, 'PartType0/Coordinates', include_file_keyword=particles_included_keyword)
-	gas_coords_x_result = p.apply_async(read_array, [snap_files, 'PartType0/Coordinates'], {'include_file_keyword':particles_included_keyword, 'column':0})
-	gas_coords_y_result = p.apply_async(read_array, [snap_files, 'PartType0/Coordinates'], {'include_file_keyword':particles_included_keyword, 'column':1})
-	gas_coords_z_result = p.apply_async(read_array, [snap_files, 'PartType0/Coordinates'], {'include_file_keyword':particles_included_keyword, 'column':2})
+	gas_coords = p.apply_async(read_array, [snap_files, 'PartType0/Coordinates'], {'include_file_keyword':particles_included_keyword})
+	# gas_coords_x_result = p.apply_async(read_array, [snap_files, 'PartType0/Coordinates'], {'include_file_keyword':particles_included_keyword, 'column':0})
+	# gas_coords_y_result = p.apply_async(read_array, [snap_files, 'PartType0/Coordinates'], {'include_file_keyword':particles_included_keyword, 'column':1})
+	# gas_coords_z_result = p.apply_async(read_array, [snap_files, 'PartType0/Coordinates'], {'include_file_keyword':particles_included_keyword, 'column':2})
 	print "gas coords initialized"
 	smoothing_length_result = p.apply_async(read_array, [snap_files, 'PartType0/SmoothingLength'], {'include_file_keyword':particles_included_keyword})
 	particle_mass_result = p.apply_async(read_array, [snap_files, 'PartType0/Mass'], {'include_file_keyword':particles_included_keyword})
@@ -548,11 +548,12 @@ def get_props_for_coldens(species, snap_directory, group_number, particles_inclu
 
 	p.close()
 	print "pool closed"
-	gas_coords_x = gas_coords_x_result.get()
+	gas_coords = gas_coords.get()
+	# gas_coords_x = gas_coords_x_result.get()
+	# gas_coords_y = gas_coords_y_result.get()
+	# gas_coords_z = gas_coords_z_result.get()
+	# gas_coords = np.column_stack((gas_coords_x, gas_coords_y, gas_coords_z))
 	print "got gas coords"
-	gas_coords_y = gas_coords_y_result.get()
-	gas_coords_z = gas_coords_z_result.get()
-	gas_coords = np.column_stack((gas_coords_x, gas_coords_y, gas_coords_z))
 
 	smoothing_length = smoothing_length_result.get()
 	particle_mass = particle_mass_result.get()

@@ -16,7 +16,7 @@
 ### split into red/blue shifted? 
 
 ### Do a check for how many galaxies have HI ion abundances that are just all zeros. That will tell you how many chem_abundance checks failed. 
-
+# Otters@78911
 ##################################
 # Imports
 
@@ -30,9 +30,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
-import real_data
 
 # my function libraries
+import real_data
 import SpecwizardFunctions
 import EagleFunctions
 import survey_realization_functions as cos_functions
@@ -93,13 +93,13 @@ elif summit_bool:
 	# where all that data is put and where created los live. Basically the home for the run you are doing. 
 	# don't make it the same for multiple runs and make sure if you're just running plotting stuff it looks in the right place
 
-	folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/halos_5rel_1')
-	folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/gass_5rel_1'))
-	folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/dwarfs_5rel_1'))
+	# folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/halos_5rel_1')
+	# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/gass_5rel_1'))
+	# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/dwarfs_5rel_1'))
 
-	# folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarfs*')
-	# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
-	# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
+	folders = glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/dwarfs*')
+	folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/gass*'))
+	folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/semi_rand_radii/halos*'))
 	# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/dwarf*'))
 	# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/halos*'))
 	# folders.append(glob.glob('/projects/ryho3446/Ali_Spec_src/with_partIDs/masters_reruns/matching_radii/gass*'))
@@ -139,7 +139,7 @@ covering_frac_val = 14.0
 virial_vel_bool = False
 mean_spectra_bool = False
 halo_mass_bool = False # for mass bins in flux plots. Use halo or stellar mass
-mass_estimates_bool = False # try to get mass of H along line from lookup tables. 
+mass_estimates_bool = True # try to get mass of H along line from lookup tables. 
 kinematics_bool = False # look at properties of individual lines
 pop_str = 'old'
 proch_bool = False
@@ -149,7 +149,7 @@ make_realistic_bool = False
 new_lines = False
 col_con_bool = False
 equ_widths_bool = True
-log_plots = False
+log_plots = True
 
 # cut is 9.9 smass in cos, this will be 9.7 after read ins and 9.7 in eagle gals (IMF)
 if run_specwizard:
@@ -355,6 +355,8 @@ for i in range(0,np.size(ions)):
 
 	covered, total, ssfr, masses, smasses, redshifts, radii, virial_radii, R200, cols, equ_widths, eagle_ids, flux_for_stacks, vel_for_stacks, virial_vel_for_stacks, cols, H_cols, num_minimas, depths, FWHMs, centroid_vels, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin, ion_num_densities, temperatues, gas_densities = cos_functions.get_EAGLE_data_for_plots(ions_short[i], lambda_line, curr_cos_id_arr, lambda_line, spec_output_directory, lookup_file, max_smass, min_smass, max_ssfr, min_ssfr, tols, hi_lo_tols, ordered_cos_radii, covering_frac_bool, covering_frac_val, max_abs_vel, mass_estimates_bool, kinematics_bool, make_realistic_bool = make_realistic_bool, offset = starting_gal_id)
 
+	# D, p = cos_functions.KS_test(plot_equ_widths, equ_widths)
+
 	# # can do both to compare num_minima with and without realistic spectra
 	# covered, total, ssfr, masses, smasses, redshifts, radii, virial_radii, R200, cols, equ_widths, eagle_ids, flux_for_stacks, vel_for_stacks, virial_vel_for_stacks, cols, H_cols, real_num_minimas, depths, FWHMs, centroid_vels, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin, ion_num_densities, temperatues, gas_densities = cos_functions.get_EAGLE_data_for_plots(ions_short[i], lambda_line, curr_cos_id_arr, lambda_line, spec_output_directory, lookup_file, max_smass, min_smass, max_ssfr, min_ssfr, tols, hi_lo_tols, ordered_cos_radii, covering_frac_bool, covering_frac_val, max_abs_vel, mass_estimates_bool, kinematics_bool, make_realistic_bool = True, offset = starting_gal_id)
 
@@ -391,15 +393,17 @@ for i in range(0,np.size(ions)):
 
 	# np.savez('/projects/ryho3446/snapshots/kin_outputs.npz', num_minimas, centroid_vels, depths, FWHMs, radii, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin)
 
-	npzfile = np.load('/projects/ryho3446/snapshots/kin_outputs.npz')
- 	num_minimas, centroid_vels, depths, FWHMs, radii, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin =  npzfile['arr_0'], npzfile['arr_1'], npzfile['arr_2'], npzfile['arr_3'], npzfile['arr_4'], npzfile['arr_5'], npzfile['arr_6'], npzfile['arr_7'], npzfile['arr_8'], npzfile['arr_9'], npzfile['arr_10'], npzfile['arr_11'], npzfile['arr_12'], npzfile['arr_13'] # [npzfile['arr_%s' % (i)] for i in range(np.size(npzfile))]
+	# npzfile = np.load('/projects/ryho3446/snapshots/kin_outputs.npz')
+ # 	num_minimas, centroid_vels, depths, FWHMs, radii, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin =  npzfile['arr_0'], npzfile['arr_1'], npzfile['arr_2'], npzfile['arr_3'], npzfile['arr_4'], npzfile['arr_5'], npzfile['arr_6'], npzfile['arr_7'], npzfile['arr_8'], npzfile['arr_9'], npzfile['arr_10'], npzfile['arr_11'], npzfile['arr_12'], npzfile['arr_13'] # [npzfile['arr_%s' % (i)] for i in range(np.size(npzfile))]
 
-	cos_functions.kinematic_plots(num_minimas, centroid_vels, depths, FWHMs, radii, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin, bins_for_median)
+	# cos_functions.kinematic_plots(num_minimas, centroid_vels, depths, FWHMs, radii, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin, bins_for_median)
 	
-	# cos_functions.neutral_columns_plot(cols, H_cols, radii, virial_radii, R200, smasses, masses, ssfr, ion_num_densities, gas_densities, temperatues, mean_total_mass_bool, virial_radii_bool, pop_str)
+	cos_functions.neutral_columns_plot(cols, H_cols, radii, virial_radii, R200, smasses, masses, ssfr, ion_num_densities, gas_densities, temperatues, mean_total_mass_bool, virial_radii_bool, pop_str)
 
 	# if equ_widths_bool:
 	# 	cos_functions.make_equ_width_plots(ions_short[i], ssfr, masses, smasses, radii, virial_radii, equ_widths, eagle_ids, curr_cos_id_arr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, curr_cos_smass, colorbar, bins_for_median, log_plots) # line in Angst
+	# 	# filter out super weak lines
+	# 	# cos_functions.make_equ_width_plots(ions_short[i], ssfr, masses, smasses, radii, virial_radii, equ_widths, eagle_ids, curr_cos_id_arr[plot_equ_widths > 0.05], plot_equ_widths[plot_equ_widths > 0.05], plot_W_errs[plot_equ_widths > 0.05], plot_W_flags[plot_equ_widths > 0.05], plot_equ_widths_radii[plot_equ_widths > 0.05], curr_cos_smass[plot_equ_widths > 0.05], colorbar, bins_for_median, log_plots) # line in Angst
 
 	# 	# cos_functions.make_equ_width_contour_plots(ions_short[i], radii, virial_radii, equ_widths, smasses, ssfr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, curr_cos_smass, curr_cos_ssfr, virial_radii_bool, log_plots)
 
