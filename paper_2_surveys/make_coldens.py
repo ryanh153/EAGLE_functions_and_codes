@@ -31,16 +31,31 @@ h = 0.6777
 # subfind_included_keyword = ['eagle_subfind_tab_' + keyword_end for keyword_end in keyword_ends] # TODO ask Ben about above
 # all_directories = False
 
-### box ben gave me. Can pick different subhaloes
-dirs = ["/cosma5/data/dp004/dc-oppe1/data/L034box/data_L034N1034/snapshot_028_z000p000/"] # this might actually be one too deep here. Check that if it fails
-group_dirs = ["/cosma5/data/dp004/dc-oppe1/data/L034box/data_L034N1034/groups_028_z000p000/"] # if the directories are different
-designator = ["L034N1034_sh112"]
-keyword_ends = ["028_z000p000_shalo_112_"]
-group_numbers =  [112] # is this the same as subhalo number? assume yes and see if it works. 
+# ### box ben gave me. Can pick different subhaloes
+# dirs = ["/cosma5/data/dp004/dc-oppe1/data/L034box/data_L034N1034/snapshot_028_z000p000/"] # this might actually be one too deep here. Check that if it fails
+# group_dirs = ["/cosma5/data/dp004/dc-oppe1/data/L034box/data_L034N1034/groups_028_z000p000/"] # if the directories are different
+# designator = ["L034N1034_sh112"]
+# keyword_ends = ["028_z000p000_shalo_112_"]
+# group_numbers =  [112] # is this the same as subhalo number? assume yes and see if it works. 
+# known_gal_coords = [[(25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.)]] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
+# particles_included_keyword = ["snap_rot_" + keyword_end for keyword_end in keyword_ends] # these rotated ones have a different naming convention. May do case by case because only a few gals for this paper
+# group_included_keyword = ["group_tab_" + keyword_end[0:12] for keyword_end in keyword_ends] # I don't see a groups folder for this box...?
+# subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end[0:12] for keyword_end in keyword_ends]
+# all_directories = True
+
+### LUVOR survey TODO change all values to be the new rotated snapshot
+dirs = ["/cosma5/data/dp004/dc-oppe1/data/Halo_x008/data_004_x008_eagle.NEQ.snap003restart/"]
+gal_folders = ["snapshot_rot_noneq_047_z000p000_shalo_1_12.05_9.99_1.069/"]
+snap_bases = ["snap_rot_noneq_047_z000p000_shalo_1_12.05_9.99_1.069"]
+designator = ["LUVOIR_test"]
+keyword_ends = ["047_z000p000"]
+group_numbers =  [1] # is this the same as subhalo number? assume yes and see if it works. 
 known_gal_coords = [[(25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.)]] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
+known_box_size = (25.*1034.)/(752.) # make zero if it needs to be read out
 particles_included_keyword = ["snap_rot_" + keyword_end for keyword_end in keyword_ends] # these rotated ones have a different naming convention. May do case by case because only a few gals for this paper
-group_included_keyword = ["group_tab_" + keyword_end[0:12] for keyword_end in keyword_ends] # I don't see a groups folder for this box...?
-subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end[0:12] for keyword_end in keyword_ends]
+group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] # I don't see a groups folder for this box...?
+subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end for keyword_end in keyword_ends]
+redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
 all_directories = True
 
 ### plotting params

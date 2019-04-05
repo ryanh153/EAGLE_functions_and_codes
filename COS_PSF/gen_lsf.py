@@ -125,7 +125,7 @@ def add_noise(input_x, input_flux, rest_wavelength, redshift, snr, vel_kms=True)
 
 	noise_vector = np.zeros(np.size(input_flux))
 	for i in range(np.size(input_flux)):
-		noise_vector[i] = np.random.normal(0.,(input_flux[i]/snr)**0.5) # should this be square rooted? 
+		noise_vector[i] = np.random.normal(0.,(input_flux[i]/snr)) # should this be square rooted? 
 
 	noisy_flux = input_flux + noise_vector
 
@@ -149,6 +149,10 @@ def ang_to_vel(input_ang, rest_wavelength, redshift):
 
 def do_it_all(simulated_x, simulated_flux, rest_wavelength, redshift, pix_per_bin, snr, cos_lsf_bool=True, directory_with_COS_LSF='./', vel_kms=True, chan=None, std=20, num_sigma_in_gauss=3, long_spec=False):
 
+	# plt.plot(simulated_x, simulated_flux)
+	# plt.savefig("sim.pdf")
+	# plt.close()
+
 	if long_spec: # spectra is too long for one LSF, we break it down into 50 AA pieces (assumes we are passed wavelengths as simulated_x)
 		lsf_bin_edges = np.concatenate(([0.0], np.arange(1125., 1775., 50), [1.e10]))
 		lambda_pieces, flux_pieces = [[] for _ in xrange(np.size(lsf_bin_edges)-1)], [[] for _ in xrange(np.size(lsf_bin_edges)-1)]
@@ -170,13 +174,22 @@ def do_it_all(simulated_x, simulated_flux, rest_wavelength, redshift, pix_per_bi
 	else:
 		if cos_lsf_bool:
 			convolved_vel, convolved_wavelengths, convolved_flux = convolve_spectra_with_COS_LSF(simulated_x, simulated_flux, rest_wavelength, redshift, vel_kms=vel_kms, chan=chan, directory_with_COS_LSF=directory_with_COS_LSF)
+			# plt.plot(convolved_vel, convolved_flux)
+			# plt.savefig("conv.pdf")
+			# plt.close()
 		else:
 			convolved_vel, convolved_wavelengths, convolved_flux = convolve_spectra_with_gaussian(simulated_x, simulated_flux, std, rest_wavelength, redshift, vel_kms=vel_kms, num_sigma_in_gauss=num_sigma_in_gauss)
 
 	if vel_kms:
 		noisy_flux = add_noise(convolved_vel, convolved_flux, rest_wavelength, redshift, snr, vel_kms=vel_kms)
+		# plt.plot(convolved_vel, noisy_flux)
+		# plt.savefig("noise.pdf")
+		# plt.close()
 
 		binned_vel, binned_wavelengths, binned_flux = bin_data(convolved_vel, noisy_flux, pix_per_bin, rest_wavelength, redshift, vel_kms=vel_kms)
+		# plt.plot(binned_vel, binned_flux)
+		# plt.savefig("final.pdf")
+		# plt.close()
 
 	else:
 		noisy_flux = add_noise(convoloved_wavelengths, convoloved_flux, rest_wavelength, redshift, snr, vel_kms=vel_kms)

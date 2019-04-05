@@ -15,6 +15,7 @@ import glob
 import warnings
 import time
 from multiprocessing import Pool as pool
+import survey_realization_functions
 
 ### Constants
 parsec_in_cm = 3.0857e18 # cm
@@ -184,6 +185,9 @@ def particles_btwn_radii(object_property, gal_centered_object_property_coords,ra
                         raise ValueError("Array passed to particles_btwn_radii is not 1 or 2 dim")
         else:
                 return temp_object_property
+
+def get_indices_of_particles_between_radii(distance, gal_centered_coords):
+	return np.argwhere(((distance >= radius1) & (distance < radius2)))[:,0]
 
 
 def cartesian_to_spherical_coordinate(cartesian_property):
@@ -1499,6 +1503,7 @@ def edit_text(file, new_file_name, keywords, replacements):
 						output.write(line)
 
 def gas_mass_in_annular_rings(gal_directory, group_number, radii, virial_radii_bool, R200, particles_included_keyword, subfind_included_keyword):
+	cool_bool = False
 	mass_in_ann = np.zeros(np.size(radii)-1)
 	neut_mass_in_ann = np.zeros(np.size(radii)-1)
 	cum_mass = np.zeros(np.size(radii)-1)
@@ -1523,26 +1528,60 @@ def gas_mass_in_annular_rings(gal_directory, group_number, radii, virial_radii_b
 
 	gas_coords = gal_centered_coords(gas_coords,gal_coords,box_size,expansion_factor,hubble_param)
 	if virial_radii_bool:
-		gas_coords /= R200
-	temp_cut_indices = np.argwhere(temperature<=1.e5)[:,0]
+		gas_coords /= R200*1.e3*parsec_in_cm
+	if cool_bool:
+		temp_cut_indices = np.argwhere(temperature<=1.e5)[:,0]
+	else:
+		temp_cut_indices = np.arange(np.size(temperature))
+
+	# get distances ourselves so we don't calculate it every time
+	distances = np.sqrt(gas_coords[:,0]**2. + gas_coords[:,1]**2. + gas_coords[:,2]**2.)
 
 	for i in range(np.size(mass_in_ann)):
-		part_mass_ann = particles_btwn_radii(part_mass[temp_cut_indices], gas_coords[temp_cut_indices], radii[i], radii[i+1])
-		H_frac_ann = particles_btwn_radii(H_frac[temp_cut_indices], gas_coords[temp_cut_indices], radii[i], radii[i+1])
-		HI_ann = particles_btwn_radii(HI[temp_cut_indices], gas_coords[temp_cut_indices], radii[i], radii[i+1])
+		# get indices ourselves as well since we use the same indices 3 times
+		in_btwn_indices = np.argwhere(((distances > radii[i]) & (distances <= radii[i+1])))[:,0]
+
+		part_mass_ann = part_mass[in_btwn_indices]
+		H_frac_ann = H_frac[in_btwn_indices]
+		HI_ann = HI[in_btwn_indices]
 		neut_mass_in_ann[i] = np.sum(part_mass_ann*H_frac_ann*HI_ann)/M_sol
 		mass_in_ann[i] = np.sum(part_mass_ann*H_frac_ann)/M_sol
 
 	return mass_in_ann, neut_mass_in_ann
 
+def gal_centered_coords_and_vels_in_annulus(gal_directory, group_number, radii, R200, particles_included_keyword, subfind_included_keyword):
+	cool_bool = False
+
+	snap_files = get_snap_files(gal_directory, particles_included_keyword)
+	GrpIDs = read_array(snap_files,"Subhalo/GroupNumber", include_file_keyword=subfind_included_keyword)
+	SubIDs = read_array(snap_files, "Subhalo/SubGroupNumber", include_file_keyword=subfind_included_keyword)
+	index = np.where((GrpIDs == float(group_number)) & (SubIDs == 0))[0] # picks out most massive galaxy in the designated group
+	gas_coords = read_array(snap_files, array_name='PartType0/Coordinates',include_file_keyword=particles_included_keyword)
+	gal_coords = read_array(snap_files, "Subhalo/CentreOfPotential", include_file_keyword=subfind_included_keyword)[index][0]
+	gas_vel = read_array(snap_files, array_name="PartType0/Velocity", include_file_keyword=particles_included_keyword)
+	gal_vel = read_array(snap_files, "Subhalo/Velocity", include_file_keyword=subfind_included_keyword)[index][0]
+	box_size = read_attribute(snap_files,'Header','BoxSize',include_file_keyword=particles_included_keyword)
+	expansion_factor = read_attribute(snap_files,'Header','ExpansionFactor',include_file_keyword=particles_included_keyword)
+	hubble_param = read_attribute(snap_files,'Header','HubbleParam',include_file_keyword=particles_included_keyword)
+
+	gas_coords = gal_centered_coords(gas_coords,gal_coords,box_size,expansion_factor,hubble_param)
+	gas_vel = gas_vel - gal_vel
+
+	coords_ann = particles_btwn_radii(gas_coords, gas_coords, radii[0]*R200, radii[1]*R200)
+	vel_ann = particles_btwn_radii(gas_vel, gas_coords, radii[0]*R200, radii[1]*R200)
+
+	return coords_ann, vel_ann
+
 def actual_cumulative_mass_for_EAGLE_gals(directory_with_sim_gals, virial_radii_bool):
 
 	min_mass, max_mass = 5., 15.
 	if virial_radii_bool:
-		radii = np.arange(0.05,1.05,0.05)
+		radii = np.arange(0.0,1.05,0.05)
 	else:
 		# radii = np.arange(0.0,651.,5.)*parsec_in_cm*1.e3
 		radii = np.arange(20.,170.,10.)*parsec_in_cm*1.e3
+		# radii = np.arange(0.,20.,5.)*parsec_in_cm*1.e3 # inner radii check for Ben
+
 	ann_gas_mass_all_gals = []
 	neut_ann_gas_mass_all_gals = []
 	halo_masses = []
@@ -1551,13 +1590,70 @@ def actual_cumulative_mass_for_EAGLE_gals(directory_with_sim_gals, virial_radii_
 	R200s = []
 
 	gal_hdf5_files = glob.glob(directory_with_sim_gals+'*/output*')
+	done_one = False
+
 	for  i, file in enumerate(gal_hdf5_files):
+		if not done_one:
+			print "on gal %d" % (i)
+			with h5py.File(file, 'r') as hf:
+				galaxy_properties = hf.get('GalaxyProperties')
+				gal_mass =  np.log10(np.array(galaxy_properties.get('gal_mass')))[0]
+				if ((gal_mass > min_mass) & (gal_mass <= max_mass)):
+					stellar_mass = np.log10(np.array(galaxy_properties.get('gal_stellar_mass')))[0]
+					sSFR = np.array(galaxy_properties.get('log10_sSFR'))[0]
+					R200 = np.array(galaxy_properties.get('gal_R200'))[0] # this is in kpc!
+					file_keyword = np.array(galaxy_properties.get('file_keyword'))[0][-12::]
+					snap_directory = np.array(galaxy_properties.get('snap_directory'))[0]
+					group_number = np.array(galaxy_properties.get('group_number'))[0]
+
+					particles_included_keyword = 'snap_noneq_'+file_keyword
+					subfind_included_keyword = 'eagle_subfind_tab_'+file_keyword
+					temp_mass, temp_neut_mass = gas_mass_in_annular_rings(snap_directory, group_number, radii, virial_radii_bool, R200, particles_included_keyword, subfind_included_keyword)
+					ann_gas_mass_all_gals.append(temp_mass), neut_ann_gas_mass_all_gals.append(temp_neut_mass)
+					halo_masses.append(gal_mass)
+					stellar_masses.append(stellar_mass)
+					sSFRs.append(sSFR)
+					R200s.append(R200)
+					# if i == 3:
+					# 	done_one = True
+
+				else:
+					continue
+		else:
+			continue
+
+
+	np.set_printoptions(threshold=np.inf)
+	arrays_to_print = [ann_gas_mass_all_gals, neut_ann_gas_mass_all_gals, radii, halo_masses, stellar_masses, sSFRs, R200s]
+
+	var_prefaces = ["ann_masses", "neut_ann_masses", "radii", "halo_masses", "stellar_masses", "sSFRs", "R200s"]
+
+	opening_lines = 'import numpy as np \n # All sim gals used for COS realizations \n'
+	filename = "/cosma/home/analyse/rhorton/snapshots/sim_ann_masses.py"
+	survey_realization_functions.print_data(filename, opening_lines, arrays_to_print, var_prefaces)
+	np.set_printoptions(threshold=1000)
+
+
+def radial_vels_for_all_particles_in_a_shell(directory_with_sim_gals):
+
+	min_mass, max_mass = 5., 15.
+	radii = [0.45, 0.55] # the min/max radius we will look for in virial radii
+	v_dot_r_hat_list = []
+	halo_masses = []
+	stellar_masses = []
+	sSFRs = []
+	R200s = []
+
+	gal_hdf5_files = glob.glob(directory_with_sim_gals+'*/output*')
+
+	for  i, file in enumerate(gal_hdf5_files):
+		print "on gal %d" % (i)
 		with h5py.File(file, 'r') as hf:
 			galaxy_properties = hf.get('GalaxyProperties')
 			gal_mass =  np.log10(np.array(galaxy_properties.get('gal_mass')))[0]
 			stellar_mass = np.log10(np.array(galaxy_properties.get('gal_stellar_mass')))[0]
 			sSFR = np.array(galaxy_properties.get('log10_sSFR'))[0]
-			R200 = np.array(galaxy_properties.get('gal_R200'))[0]
+			R200 = np.array(galaxy_properties.get('gal_R200'))[0] # in kpc!
 			file_keyword = np.array(galaxy_properties.get('file_keyword'))[0][-12::]
 			snap_directory = np.array(galaxy_properties.get('snap_directory'))[0]
 			group_number = np.array(galaxy_properties.get('group_number'))[0]
@@ -1565,28 +1661,33 @@ def actual_cumulative_mass_for_EAGLE_gals(directory_with_sim_gals, virial_radii_
 		if ((gal_mass > min_mass) & (gal_mass <= max_mass)):
 			particles_included_keyword = 'snap_noneq_'+file_keyword
 			subfind_included_keyword = 'eagle_subfind_tab_'+file_keyword
-			temp_mass, temp_neut_mass = gas_mass_in_annular_rings(snap_directory, group_number, radii, virial_radii_bool, R200, particles_included_keyword, subfind_included_keyword)
-			ann_gas_mass_all_gals.append(temp_mass), neut_ann_gas_mass_all_gals.append(temp_neut_mass)
+			### get coordiantes and vels of all gas particles in range. Both relative to gal
+			coords, vels = gal_centered_coords_and_vels_in_annulus(snap_directory, group_number, radii, R200*parsec_in_cm*1.e3, particles_included_keyword, subfind_included_keyword)
+			inv_coord_norms = 1./np.linalg.norm(coords, axis=1)
+			inv_coord_norms = np.reshape(inv_coord_norms, (np.size(inv_coord_norms),1))
+			unit_coords = coords*inv_coord_norms
+
+			v_dot_r_hat = np.zeros(np.shape(coords)[0])
+			for i in range(np.size(v_dot_r_hat)):
+				v_dot_r_hat[i] = np.dot(unit_coords[i,:], vels[i,:])
+
+			v_dot_r_hat_list.append(v_dot_r_hat)
 			halo_masses.append(gal_mass)
 			stellar_masses.append(stellar_mass)
 			sSFRs.append(sSFR)
 			R200s.append(R200)
-		else:
-			continue
 
-	print 'To vir in virial units All Gals sim cum masses'
-	print ann_gas_mass_all_gals
-	print ''
-	print neut_ann_gas_mass_all_gals
-	print ''
-	print halo_masses
-	print ''
-	print stellar_masses
-	print ''
-	print sSFRs
-	print ''
-	print R200s
-	print ''
+	np.set_printoptions(threshold=np.inf)
+	arrays_to_print = [v_dot_r_hat_list, radii, halo_masses, stellar_masses, sSFRs, R200s]
+
+	var_prefaces = ["v_dot_r", "radii", "halo_masses", "stellar_masses", "sSFRs", "R200s"]
+
+	opening_lines = 'import numpy as np \n # All sim gals used for COS realizations \n # v dot r in shell from inner to outer radius (given in fraction of R_200) \n'
+	filename = "/cosma/home/analyse/rhorton/snapshots/sim_v_dot_r.py"
+	survey_realization_functions.print_data(filename, opening_lines, arrays_to_print, var_prefaces)
+	np.set_printoptions(threshold=1000)
+
+
 
 
 

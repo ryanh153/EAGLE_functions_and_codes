@@ -49,8 +49,8 @@ plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['le
 cos_comparisons_file = 'cos_data.hdf5'
 
 # ### Super important to make sure these are right before each run. Don't overwrite stuff for the love of god. Especially on long runs
-cosma_bool = False
-summit_bool = True
+cosma_bool = True
+summit_bool = False
 ### old cosma locations
 if cosma_bool:
 	# this is the location of the gal output files that contain all the data you need from the eagle galaxies
@@ -139,7 +139,7 @@ covering_frac_val = 14.0
 virial_vel_bool = False
 mean_spectra_bool = False
 halo_mass_bool = False # for mass bins in flux plots. Use halo or stellar mass
-mass_estimates_bool = True # try to get mass of H along line from lookup tables. 
+mass_estimates_bool = False # try to get mass of H along line from lookup tables. 
 kinematics_bool = False # look at properties of individual lines
 pop_str = 'old'
 proch_bool = False
@@ -351,11 +351,13 @@ for i in range(0,np.size(ions)):
 			curr_cos_id_arr = np.array([])
 		print 'warning: No COS data prepared for this ion'
 
-	# EagleFunctions.actual_cumulative_mass_for_EAGLE_gals('/gpfs/data/analyse/rhorton/opp_research/data/end_summer_gals/')
+	# EagleFunctions.actual_cumulative_mass_for_EAGLE_gals('/cosma/home/analyse/rhorton/data/paper1_gals/', virial_radii_bool)
 
-	covered, total, ssfr, masses, smasses, redshifts, radii, virial_radii, R200, cols, equ_widths, eagle_ids, flux_for_stacks, vel_for_stacks, virial_vel_for_stacks, cols, H_cols, num_minimas, depths, FWHMs, centroid_vels, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin, ion_num_densities, temperatues, gas_densities = cos_functions.get_EAGLE_data_for_plots(ions_short[i], lambda_line, curr_cos_id_arr, lambda_line, spec_output_directory, lookup_file, max_smass, min_smass, max_ssfr, min_ssfr, tols, hi_lo_tols, ordered_cos_radii, covering_frac_bool, covering_frac_val, max_abs_vel, mass_estimates_bool, kinematics_bool, make_realistic_bool = make_realistic_bool, offset = starting_gal_id)
+	# EagleFunctions.radial_vels_for_all_particles_in_a_shell('/cosma/home/analyse/rhorton/data/paper1_gals/')
 
-	# D, p = cos_functions.KS_test(plot_equ_widths, equ_widths)
+	# covered, total, ssfr, masses, smasses, redshifts, radii, virial_radii, R200, cols, equ_widths, eagle_ids, flux_for_stacks, vel_for_stacks, virial_vel_for_stacks, cols, H_cols, num_minimas, depths, FWHMs, centroid_vels, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin, ion_num_densities, temperatues, gas_densities = cos_functions.get_EAGLE_data_for_plots(ions_short[i], lambda_line, curr_cos_id_arr, lambda_line, spec_output_directory, lookup_file, max_smass, min_smass, max_ssfr, min_ssfr, tols, hi_lo_tols, ordered_cos_radii, covering_frac_bool, covering_frac_val, max_abs_vel, mass_estimates_bool, kinematics_bool, make_realistic_bool = make_realistic_bool, offset = starting_gal_id)
+
+	D, p = cos_functions.KS_test(plot_cols, cols)
 
 	# # can do both to compare num_minima with and without realistic spectra
 	# covered, total, ssfr, masses, smasses, redshifts, radii, virial_radii, R200, cols, equ_widths, eagle_ids, flux_for_stacks, vel_for_stacks, virial_vel_for_stacks, cols, H_cols, real_num_minimas, depths, FWHMs, centroid_vels, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin, ion_num_densities, temperatues, gas_densities = cos_functions.get_EAGLE_data_for_plots(ions_short[i], lambda_line, curr_cos_id_arr, lambda_line, spec_output_directory, lookup_file, max_smass, min_smass, max_ssfr, min_ssfr, tols, hi_lo_tols, ordered_cos_radii, covering_frac_bool, covering_frac_val, max_abs_vel, mass_estimates_bool, kinematics_bool, make_realistic_bool = True, offset = starting_gal_id)
@@ -398,7 +400,7 @@ for i in range(0,np.size(ions)):
 
 	# cos_functions.kinematic_plots(num_minimas, centroid_vels, depths, FWHMs, radii, temps, line_ion_densities, line_nHs, escape_vels, virial_radii_for_kin, halo_masses_for_kin, stellar_masses_for_kin, ssfr_for_kin, redshifts_for_kin, bins_for_median)
 	
-	cos_functions.neutral_columns_plot(cols, H_cols, radii, virial_radii, R200, smasses, masses, ssfr, ion_num_densities, gas_densities, temperatues, mean_total_mass_bool, virial_radii_bool, pop_str)
+	# cos_functions.neutral_columns_plot(cols, H_cols, radii, virial_radii, R200, smasses, masses, ssfr, ion_num_densities, gas_densities, temperatues, mean_total_mass_bool, virial_radii_bool, pop_str)
 
 	# if equ_widths_bool:
 	# 	cos_functions.make_equ_width_plots(ions_short[i], ssfr, masses, smasses, radii, virial_radii, equ_widths, eagle_ids, curr_cos_id_arr, plot_equ_widths, plot_W_errs, plot_W_flags, plot_equ_widths_radii, curr_cos_smass, colorbar, bins_for_median, log_plots) # line in Angst

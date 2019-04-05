@@ -49,7 +49,7 @@ omega_b = 0.04825
 
 # ### initial test galaxy
 # dirs = ["/cosma5/data/dp004/dc-oppe1/data/Halo_x001/data_002_x001_eagle.NEQ.snap042_acc/"]
-# gal_folders = ["snapshot_rot_noneq_047_z000p000_shalo_1_12.28_10.30_1.246/"]
+# gal_folders = ["snapshot_noneq_noneq_047_z000p000_shalo_1_12.28_10.30_1.246/"]
 # snap_bases = ["snap_rot_noneq_047_z000p000_shalo_1_12.28_10.30_1.246"]
 # designator = ["data_002_x001"]
 # keyword_ends = ["047_z000p000"]
@@ -61,27 +61,57 @@ omega_b = 0.04825
 # redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
 # all_directories = False
 
-### box ben gave me. Can pick different subhaloes
-dirs = ["/cosma5/data/dp004/dc-oppe1/data/L034box/data_L034N1034/snapshot_028_z000p000/"] # this might actually be one too deep here. Check that if it fails
-# gal_folders = ["snapshot_rot_028_z000p000_shalo_11_12.50_10.52_0.859/"]
-# snap_bases = ["snap_rot_028_z000p000_shalo_11_12.50_10.52_0.859"]
-gal_folders = ["snapshot_rot_028_z000p000_shalo_112_11.80_10.03_1.055/"]
-snap_bases = ["snap_rot_028_z000p000_shalo_112_11.80_10.03_1.055"]
-designator = ["L034N1034_sh13"]
-keyword_ends = ["028_z000p000"]
-group_numbers =  [13] # is this the same as subhalo number? assume yes and see if it works. 
-known_gal_coords = [[(25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.)]] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
-particles_included_keyword = ["snap_rot_" + keyword_end for keyword_end in keyword_ends] # these rotated ones have a different naming convention. May do case by case because only a few gals for this paper
+# ### box ben gave me. Can pick different subhaloes
+# dirs = ["/cosma5/data/dp004/dc-oppe1/data/L034box/data_L034N1034/snapshot_028_z000p000/"] # this might actually be one too deep here. Check that if it fails
+# # gal_folders = ["snapshot_rot_028_z000p000_shalo_11_12.50_10.52_0.859/"]
+# # snap_bases = ["snap_rot_028_z000p000_shalo_11_12.50_10.52_0.859"]
+# gal_folders = ["snapshot_rot_028_z000p000_shalo_112_11.80_10.03_1.055/"]
+# snap_bases = ["snap_rot_028_z000p000_shalo_112_11.80_10.03_1.055"]
+# designator = ["L034N1034_sh13"]
+# keyword_ends = ["028_z000p000"]
+# group_numbers =  [13] # is this the same as subhalo number? assume yes and see if it works. 
+# known_gal_coords = [[(25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.)]] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
+# particles_included_keyword = ["snap_rot_" + keyword_end for keyword_end in keyword_ends] # these rotated ones have a different naming convention. May do case by case because only a few gals for this paper
+# group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] # I don't see a groups folder for this box...?
+# subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end for keyword_end in keyword_ends]
+# redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
+# all_directories = True
+
+# ### LUVOR survey TODO change all values to be the new rotated snapshot
+# dirs = ["/cosma5/data/dp004/dc-oppe1/data/Halo_x008/data_004_x008_eagle.NEQ.snap003restart/"]
+# gal_folders = ["snapshot_rot_noneq_047_z000p000_shalo_1_12.05_9.99_1.069/"]
+# snap_bases = ["snap_rot_noneq_047_z000p000_shalo_1_12.05_9.99_1.069"]
+# designator = ["LUVOIR_test"]
+# keyword_ends = ["047_z000p000"]
+# group_numbers =  [1] # is this the same as subhalo number? assume yes and see if it works. 
+# known_gal_coords = [[(25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.)]] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
+# known_box_size = (25.*1034.)/(752.) # make zero if it needs to be read out
+# particles_included_keyword = ["snap_rot_" + keyword_end for keyword_end in keyword_ends] # these rotated ones have a different naming convention. May do case by case because only a few gals for this paper
+# group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] # I don't see a groups folder for this box...?
+# subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end for keyword_end in keyword_ends]
+# redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
+# all_directories = True
+
+### convergence testing 
+dirs = ["/cosma5/data/dp004/dc-oppe1/data/Halo_x008/data_005_x008_eagle.NEQ.snap023restart/"]
+gal_folders = ["snapshot_noneq_030_z000p205/"]
+snap_bases = ["snap_noneq_030_z000p205"]
+designator = ["x008_data_005"]
+keyword_ends = ["030_z000p205"]
+group_numbers =  [1] # is this the same as subhalo number? assume yes and see if it works. 
+known_gal_coords = [0] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
+known_box_size = 0 # make zero if it needs to be read out
+particles_included_keyword = ["snap_noneq_" + keyword_end for keyword_end in keyword_ends] # these rotated ones have a different naming convention. May do case by case because only a few gals for this paper
 group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] # I don't see a groups folder for this box...?
 subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end for keyword_end in keyword_ends]
-redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
-all_directories = True
+redshift = 0.205 ### TODO keep an eye to make sure this is still always true!!!
+all_directories = False
 
 ### survey properties
 ### Check these for errors in data size or related  issues
-points_per_radius = 72
-radii_start, radii_stop, radii_step = 20., 260., 5 # stop not inclusive
-cores = 12 # max number, use this is points per radius is divisable by 16
+points_per_radius = 36
+radii_start, radii_stop, radii_step = 20., 180., 20. # stop not inclusive
+cores = 1 # max number, use this is points per radius is divisable by 16
 ###
 
 radii =  np.arange(radii_start, radii_stop, radii_step) # kpc
@@ -92,13 +122,13 @@ angle_off = np.array(['y', 'z', 'x'])
 covering_frac_vals = np.array([14., 16., 18.])
 
 ### For specwizard
-run_specwizard = False
-making_npz_file = False
+run_specwizard = True
+making_npz_file = True
 if run_specwizard:
    print "Running on %s cores. %s sightlines per core" % (str(cores), str(3*np.size(radii)))
    print ''
 path_to_param_template = "/cosma/home/analyse/rhorton/Ali_Spec_src/CGM_template.par"
-run_output_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/paper_2/L034N1034_sh112/full_run/"
+run_output_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/convergence_tests/data_005_x008/"
 path_to_specwizard_executable = "/cosma/home/analyse/rhorton/Ali_Spec_src/specwizard"
 h1_lookup_file = "/cosma/home/analyse/rhorton/Ali_Spec_src/IonizationTables/HM01G+C+SSH/h1.hdf5"
 
@@ -106,8 +136,8 @@ h1_lookup_file = "/cosma/home/analyse/rhorton/Ali_Spec_src/IonizationTables/HM01
 
 ### Check these for errors in data size or related  issues
 bin_stagger = 0.25 # so that we don't count things on both sides of a bin. Ex: some radii at 30 are read as  29.997 and some at 30.012
-radii_step = 30. # stops are made inclusive. Use same start/stop as above
-angle_start, angle_stop, angle_step, ang_step_2_fold, ang_step_4_fold = 0., 360., 30., 20., 10. # stop not inclusive
+radii_step = 40. # stops are made inclusive. Use same start/stop as above
+angle_start, angle_stop, angle_step, ang_step_2_fold, ang_step_4_fold = 0., 360., 30., 20., 20. # stop not inclusive
 ###
 npz_filename = "survey_results.npz"
 make_realistic_bool = False
@@ -135,11 +165,11 @@ plt.rcParams["axes.labelsize"], plt.rcParams["axes.titlesize"], plt.rcParams["le
 
 ### plot bools
 col_rad, col_ang  = True, False
-H_col_rad, H_col_ang = True, False
+H_col_rad, H_col_ang = False, False
 W_rad, W_ang = False, False
 vel_rad, vel_ang = False, False
 ann_mass_rad, ann_mass_ang = True, False
-H_ann_mass_rad, H_ann_mass_ang = True, False
+H_ann_mass_rad, H_ann_mass_ang = False, False
 cum_mass, H_cum_mass = False, False
 cover_rad, cover_ang = True, False
 
@@ -207,18 +237,27 @@ def wrap_around_coords(coord):
 		coord-= 1.0
 	return coord
 
-def get_gal_coords_and_box_size(snap_files, particles_included_keyword, subfind_included_keyword, gal_coords):
-	box_size = EagleFunctions.read_attribute(snap_files, "Header", "BoxSize", include_file_keyword = particles_included_keyword)*1.e6*parsec_in_cm/h # bos size is attribute, not automatic cgs conversion. Also scaled by hubble param (hence h)
+def get_gal_coords_and_box_size(snap_files, group_number, particles_included_keyword, subfind_included_keyword, gal_coords, box_size):
+	if box_size == 0:
+		box_size = EagleFunctions.read_attribute(snap_files, "Header", "BoxSize", include_file_keyword = particles_included_keyword) # box size is attribute, not automatic cgs conversion
+		hubble_param = EagleFunctions.read_attribute(snap_files, "Header", "HubbleParam", include_file_keyword = particles_included_keyword) # box size is attribute, not automatic cgs conversion
+		expansion_factor = EagleFunctions.read_attribute(snap_files, "Header", "ExpansionFactor", include_file_keyword = particles_included_keyword) # box size is attribute, not automatic cgs conversion
+		box_size = (box_size*expansion_factor/hubble_param)*1.e6*parsec_in_cm # now correct and in CGS
+	else:
+		box_size = box_size*(1.e6*parsec_in_cm) 
 
 	if gal_coords == 0:
 		p = pool(4)
-		GrpIDs_result = p.apply_async(EagleFunctions.read_array, [snap_files, "Subhalo/GroupNumber"], {'include_file_keyword':subfind_included_keyword})
-		SubIDs_result = p.apply_async(EagleFunctions.read_array, [snap_files, "Subhalo/SubGroupNumber"], {'include_file_keyword':subfind_included_keyword})
-		gal_coords_result = p.apply_async(EagleFunctions.read_array, [snap_files, "Subhalo/CentreOfPotential"], {'include_file_keyword':subfind_included_keyword}) # map center
+		GrpIDs = p.apply_async(EagleFunctions.read_array, [snap_files, "Subhalo/GroupNumber"], {'include_file_keyword':subfind_included_keyword})
+		SubIDs = p.apply_async(EagleFunctions.read_array, [snap_files, "Subhalo/SubGroupNumber"], {'include_file_keyword':subfind_included_keyword})
+		gal_coords = p.apply_async(EagleFunctions.read_array, [snap_files, "Subhalo/CentreOfPotential"], {'include_file_keyword':subfind_included_keyword}) # map center
 		p.close()
-		GrpIDs_result = p.apply_async(read_array, [snap_files, "Subhalo/GroupNumber"], {'include_file_keyword':subfind_included_keyword})
-		SubIDs_result = p.apply_async(read_array, [snap_files, "Subhalo/SubGroupNumber"], {'include_file_keyword':subfind_included_keyword})
-		gal_coords = p.apply_async(read_array, [snap_files, "Subhalo/CentreOfPotential"], {'include_file_keyword':subfind_included_keyword}) # map center
+		GrpIDs = GrpIDs.get()
+		SubIDs = SubIDs.get()
+		index = np.where((GrpIDs == float(group_number)) & (SubIDs == 0))[0] # picks out most massive galaxy in the designated group
+		if np.size(index) > 1:
+			index = index[0]
+		gal_coords = gal_coords.get()[index] # map center
 	else:
 		gal_coords = np.array(gal_coords)*(1.e6*parsec_in_cm) # make sure in the same units as box size (which is read out in cm)
 
@@ -590,7 +629,7 @@ if run_specwizard:
 		snap_files = np.concatenate((snap_files, EagleFunctions.get_snap_files(dirs[gal_index], group_included_keyword[gal_index], all_directories)))
 		for ax in axis:
 			los_filename = run_output_dir + "los_%s_axis_%s.txt" % (designator[gal_index], str(ax))
-			gal_coords, box_size = get_gal_coords_and_box_size(snap_files, particles_included_keyword[gal_index], subfind_included_keyword[gal_index], known_gal_coords[gal_index])
+			gal_coords, box_size = get_gal_coords_and_box_size(snap_files, group_numbers[gal_index], particles_included_keyword[gal_index], subfind_included_keyword[gal_index], known_gal_coords[gal_index], known_box_size)
 			create_mult_los_per_radius_text(los_filename, snap_files, gal_coords, box_size, points_per_radius, radii, axis=ax)
 			# continue
 
@@ -607,13 +646,14 @@ if run_specwizard:
 
 			# run specwizard (in parallel)
 			# can not seperatre module loads and specwizard runs. Different calls of system() seem to happen in different environments!
-			os.system("module load intel_comp/2018-update2 intel_mpi/2018 hdf5/1.8.20 && mpirun -np %s %s %s" % (str(cores), path_to_specwizard_executable, param_filename)) # make sure all the right modules are installed
+			os.system("module load intel_comp/2019-update2 intel_mpi/2019-update2 hdf5/1.10.3 && mpirun -np %s %s %s" % (str(cores), path_to_specwizard_executable, param_filename)) # make sure all the right modules are installed
 			# if 8 lines per core it's about twice as fast. 1 or 2 lines it is slower by like 10%. Not perfeclty uniform though
 
 			# store files
 			os.system("mv %sspec.%s.0.hdf5 %sspec.%s_axis_%s.hdf5" % (run_output_dir, snap_bases[gal_index], run_output_dir, designator[gal_index], str(ax)))
-			subprocess.call("mkdir %s/particle_id_files_%s" % (run_output_dir, str(ax)), shell=True)
-			subprocess.call("mv %s/eagle_particles_hit* %s/particle_id_files_%s" % (run_output_dir, run_output_dir, str(ax)), shell=True)
+			# ### if tracking particle ids
+			# subprocess.call("mkdir %s/particle_id_files_%s" % (run_output_dir, str(ax)), shell=True)
+			# subprocess.call("mv %s/eagle_particles_hit* %s/particle_id_files_%s" % (run_output_dir, run_output_dir, str(ax)), shell=True)
 
 elif making_npz_file:
 	for gal_index in range(0,np.size(dirs)):
@@ -621,7 +661,7 @@ elif making_npz_file:
 		# because particle included keyword is different in rotated snapshots have to grab the groups_ files seperately
 		snap_files = np.concatenate((snap_files, EagleFunctions.get_snap_files(dirs[gal_index], group_included_keyword[gal_index], all_directories)))
 
-		gal_coords, box_size = get_gal_coords_and_box_size(snap_files, particles_included_keyword[gal_index], subfind_included_keyword[gal_index], known_gal_coords[gal_index])
+		gal_coords, box_size = get_gal_coords_and_box_size(snap_files, group_numbers[gal_index], particles_included_keyword[gal_index], subfind_included_keyword[gal_index], known_gal_coords[gal_index], known_box_size)
 
 if making_npz_file:
 	lines_gone_through = 0
@@ -686,15 +726,25 @@ if making_npz_file:
 	specwizrd_velocity_array = np.hstack(specwizard_velocity_list)
 	expected_per_bin = (points_per_file*num_files)/(np.size(axis)*(np.size(radii_bins_for_data)-1)*(np.size(angle_bins_for_data)-1))
 
-	np.savez(run_output_dir+npz_filename, gal_coords, box_size, file_id_arr, axis_arr, radii_arr, angle_arr, col_dens_arr, H_col_dens_arr, W_arr, np.hstack(line_num_minima_arr), np.hstack(line_centroid_vel_arr), np.hstack(line_FWHM_arr), np.hstack(line_depth_arr), np.hstack(line_temps_arr), np.hstack(line_ion_densities_arr), np.hstack(line_nH_arr), specwizrd_velocity_array)
+	np.savez(run_output_dir+npz_filename, gal_coords=gal_coords, box_size=box_size, file_id_arr=file_id_arr, axis_arr=axis_arr, radii_arr=radii_arr, angle_arr=angle_arr, col_dens_arr=col_dens_arr, H_col_dens_arr=H_col_dens_arr, W_arr=W_arr, line_num_minima_arr=np.hstack(line_num_minima_arr), line_centroid_vel_arr=np.hstack(line_centroid_vel_arr), line_FWHM_arr=np.hstack(line_FWHM_arr), line_depth_arr=np.hstack(line_depth_arr), line_temps_arr=np.hstack(line_temps_arr), line_ion_densities_arr=np.hstack(line_ion_densities_arr), line_nH_arr=np.hstack(line_nH_arr), specwizrd_velocity_array=specwizrd_velocity_array)
 else:
 	npz_file = np.load(run_output_dir+npz_filename)
-	gal_coords, box_size, file_id_arr, axis_arr, radii_arr, angle_arr, col_dens_arr, H_col_dens_arr, W_arr, line_num_minima_arr, line_centroid_vel_arr, line_FWHM_arr, line_depth_arr, line_temps_arr, line_ion_densities_arr, line_nH_arr, specwizrd_velocity_array = npz_file["arr_0"], \
-	npz_file["arr_1"], npz_file["arr_2"], npz_file["arr_3"], npz_file["arr_4"], npz_file["arr_5"], npz_file["arr_6"], npz_file["arr_7"], npz_file["arr_8"], npz_file["arr_9"], npz_file["arr_10"], npz_file["arr_11"], npz_file["arr_12"], npz_file["arr_13"], npz_file["arr_14"], \
-	npz_file["arr_15"], npz_file["arr_16"]
+	try:
+		gal_coords, box_size, file_id_arr, axis_arr, radii_arr, angle_arr, col_dens_arr, H_col_dens_arr, W_arr, line_num_minima_arr, line_centroid_vel_arr, line_FWHM_arr, line_depth_arr, line_temps_arr, line_ion_densities_arr, line_nH_arr, specwizrd_velocity_array = npz_file["gal_coords"], \
+		npz_file["box_size"], npz_file["file_id_arr"], npz_file["axis_arr"], npz_file["radii_arr"], npz_file["angle_arr"], npz_file["col_dens_arr"], npz_file["H_col_dens_arr"], npz_file["W_arr"], npz_file["line_num_minima_arr"], npz_file["line_centroid_vel_arr"], npz_file["line_FWHM_arr"], npz_file["line_depth_arr"], npz_file["line_temps_arr"], npz_file["line_ion_densities_arr"], \
+		npz_file["line_nH_arr"], npz_file["specwizrd_velocity_array"]
+	except: # used to not have these names. If using an old file read them out, then save them properly. 
+		gal_coords, box_size, file_id_arr, axis_arr, radii_arr, angle_arr, col_dens_arr, H_col_dens_arr, W_arr, line_num_minima_arr, line_centroid_vel_arr, line_FWHM_arr, line_depth_arr, line_temps_arr, line_ion_densities_arr, line_nH_arr, specwizrd_velocity_array = npz_file["arr_0"], \
+		npz_file["arr_1"], npz_file["arr_2"], npz_file["arr_3"], npz_file["arr_4"], npz_file["arr_5"], npz_file["arr_6"], npz_file["arr_7"], npz_file["arr_8"], npz_file["arr_9"], npz_file["arr_10"], npz_file["arr_11"], npz_file["arr_12"], npz_file["arr_13"], npz_file["arr_14"], \
+		npz_file["arr_15"], npz_file["arr_16"]
+
+		np.savez(run_output_dir+npz_filename, gal_coords=gal_coords, box_size=box_size, file_id_arr=file_id_arr, axis_arr=axis_arr, radii_arr=radii_arr, angle_arr=angle_arr, col_dens_arr=col_dens_arr, H_col_dens_arr=H_col_dens_arr, W_arr=W_arr, line_num_minima_arr=np.hstack(line_num_minima_arr), line_centroid_vel_arr=np.hstack(line_centroid_vel_arr), line_FWHM_arr=np.hstack(line_FWHM_arr), line_depth_arr=np.hstack(line_depth_arr), line_temps_arr=np.hstack(line_temps_arr), line_ion_densities_arr=np.hstack(line_ion_densities_arr), line_nH_arr=np.hstack(line_nH_arr), specwizrd_velocity_array=specwizrd_velocity_array)
+
 	expected_per_bin = (np.size(col_dens_arr))/(np.size(axis)*(np.size(radii_bins_for_data)-1)*(np.size(angle_bins_for_data)-1))
 
 # map angles to degrees from disk of galaxy, 2 fold if we care about which side (vel for example) 4 fold otherwise
+print col_dens_arr
+print ''
 ang_arr_2_fold = np.where(angle_arr >= 180., 180.-(angle_arr%180.), angle_arr)
 ang_arr_4_fold = np.where(ang_arr_2_fold >= 90., 90.-(ang_arr_2_fold%90.), ang_arr_2_fold)
 
