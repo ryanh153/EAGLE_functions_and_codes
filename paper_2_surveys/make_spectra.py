@@ -93,10 +93,10 @@ omega_b = 0.04825
 # all_directories = True
 
 ### convergence testing 
-dirs = ["/cosma5/data/dp004/dc-oppe1/data/Halo_x008/data_005_x008_eagle.NEQ.snap023restart/"]
+dirs = ["/cosma5/data/dp004/dc-oppe1/data/Halo_x001/data_002_x001_eagle.NEQ.snap023restart/"]
 gal_folders = ["snapshot_noneq_030_z000p205/"]
 snap_bases = ["snap_noneq_030_z000p205"]
-designator = ["x008_data_005"]
+designator = ["x001_data_002"]
 keyword_ends = ["030_z000p205"]
 group_numbers =  [1] # is this the same as subhalo number? assume yes and see if it works. 
 known_gal_coords = [0] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
@@ -128,7 +128,7 @@ if run_specwizard:
    print "Running on %s cores. %s sightlines per core" % (str(cores), str(3*np.size(radii)))
    print ''
 path_to_param_template = "/cosma/home/analyse/rhorton/Ali_Spec_src/CGM_template.par"
-run_output_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/convergence_tests/data_005_x008/"
+run_output_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/convergence_tests/data_002_x001/"
 path_to_specwizard_executable = "/cosma/home/analyse/rhorton/Ali_Spec_src/specwizard"
 h1_lookup_file = "/cosma/home/analyse/rhorton/Ali_Spec_src/IonizationTables/HM01G+C+SSH/h1.hdf5"
 

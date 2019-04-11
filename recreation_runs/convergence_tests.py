@@ -2,53 +2,109 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import itertools
 
-hires_file = "/cosma/home/analyse/rhorton/Ali_Spec_src/convergence_tests/data_001_x008/hires/survey_results.npz"
-lowres_file = "/cosma/home/analyse/rhorton/Ali_Spec_src/convergence_tests/data_001_x008/lowres/survey_results.npz"
-
+num_compares = 7
 radii = np.arange(20.,180.,20.)
 plot_pts = np.size(radii)
 r_err = 1. # range to look for (20 +/- 1 for example) because radii saved will have some variance)
-hires_col_med, hires_col_low, hires_col_hi = np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts)
-lowres_col_med, lowres_col_low, lowres_col_hi = np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts)
 
-hires_npz = np.load(hires_file)
-try:
+hires_files, hires_col_list, radii_list = [[] for x in range(num_compares)], [[] for x in range(num_compares)], [[] for x in range(num_compares)]
+lowres_files, lowres_col_list = [[] for x in range(num_compares)], [[] for x in range(num_compares)]
+hires_W_list, lowres_W_list = [[] for x in range(num_compares)], [[] for x in range(num_compares)]
+
+hires_col_med, hires_col_1low, hires_col_1hi , hires_col_2low, hires_col_2hi = np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts) 
+hires_W_med, hires_W_1low, hires_W_1hi , hires_W_2low, hires_W_2hi = np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts) 
+hires_14, hires_16, hires_18 = np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts)
+
+lowres_col_med, lowres_col_1low, lowres_col_1hi, lowres_col_2low, lowres_col_2hi = np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts)
+lowres_W_med, lowres_W_1low, lowres_W_1hi, lowres_W_2low, lowres_W_2hi = np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts)
+lowres_14, lowres_16, lowres_18 = np.zeros(plot_pts), np.zeros(plot_pts), np.zeros(plot_pts)
+
+for i in range(num_compares):
+	hires_files[i] = "/cosma/home/analyse/rhorton/Ali_Spec_src/convergence_tests/data_00"+str(i+1)+"_x008/survey_results.npz"
+	lowres_files[i] = "/cosma/home/analyse/rhorton/Ali_Spec_src/convergence_tests/data_00"+str(i+1)+"_x001/survey_results.npz"
+
+for i in range(num_compares):
+	hires_npz = np.load(hires_files[i])
 	hires_radii, hires_col, hires_W = hires_npz["radii_arr"], hires_npz["col_dens_arr"], hires_npz["W_arr"]
-except: # used to not have these names. If using an old file read them out, then save them properly. 
-	gal_coords, box_size, file_id_arr, axis_arr, radii_arr, angle_arr, col_dens_arr, H_col_dens_arr, W_arr, line_num_minima_arr, line_centroid_vel_arr, line_FWHM_arr, line_depth_arr, line_temps_arr, line_ion_densities_arr, line_nH_arr, specwizrd_velocity_array = hires_npz["arr_0"], \
-	hires_npz["arr_1"], hires_npz["arr_2"], hires_npz["arr_3"], hires_npz["arr_4"], hires_npz["arr_5"], hires_npz["arr_6"], hires_npz["arr_7"], hires_npz["arr_8"], hires_npz["arr_9"], hires_npz["arr_10"], hires_npz["arr_11"], hires_npz["arr_12"], hires_npz["arr_13"], hires_npz["arr_14"], \
-	hires_npz["arr_15"], hires_npz["arr_16"]
+	hires_col_list[i], hires_W_list[i], radii_list[i] = list(hires_col), list(hires_W), list(hires_radii)
 
-	np.savez(hires_file, gal_coords=gal_coords, box_size=box_size, file_id_arr=file_id_arr, axis_arr=axis_arr, radii_arr=radii_arr, angle_arr=angle_arr, col_dens_arr=col_dens_arr, H_col_dens_arr=H_col_dens_arr, W_arr=W_arr, line_num_minima_arr=np.hstack(line_num_minima_arr), line_centroid_vel_arr=np.hstack(line_centroid_vel_arr), line_FWHM_arr=np.hstack(line_FWHM_arr), line_depth_arr=np.hstack(line_depth_arr), line_temps_arr=np.hstack(line_temps_arr), line_ion_densities_arr=np.hstack(line_ion_densities_arr), line_nH_arr=np.hstack(line_nH_arr), specwizrd_velocity_array=specwizrd_velocity_array)
-	hires_npz = np.load(hires_file)
-	hires_radii, hires_col, hires_W = hires_npz["radii_arr"], hires_npz["col_dens_arr"], hires_npz["W_arr"]
-
-lowres_npz = np.load(lowres_file)
-try:
+	lowres_npz = np.load(lowres_files[i])
 	lowres_radii, lowres_col, lowres_W = lowres_npz["radii_arr"], lowres_npz["col_dens_arr"], lowres_npz["W_arr"]
-except: # used to not have these names. If using an old file read them out, then save them properly. 
-	gal_coords, box_size, file_id_arr, axis_arr, radii_arr, angle_arr, col_dens_arr, H_col_dens_arr, W_arr, line_num_minima_arr, line_centroid_vel_arr, line_FWHM_arr, line_depth_arr, line_temps_arr, line_ion_densities_arr, line_nH_arr, specwizrd_velocity_array = lowres_npz["arr_0"], \
-	lowres_npz["arr_1"], lowres_npz["arr_2"], lowres_npz["arr_3"], lowres_npz["arr_4"], lowres_npz["arr_5"], lowres_npz["arr_6"], lowres_npz["arr_7"], lowres_npz["arr_8"], lowres_npz["arr_9"], lowres_npz["arr_10"], lowres_npz["arr_11"], lowres_npz["arr_12"], lowres_npz["arr_13"], lowres_npz["arr_14"], \
-	lowres_npz["arr_15"], lowres_npz["arr_16"]
+	lowres_col_list[i], lowres_W_list[i] = list(lowres_col), list(lowres_W)
 
-	np.savez(lowres_file, gal_coords=gal_coords, box_size=box_size, file_id_arr=file_id_arr, axis_arr=axis_arr, radii_arr=radii_arr, angle_arr=angle_arr, col_dens_arr=col_dens_arr, H_col_dens_arr=H_col_dens_arr, W_arr=W_arr, line_num_minima_arr=np.hstack(line_num_minima_arr), line_centroid_vel_arr=np.hstack(line_centroid_vel_arr), line_FWHM_arr=np.hstack(line_FWHM_arr), line_depth_arr=np.hstack(line_depth_arr), line_temps_arr=np.hstack(line_temps_arr), line_ion_densities_arr=np.hstack(line_ion_densities_arr), line_nH_arr=np.hstack(line_nH_arr), specwizrd_velocity_array=specwizrd_velocity_array)
-	lowres_npz = np.load(lowres_file)
-	lowres_radii, lowres_col, lowres_W = lowres_npz["radii_arr"], lowres_npz["col_dens_arr"], lowres_npz["W_arr"]
+hires_col_list, lowres_col_list, radii_list = list(itertools.chain.from_iterable(hires_col_list)), list(itertools.chain.from_iterable(lowres_col_list)), list(itertools.chain.from_iterable(radii_list))
+hires_W_list, lowres_W_list = list(itertools.chain.from_iterable(hires_W_list)), list(itertools.chain.from_iterable(lowres_W_list))
 
-print hires_radii
-print ''
+for j, radius in enumerate(radii):
+	temp_hires_cols = [hires_col_list[i] for i in range(np.size(hires_col_list)) if ((radii_list[i] > radius - r_err) & (radii_list[i] < radius + r_err))]
+	temp_lowres_cols = [lowres_col_list[i] for i in range(np.size(lowres_col_list)) if ((radii_list[i] > radius - r_err) & (radii_list[i] < radius + r_err))]
 
-for i, radius in enumerate(radii):
-	indices = np.argwhere(((hires_radii > radius - r_err) & (hires_radii > radius + r_err)))[:,0]
-	temp_hires_cols, temp_lowres_cols = hires_col[indices], lowres_col[indices]
-	hires_col_med[i], hires_col_low, hires_col_hi = np.median(temp_hires_cols), np.percentile(temp_hires_cols, 16.), np.percentile(temp_hires_cols, 84.)
-	lowres_col_med[i], lowres_col_low, lowres_col_hi = np.median(temp_lowres_cols), np.percentile(temp_lowres_cols, 16.), np.percentile(temp_lowres_cols, 84.)
+	hires_col_med[j], hires_col_1low[j], hires_col_1hi[j] = np.median(temp_hires_cols), np.percentile(temp_hires_cols, 16.), np.percentile(temp_hires_cols, 84.)
+	hires_col_2low[j], hires_col_2hi[j] = np.percentile(temp_hires_cols, 5.), np.percentile(temp_hires_cols, 95.)
+	lowres_col_med[j], lowres_col_1low[j], lowres_col_1hi[j] = np.median(temp_lowres_cols), np.percentile(temp_lowres_cols, 16.), np.percentile(temp_lowres_cols, 84.)
+	lowres_col_2low[j], lowres_col_2hi[j] = np.percentile(temp_lowres_cols, 5.), np.percentile(temp_lowres_cols, 95.)
 
-fig, ax = plt.subplots(1)
-ax.plot(radii, hires_col_med)
-ax.hold(True)
-ax.plot(radii, lowres_col_med)
-ax.hold(False)
-fig.savefig("convergence_tests.pdf")
-plt.close(fig)
+	num_temp_cols = float(np.size(temp_hires_cols))
+	hires_14[j], hires_16[j], hires_18[j] = np.size([x for x in temp_hires_cols if x >= 14.])/num_temp_cols, np.size([x for x in temp_hires_cols if x >= 16.])/num_temp_cols, np.size([x for x in temp_hires_cols if x >= 18.])/num_temp_cols
+	lowres_14[j], lowres_16[j], lowres_18[j] = np.size([x for x in temp_lowres_cols if x >= 14.])/num_temp_cols, np.size([x for x in temp_lowres_cols if x >= 16.])/num_temp_cols, np.size([x for x in temp_lowres_cols if x >= 18.])/num_temp_cols
+
+	temp_hires_W = [hires_W_list[i] for i in range(np.size(hires_W_list)) if ((radii_list[i] > radius - r_err) & (radii_list[i] < radius + r_err))]
+	temp_lowres_W = [lowres_W_list[i] for i in range(np.size(lowres_W_list)) if ((radii_list[i] > radius - r_err) & (radii_list[i] < radius + r_err))]
+
+	hires_W_med[j], hires_W_1low[j], hires_W_1hi[j] = np.median(temp_hires_W), np.percentile(temp_hires_W, 16.), np.percentile(temp_hires_W, 84.)
+	hires_W_2low[j], hires_W_2hi[j] = np.percentile(temp_hires_W, 5.), np.percentile(temp_hires_W, 95.)
+	lowres_W_med[j], lowres_W_1low[j], lowres_W_1hi[j] = np.median(temp_lowres_W), np.percentile(temp_lowres_W, 16.), np.percentile(temp_lowres_W, 84.)
+	lowres_W_2low[j], lowres_W_2hi[j] = np.percentile(temp_lowres_W, 5.), np.percentile(temp_lowres_W, 95.)
+
+col_fig, col_ax = plt.subplots(1)
+col_ax.plot(radii, hires_col_med, color='b', label="HiRes")
+col_ax.fill_between(radii, hires_col_1low, hires_col_1hi, color='b', alpha=0.33)
+col_ax.fill_between(radii, hires_col_2low, hires_col_2hi, color='b', alpha=0.15)
+col_ax.plot(radii, lowres_col_med, color='k', label="Fiducial")
+col_ax.fill_between(radii, lowres_col_1low, lowres_col_1hi, color='k', alpha=0.33)
+col_ax.fill_between(radii, lowres_col_2low, lowres_col_2hi, color='k', alpha=0.15)
+col_ax.set_xlim((20.,160.))
+col_ax.set_ylim((12.,21.))
+col_ax.legend(loc="upper right")
+col_ax.set_xlabel("Impact Prameter (kpc)")
+col_ax.set_ylabel(r"${\rm log_{10}}(N_{HI})$ ${\rm cm^{-2}}$")
+col_ax.set_title("Column Densities vs Impact Parameter for Different Resolutions")
+col_fig.savefig("col_conv.pdf", bbox_inches="tight")
+plt.close(col_fig)
+
+W_fig, W_ax = plt.subplots(1)
+W_ax.plot(radii, hires_W_med, color='b', label="HiRes")
+W_ax.fill_between(radii, hires_W_1low, hires_W_1hi, color='b', alpha=0.33)
+W_ax.fill_between(radii, hires_W_2low, hires_W_2hi, color='b', alpha=0.15)
+W_ax.plot(radii, lowres_W_med, color='k', label="Fiducial")
+W_ax.fill_between(radii, lowres_W_1low, lowres_W_1hi, color='k', alpha=0.33)
+W_ax.fill_between(radii, lowres_W_2low, lowres_W_2hi, color='k', alpha=0.15)
+W_ax.set_xlim((20.,160.))
+W_ax.set_ylim((0.,1.5))
+W_ax.legend(loc="upper right")
+W_ax.set_xlabel("Impact Prameter (kpc)")
+W_ax.set_ylabel(r"$Equivalent Width$ $(\AA{})$")
+W_ax.set_title("Equivalent Widths vs Impact Parameter for Different Resolutions")
+W_fig.savefig("W_conv.pdf", bbox_inches="tight")
+plt.close(W_fig)
+
+cov_fig, cov_ax = plt.subplots(1)
+cov_ax.plot(radii, hires_14, 'b', label="HiRes 14", linestyle="-")
+cov_ax.plot(radii, lowres_14, 'k', label="Fiducial 14", linestyle="-")
+cov_ax.plot(radii, hires_16, 'b', label="HiRes 16", linestyle="--")
+cov_ax.plot(radii, lowres_16, 'k', label="Fiducial 16", linestyle="--")
+cov_ax.plot(radii, hires_18, 'b', label="HiRes 18", linestyle=":")
+cov_ax.plot(radii, lowres_18, 'k', label="Fiducial 18", linestyle=":")
+cov_ax.set_xlim((20.,160.))
+cov_ax.set_ylim((0.0,1.0))
+cov_ax.legend(loc = "lower center", ncol=3)
+cov_ax.set_xlabel("Impact Parameter (kpc)")
+cov_ax.set_ylabel(r"Covering Fraction of ${\rm log_{10}}(N_{HI})$")
+cov_ax.set_title("Covering Fractions for Different Resolutions")
+cov_fig.savefig("cov_conv.pdf", bbox_inches="tight")
+plt.close(cov_fig)
+
+
+
