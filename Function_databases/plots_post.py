@@ -267,14 +267,10 @@ if do_cum_mass_plots:
             cum_med_ax.plot(plot_radii, neut_cum_mass_med, color=colors[i], linestyle='dotted')
          cum_med_ax.fill_between(plot_radii, neut_cum_mass_bot_err, neut_cum_mass_top_err, color=colors[i],alpha=0.33)
 
-   # mock_cum_ax.plot(proch_radii, adj_proch_cum_mass, color='lime')
-   # mock_cum_ax.fill_between(proch_radii, adj_proch_cum_mass-proch_cum_mass_err, adj_proch_cum_mass+proch_cum_mass_err, color='lime', alpha=0.33)
-   mock_cum_ax.errorbar(proch_radii, proch_cum_mass, yerr=proch_cum_mass_err, elinewidth=2, marker='*', markersize=15., color='limegreen', label="P")
+   mock_cum_ax.errorbar(proch_radii, proch_cum_mass, yerr=proch_cum_mass_err, elinewidth=2, ecolor='k', marker='*', markersize=15., color='limegreen', label="P")
    mock_cum_ax.plot(proch_radii, proch_cum_mass, marker='*', markersize=15., color='limegreen', label="Prochaska 2017")
-   # mock_cum_ax.fill_between(proch_radii, proch_cum_mass-proch_cum_mass_err, proch_cum_mass+proch_cum_mass_err, color='limegreen', alpha=0.33)
    mock_cum_ax.plot(145., 2.0e10, linestyle='None', marker='^', markersize=15., color='darkviolet', markeredgecolor='k', label='Werk 2014')
 
-   # mock_ann_ax.errorbar(proch_radii+0.75, adj_proch_ann_mass, yerr=proch_mass_err, color='lime', linestyle='None', marker='.')
    mock_ann_plots[-1] = mock_ann_ax.errorbar(proch_radii+0.75, proch_ann_mass, yerr=proch_mass_err, color='limegreen', label='Prochaska 2017', markersize = 12., linestyle='None', marker='.')
 
    max_col, min_col = np.max([np.max(all_cols), np.max(all_H_cols)]), np.min([np.min(all_cols), np.min(all_H_cols)])
@@ -334,6 +330,7 @@ if do_cum_mass_plots:
    mock_cum_ax.set_yscale('log')
    mock_cum_ax.set_ylim([10**4.0,10**12.5])
    mock_cum_ax.set_xlim([20.,160.])
+   mock_cum_ax.yaxis.set_major_formatter(log_fmt)
    mock_cum_fig.savefig('jacknife_mass.pdf')
    plt.close(mock_cum_fig)
 

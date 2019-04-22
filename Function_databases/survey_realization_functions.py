@@ -467,7 +467,7 @@ def run_specwizard_for_matching_gals(cos_comparisons_file, directory_with_gal_fo
 
 
 def get_EAGLE_data_for_plots(ion, rest_wavelength, cos_id_arr, lambda_line, spec_output_directory, lookup_file, max_smass, min_smass, max_ssfr, min_ssfr, tols, hi_lo_tols, ordered_cos_radii, covering_frac_bool, covering_frac_val, max_abs_vel, mass_estimates_bool, kinematics_bool, make_realistic_bool, offset = 0):
-
+	print "get data"
 	masses = np.array([])
 	smasses = np.array([])
 	ssfr = np.array([])
@@ -3261,10 +3261,10 @@ def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_
 
 	# requirements for identifying a line, want it to be visible after convolved to (so, visible by COS)
 	if cos_lsf_bool:
-		snr_eff = 7.9*3.**0.38
+		snr_eff = snr*3.**0.38
 	else:
-		snr_eff = 7.9*3.**0.38
-	depth_tol = 2./snr_eff**0.5 # 0.57
+		snr_eff = snr*3.**0.38
+	depth_tol = 1./snr_eff**0.5 # 0.57
 	prominence_tol = 2. # how far up a flux must go after min, must raise by prom_tol*f_min/snr**0.5 0.4 at f_min=0.7
 	min_val_limit = 1.0-depth_tol
 	EAGLE_delta_vel = 0.40
@@ -4228,6 +4228,7 @@ def handle_single_realization_statistics(spec_output_directory, cos_smass_data, 
 	lower_mass = [5., 9.7, 9.7]
 	upper_ssfr = [-5., -5., -11.]
 	lower_ssfr = [-15., -11., -15.]
+	radius_split = 100. # kpc
 	groups = ['Low Mass', 'Active', 'Passive']
 	reject_vals = [[] for i in range(np.size(upper_mass))]
 	pvals = []
@@ -4235,15 +4236,25 @@ def handle_single_realization_statistics(spec_output_directory, cos_smass_data, 
 	bins = np.arange(0,110,10)
 	plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['legend.fontsize'], plt.rcParams['xtick.labelsize'], plt.rcParams['ytick.labelsize'] = 15., 16., 14., 14, 14
 
-	for j in range(0,np.size(upper_mass)):
-		### work with only cos data we care about for this subset (low mass, active, passive)
-		curr_cos_id_arr = cos_id_arr[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
-		curr_cos_h1_equ_widths = cos_h1_equ_widths[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
-		curr_cos_h1_W_flags = cos_h1_W_flags[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
-		curr_cos_h1_equ_widths_radii = cos_h1_equ_widths_radii[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
-		curr_cos_h1_cols = cos_h1_cols[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
-		curr_cos_h1_cols_flags = cos_h1_cols_flags[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
-		curr_cos_h1_cols_radii = cos_h1_cols_radii[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
+	for j in range(0,2*np.size(upper_mass)):
+		### work with only cos data we care about for this subset (low mass, active, passive, radius)
+		indices = np.argwhere(((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j])))
+
+		curr_cos_id_arr = cos_id_arr[indices]
+		curr_cos_h1_equ_widths = cos_h1_equ_widths[indices]
+		curr_cos_h1_W_flags = cos_h1_W_flags[indices]
+		curr_cos_h1_equ_widths_radii = cos_h1_equ_widths_radii[indices]
+		curr_cos_h1_cols = cos_h1_cols[indices]
+		curr_cos_h1_cols_flags = cos_h1_cols_flags[indices]
+		curr_cos_h1_cols_radii = cos_h1_cols_radii[indices]
+
+		# curr_cos_id_arr = cos_id_arr[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
+		# curr_cos_h1_equ_widths = cos_h1_equ_widths[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
+		# curr_cos_h1_W_flags = cos_h1_W_flags[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
+		# curr_cos_h1_equ_widths_radii = cos_h1_equ_widths_radii[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
+		# curr_cos_h1_cols = cos_h1_cols[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
+		# curr_cos_h1_cols_flags = cos_h1_cols_flags[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
+		# curr_cos_h1_cols_radii = cos_h1_cols_radii[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
 
 		print groups[j]
 		print 'num of cos galaxies in this group'

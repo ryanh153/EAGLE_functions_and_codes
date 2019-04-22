@@ -125,7 +125,13 @@ def add_noise(input_x, input_flux, rest_wavelength, redshift, snr, vel_kms=True)
 
 	noise_vector = np.zeros(np.size(input_flux))
 	for i in range(np.size(input_flux)):
-		noise_vector[i] = np.random.normal(0.,(input_flux[i]/snr)) # should this be square rooted? 
+		try:
+			noise_vector[i] = np.random.normal(0.,(input_flux[i]/snr)) # should this be square rooted? 
+		except:
+			if input_flux[i] < -0.01: # make sure we catch acual issues with negative flux
+				print "what?"
+				print input_flux[i]
+			noise_vector[i] = np.random.normal(0.,(1.e-5)) # scale can't be zero. Make very small 
 
 	noisy_flux = input_flux + noise_vector
 
