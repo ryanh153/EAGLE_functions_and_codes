@@ -1337,9 +1337,9 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 
 		cos_data_object = ax.errorbar(plot_equ_widths_radii[norm_indices], plot_equ_widths[norm_indices], yerr=plot_W_errs[norm_indices], fmt='*', c='#00FF00', markersize = 8.5, markeredgecolor = 'k', markeredgewidth = 0.5, label = 'COS: high=%.2f, low=%.2f' % (high_frac, low_frac))
 		ax.errorbar(plot_equ_widths_radii[upper_indices], plot_equ_widths[upper_indices], yerr=plot_W_errs[upper_indices], fmt='v', c='#00FF00', markersize = 8.5, markeredgecolor = 'k', markeredgewidth = 0.5)
-		ax.errorbar(plot_equ_widths_radii[lower_indices], plot_equ_widths[lower_indices], yerr=plot_W_errs[lower_indices], fmt='^', c='#00FF00', markersize = 8.5, markeredgecolor = 'k', markeredgewidth = 0.5)
+		ax.errorbar(plot_equ_widths_radii[lower_indices], plot_equ_widths[lower_indices], yerr=plot_W_errs[lower_indices], fmt='*', c='#00FF00', markersize = 8.5, markeredgecolor = 'k', markeredgewidth = 0.5)
 
-		data_legend = ax.legend(handles=[eagle_data_object, cos_data_object], loc='upper right')
+		# data_legend = ax.legend(handles=[eagle_data_object, cos_data_object], loc='upper right')
 
 		# # KS test stuff
 		# plt.plot(obs_radius_max, obs_value_max, 'k*', markersize = 15., label = obs_quad)
@@ -1352,7 +1352,7 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 
 		### [0] is necessary because plt.plot returns a list since it can make multiple plots per call. It's a length one list here but we still need to select an element
 		plt.rcParams['legend.fontsize'] = 10
-		fit_legend = ax.legend(handles=[eagle_fit_object[0], cos_fit_object[0]], loc='lower left')
+		# fit_legend = ax.legend(handles=[eagle_fit_object[0], cos_fit_object[0]], loc='lower left')
 		plt.rcParams['legend.fontsize'] = 14
 
 		# plt.title('Red W vs b, Rejection at: %s' % (str(reject_val)))
@@ -1375,10 +1375,10 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 			cb = ax.colorbar()
 			cb.set_label(r'$log_{10}(sSFR)$')
 
-		if log_plots:
-			ax.legend(loc = 'lower left')
-		else:
-			ax.legend(loc = 'upper right')
+		# if log_plots:
+		# 	ax.legend(loc = 'lower left')
+		# else:
+		# 	ax.legend(loc = 'upper right')
 
 
 		bins = np.linspace(np.min(x_arr), np.max(x_arr),bins_for_median)
@@ -4230,15 +4230,16 @@ def handle_single_realization_statistics(spec_output_directory, cos_smass_data, 
 	lower_ssfr = [-15., -11., -15.]
 	radius_split = 100. # kpc
 	groups = ['Low Mass', 'Active', 'Passive']
-	reject_vals = [[] for i in range(np.size(upper_mass))]
+	p_vals = [[] for i in range(np.size(upper_mass))]
 	pvals = []
 	colors = ['g', 'b', 'r']
-	bins = np.arange(0,110,10)
+	bins = np.arange(0,1.1,0.1)
+	plot_bins = np.arange(0.,1.1,0.1)
 	plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['legend.fontsize'], plt.rcParams['xtick.labelsize'], plt.rcParams['ytick.labelsize'] = 15., 16., 14., 14, 14
 
-	for j in range(0,2*np.size(upper_mass)):
+	for j in range(0,np.size(upper_mass)):
 		### work with only cos data we care about for this subset (low mass, active, passive, radius)
-		indices = np.argwhere(((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j])))
+		indices = np.argwhere(((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j])))[:,0]
 
 		curr_cos_id_arr = cos_id_arr[indices]
 		curr_cos_h1_equ_widths = cos_h1_equ_widths[indices]
@@ -4275,15 +4276,15 @@ def handle_single_realization_statistics(spec_output_directory, cos_smass_data, 
 				         plot_num, groups[j])
 			### new (1d)
 			if equ_widths_bool:
-				D, p = KS_test(cos_Ws, sim_Ws)
+				D, p = KS_test(cos_Ws, sim_Ws, groups[j], str(plot_num))
 			else:
-				D, p = KS_test(cos_cols, sim_cols)
-			reject_val = D*100.
+				D, p = KS_test(cos_cols, sim_cols, groups[j], str(plot_num))
+
 			plot_num += 1
 			if reject_val == 'Not Rejected':
-				reject_vals[j].append(0.0)
+				p_vals[j].append(0.0)
 			else:
-				reject_vals[j].append(reject_val)
+				p_vals[j].append(p)
 			pvals.append(p)
 
 			# if equ_widths_bool:
@@ -4292,7 +4293,7 @@ def handle_single_realization_statistics(spec_output_directory, cos_smass_data, 
 
 			# 	fig = plt.figure()
 			# 	ax = fig.add_subplot(111)
-			# 	ax.scatter(sim_radii, sim_Ws, s=100., marker='.', c='k')
+			# 	ax.scatter(sim_radii, sim_Ws, s=100., marker='.', c='k', label="EAGLE Realization")
 			# 	plt.hold(True)
 			# 	norm_radii = cos_radii[curr_cos_h1_W_flags == 1]
 			# 	norm_Ws = cos_Ws[curr_cos_h1_W_flags == 1]
@@ -4301,13 +4302,13 @@ def handle_single_realization_statistics(spec_output_directory, cos_smass_data, 
 			# 	lower_radii = cos_radii[curr_cos_h1_W_flags == 2]
 			# 	lower_Ws = cos_Ws[curr_cos_h1_W_flags == 2]
 
-			# 	ax.scatter(norm_radii, norm_Ws, s=100, marker='*', c='#00FF00', edgecolor='k', linewidth=0.5)
+			# 	ax.scatter(norm_radii, norm_Ws, s=100, marker='*', c='#00FF00', edgecolor='k', linewidth=0.5, label="COS data")
 			# 	ax.scatter(upper_radii, upper_Ws, s=100, marker='v', c='#00FF00', edgecolor='k', linewidth=0.5)
-			# 	ax.scatter(lower_radii, lower_Ws, s=100, marker='^', c='#00FF00', edgecolor='k', linewidth=0.5)
+			# 	ax.scatter(lower_radii, lower_Ws, s=100, marker='*', c='#00FF00', edgecolor='k', linewidth=0.5)
 			# 	plt.hold(False)
 			# 	ax.set_axisbelow(True)
-			# 	ax.legend()
-			# 	ax.set_title('%s Example: Reject at %.1f%% certainty' % (groups[j] ,reject_val))
+			# 	ax.legend(loc="upper right")
+			# 	ax.set_title('%s Example: p=%.2f' % (groups[j] ,p))
 			# 	ax.set_xlabel('Impact Parameter (kpc)')
 			# 	ax.set_ylabel(r'Equivalent Width ($\AA{}$)')
 			# 	ax.set_xlim(xlim)
@@ -4346,19 +4347,19 @@ def handle_single_realization_statistics(spec_output_directory, cos_smass_data, 
 			# 	plt.close(fig)
 	
 
-	reject_vals = np.transpose(np.array(reject_vals))
+	p_vals = np.transpose(np.array(p_vals))
 
 	hist_fig = plt.figure()
 	hist_ax = hist_fig.add_subplot(111)
 	plt.hold(True)
-	hist_ax.hist(reject_vals, bins, color=colors, label=groups)
+	hist_ax.hist(p_vals, bins, color=colors, label=groups)
 	plt.hold(False)
 	hist_ax.set_title('Histograms of Rejection Certainty')
-	hist_ax.set_xlabel(r'Rejection Certainty (10$\%$ bins)')
+	hist_ax.set_xlabel(r'p values (bin size = 0.05)')
 	hist_ax.set_ylabel('Number')
-	hist_ax.set_xticks(bins)
+	hist_ax.set_xticks(plot_bins)
 	plt.hold(False)
-	hist_ax.legend(loc='upper left')
+	hist_ax.legend(loc='upper center')
 	hist_ax.grid()
 	hist_ax.set_axisbelow(True)
 	hist_fig.savefig('better_hists.pdf', bbox_inches='tight')
@@ -4576,28 +4577,31 @@ def print_data(filename, opening_lines, arrays_to_print, var_prefaces):
 def fun_linear(params, x, y):
 	return (params[0]*x+params[1]) - y
 
-def KS_test(cos_Ws, sim_Ws):
+def KS_test(cos_Ws, sim_Ws, group_number = None, plot_num = None):
 	D, p = scipy.stats.ks_2samp(cos_Ws, sim_Ws)
 
-	sorted_cos_Ws = np.sort(cos_Ws)
-	sorted_sim_Ws = np.sort(sim_Ws)
-	p1 = np.linspace(0., 1., len(cos_Ws))
-	p2 = np.linspace(0., 1., len(sim_Ws))
+	# sorted_cos_Ws = np.sort(cos_Ws)
+	# sorted_sim_Ws = np.sort(sim_Ws)
+	# p1 = np.linspace(0., 1., len(cos_Ws))
+	# p2 = np.linspace(0., 1., len(sim_Ws))
 
-	fig, ax = plt.subplots(1)
-	ax.plot(sorted_cos_Ws, p1, color="#00FF00", label = "COS")
-	plt.hold(True)
-	ax.plot(sorted_sim_Ws, p2, color = 'b', label = "EAGLE")
-	plt.hold(False)
-	ax.legend(loc="lower right")
-	ax.set_title("KS Test for All Galaxies: p=%.1e" % (p))
-	ax.set_xlabel(r"W ($\AA{}$)")
-	ax.set_ylabel("p(W<x)")
-	ax.set_xlim(0.0, 2.5)
-	ax.set_ylim(0.0, 1.05)
-	fig.tight_layout()
-	fig.savefig("cdf_comp.pdf")
-	plt.close(fig)
+	# fig, ax = plt.subplots(1)
+	# ax.plot(sorted_cos_Ws, p1, color="#00FF00", label = "COS")
+	# plt.hold(True)
+	# ax.plot(sorted_sim_Ws, p2, color = 'b', label = "EAGLE")
+	# plt.hold(False)
+	# ax.legend(loc="lower right")
+	# ax.set_title("KS Test for All Galaxies: p=%.1e, D=%.1e" % (p, D))
+	# ax.set_xlabel(r"W ($\AA{}$)")
+	# ax.set_ylabel("p(W<x)")
+	# ax.set_xlim(0.0, 2.5)
+	# ax.set_ylim(0.0, 1.05)
+	# fig.tight_layout()
+	# if group_number == None:
+	# 	fig.savefig("cdf_comp.pdf", bbox_inches = "tight")
+	# else:
+	# 	fig.savefig("cdf_comp_%s_%s.pdf" % (group_number, plot_num), bbox_inches="tight")
+	# plt.close(fig)
 
 	return D, p
 
