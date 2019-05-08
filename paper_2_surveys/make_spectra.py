@@ -77,35 +77,35 @@ omega_b = 0.04825
 # redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
 # all_directories = True
 
-# ### LUVOR survey TODO change all values to be the new rotated snapshot
-# dirs = ["/cosma5/data/dp004/dc-oppe1/data/Halo_x008/data_004_x008_eagle.NEQ.snap003restart/"]
-# gal_folders = ["snapshot_rot_noneq_047_z000p000_shalo_1_12.05_9.99_1.069/"]
-# snap_bases = ["snap_rot_noneq_047_z000p000_shalo_1_12.05_9.99_1.069"]
-# designator = ["LUVOIR_test"]
-# keyword_ends = ["047_z000p000"]
-# group_numbers =  [1] # is this the same as subhalo number? assume yes and see if it works. 
-# known_gal_coords = [[(25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.)]] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
-# known_box_size = (25.*1034.)/(752.) # make zero if it needs to be read out
-# particles_included_keyword = ["snap_rot_" + keyword_end for keyword_end in keyword_ends] # these rotated ones have a different naming convention. May do case by case because only a few gals for this paper
-# group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] # I don't see a groups folder for this box...?
-# subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end for keyword_end in keyword_ends]
-# redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
-# all_directories = True
-
-### convergence testing 
-dirs = ["/cosma5/data/dp004/dc-oppe1/data/Halo_x001/data_002_x001_eagle.NEQ.snap023restart/"]
-gal_folders = ["snapshot_noneq_030_z000p205/"]
-snap_bases = ["snap_noneq_030_z000p205"]
-designator = ["x001_data_002"]
-keyword_ends = ["030_z000p205"]
+### LUVOR survey TODO change all values to be the new rotated snapshot
+dirs = ["/cosma5/data/dp004/dc-oppe1/data/Halo_x008/data_004_x008_eagle.NEQ.snap003restart/"]
+gal_folders = ["snapshot_rot_noneq_047_z000p000_shalo_1_12.05_9.99_1.069/"]
+snap_bases = ["snap_rot_noneq_047_z000p000_shalo_1_12.05_9.99_1.069"]
+designator = ["LUVOIR_test"]
+keyword_ends = ["047_z000p000"]
 group_numbers =  [1] # is this the same as subhalo number? assume yes and see if it works. 
-known_gal_coords = [0] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
-known_box_size = 0 # make zero if it needs to be read out
-particles_included_keyword = ["snap_noneq_" + keyword_end for keyword_end in keyword_ends] # these rotated ones have a different naming convention. May do case by case because only a few gals for this paper
+known_gal_coords = [[(25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.), (25.*1034.)/(752.*2.)]] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
+known_box_size = (25.*1034.)/(752.) # make zero if it needs to be read out
+particles_included_keyword = ["snap_rot_" + keyword_end for keyword_end in keyword_ends] # these rotated ones have a different naming convention. May do case by case because only a few gals for this paper
 group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] # I don't see a groups folder for this box...?
 subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end for keyword_end in keyword_ends]
-redshift = 0.205 ### TODO keep an eye to make sure this is still always true!!!
-all_directories = False
+redshift = 0.0 ### TODO keep an eye to make sure this is still always true!!!
+all_directories = True
+
+# ### convergence testing 
+# dirs = ["/cosma5/data/dp004/dc-oppe1/data/Halo_x001/data_002_x001_eagle.NEQ.snap023restart/"]
+# gal_folders = ["snapshot_noneq_030_z000p205/"]
+# snap_bases = ["snap_noneq_030_z000p205"]
+# designator = ["x001_data_002"]
+# keyword_ends = ["030_z000p205"]
+# group_numbers =  [1] # is this the same as subhalo number? assume yes and see if it works. 
+# known_gal_coords = [0] # put zeros in this array if you want to take the gal coords from subfind, otherwise insert here
+# known_box_size = 0 # make zero if it needs to be read out
+# particles_included_keyword = ["snap_noneq_" + keyword_end for keyword_end in keyword_ends] # these rotated ones have a different naming convention. May do case by case because only a few gals for this paper
+# group_included_keyword = ["group_tab_" + keyword_end for keyword_end in keyword_ends] # I don't see a groups folder for this box...?
+# subfind_included_keyword = ["eagle_subfind_tab_" + keyword_end for keyword_end in keyword_ends]
+# redshift = 0.205 ### TODO keep an eye to make sure this is still always true!!!
+# all_directories = False
 
 ### survey properties
 ### Check these for errors in data size or related  issues
@@ -116,19 +116,19 @@ cores = 1 # max number, use this is points per radius is divisable by 16
 
 radii =  np.arange(radii_start, radii_stop, radii_step) # kpc
 points_per_file = points_per_radius*np.size(radii)
-axis = np.array([0.,1.,2.])
-axis_letters = np.array(['x', 'y', 'z'])
-angle_off = np.array(['y', 'z', 'x'])
+axis = np.array([0.,1.])
+axis_letters = np.array(['x', 'y'])
+angle_off = np.array(['y', 'z'])
 covering_frac_vals = np.array([14., 16., 18.])
 
 ### For specwizard
-run_specwizard = True
-making_npz_file = True
+run_specwizard = False
+making_npz_file = False
 if run_specwizard:
    print "Running on %s cores. %s sightlines per core" % (str(cores), str(3*np.size(radii)))
    print ''
 path_to_param_template = "/cosma/home/analyse/rhorton/Ali_Spec_src/CGM_template.par"
-run_output_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/convergence_tests/data_002_x001/"
+run_output_dir = "/cosma/home/analyse/rhorton/Ali_Spec_src/LOVOIR_survey/"
 path_to_specwizard_executable = "/cosma/home/analyse/rhorton/Ali_Spec_src/specwizard"
 h1_lookup_file = "/cosma/home/analyse/rhorton/Ali_Spec_src/IonizationTables/HM01G+C+SSH/h1.hdf5"
 

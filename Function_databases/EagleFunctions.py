@@ -1628,8 +1628,8 @@ def actual_cumulative_mass_for_EAGLE_gals(directory_with_sim_gals, virial_radii_
 
 	var_prefaces = ["ann_masses", "neut_ann_masses", "radii", "halo_masses", "stellar_masses", "sSFRs", "R200s"]
 
-	opening_lines = 'import numpy as np \n # All sim gals used for COS realizations \n'
-	filename = "/cosma/home/analyse/rhorton/snapshots/sim_ann_masses.py"
+	opening_lines = 'import numpy as np \n # All sim gals used for COS realizations. normalized units \n'
+	filename = "/cosma/home/analyse/rhorton/snapshots/sim_ann_masses_normed.py"
 	survey_realization_functions.print_data(filename, opening_lines, arrays_to_print, var_prefaces)
 	np.set_printoptions(threshold=1000)
 
