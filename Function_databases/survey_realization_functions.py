@@ -275,7 +275,7 @@ def populate_hdf5_with_matching_gals(cos_comparisons_file, directory_with_gal_fo
 		plt.plot(cos_agn_smass, cos_agn_ssfr,'c*', markersize=6)
 		plt.plot(cos_agn_smass_matched, cos_agn_ssfr_matched,'c*', label = 'COS-AGN', zorder=1, markersize=9)
 
-	plt.scatter(sim_data_to_match[0][:], sim_data_to_match[1][:], c='k', label = 'EAGLE galaxies', zorder=10, s=20, linewidth=0.5)
+	plt.scatter(sim_data_to_match[0][:], sim_data_to_match[1][:], c='k', label = 'EAGLE galaxies', zorder=10, s=30, linewidth=0.5)
 	ax = plt.gca()
 	plt.axhline(-11.0,c='k')
 	plt.axvline(9.7,c='k')
@@ -285,8 +285,8 @@ def populate_hdf5_with_matching_gals(cos_comparisons_file, directory_with_gal_fo
 	l = plt.legend(handles, labels, fontsize=15, loc='lower left')
 	l.set_zorder(20)
 	plt.title('Stellar Mass vs SSFR Comparison', fontsize=20)
-	plt.xlabel(r'$log_{10}\left(\frac{M_*}{M_{\odot}}\right)$', fontsize=18)
-	plt.ylabel(r'$log_{10}(sSFR) \: \, {\rm yr}^{-1}$', fontsize=18)
+	plt.xlabel(r'${\rm log_{10}}(M_{*}) \: M_{\odot}$', fontsize=18)
+	plt.ylabel(r'$log_{10}(sSFR) \: {\rm yr}^{-1}$', fontsize=18)
 	plt.text(7.5, -9., 'Low Mass', fontsize = 15)
 	plt.text( 10., -9., 'Active', fontsize = 15)
 	plt.text( 9.75,-11.5, 'Passive', fontsize = 15)
@@ -931,6 +931,24 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 	eagle_ids = np.array(eagle_ids)
 	xlim = [0.,165.]
 	ylim = [11.,20.5]
+	print "radii"
+	print np.sort(radii)
+	print ''
+	print np.sort(cos_h1_cols_radii)
+	print ''
+	inner_ind, outer_ind = np.argwhere(radii < 80.)[:,0], np.argwhere(radii >=80.)[:,0]
+	inner_cols, inner_radii, outer_cols, outer_radii = cols[inner_ind], radii[inner_ind], cols[outer_ind], radii[outer_ind]
+	inner_cross_hor, inner_cross_vert = [np.min(inner_radii), np.max(inner_radii)], [np.percentile(inner_cols,14.), np.percentile(inner_cols,84.)]
+	outer_cross_hor, outer_cross_vert = [np.min(outer_radii), np.max(outer_radii)], [np.percentile(outer_cols,14.), np.percentile(outer_cols,84.)]
+	inner_med, outer_med = np.median(inner_cols), np.median(outer_cols)
+
+
+	in_cos_ind, out_cos_ind = np.argwhere(plot_cols_radii < 80.)[:,0], np.argwhere(plot_cols_radii >=80.)[:,0]
+	in_cos_cols, in_cos_radii, out_cos_cols, out_cos_radii = plot_cols[in_cos_ind], plot_cols_radii[in_cos_ind], plot_cols[out_cos_ind], plot_cols_radii[out_cos_ind]
+	in_cos_cross_hor, in_cos_cross_vert = [np.min(in_cos_radii), np.max(in_cos_radii)], [np.percentile(in_cos_cols,14.), np.percentile(in_cos_cols,84.)]
+	out_cos_cross_hor, out_cos_cross_vert = [np.min(out_cos_radii), np.max(out_cos_radii)], [np.percentile(out_cos_cols,14.), np.percentile(out_cos_cols,84.)]
+	in_cos_med, out_cos_med = np.median(in_cos_cols), np.median(out_cos_cols)
+
 
 	# because not all surveys have column densities
 	cos_id_arr = cos_id_arr[plot_cols != 1.]
@@ -1012,22 +1030,19 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 		
 		fig, ax = plt.subplots(1,1)
 
-		# ### scatter/single rel block
-		# if colorbar == 'smass':
-		# 	plt.scatter(radii, cols, s=20., label = 'EAGLE, %.2f' % (delta), c=np.log10(smasses), cmap='RdBu_r', edgecolor = 'black', linewidth = 0.5)
-		# 	cb = plt.colorbar()
-		# 	cb.set_label(r'$log_{10}(M_{star})$')
-		# elcolorbar == 'hmass':
-		# 	plt.scatter(radii, cols, s=20., label = 'EAGLE, %.2f' % (delta), c=np.log10(masses), cmap='RdBu_r', edgecolor = 'black', linewidth = 0.5)
-		# 	cb = plt.colorbar()
-		# 	cb.set_label(r'$log_{10}(M_{200})$')
-		# elif colorbar == 'ssfr':
-		# 	plt.scatter(radii, cols, c=ssfr, s=20., cmap='RdBu', edgecolor = 'black', linewidth = 0.5, label = 'EAGLE, %.2f' % (delta))
-		# 	cb = plt.colorbar()
-		# 	cb.set_label(r'$log_{10}(sSFR)$')
-		# plt.hold(True)
+		ax.plot(inner_cross_hor,[inner_med, inner_med], color='k', linewidth=5)
+		ax.hold(True)
+		ax.plot([37.5, 37.5], inner_cross_vert, color='k', linewidth=5)
+		ax.plot(outer_cross_hor,[outer_med, outer_med], color='k', linewidth=5)
+		ax.plot([117.5, 117.5], outer_cross_vert, color='k', linewidth=5)
 
-		### err bars/multi rel block
+		ax.plot(in_cos_cross_hor,[in_cos_med, in_cos_med], color='#00FF00', linewidth=5)
+		ax.plot([42.5, 42.5], in_cos_cross_vert, color='#00FF00', linewidth=5)
+		ax.plot(out_cos_cross_hor,[out_cos_med, out_cos_med], color='#00FF00', linewidth=5)
+		ax.plot([122.5, 122.5], out_cos_cross_vert, color='#00FF00', linewidth=5)
+		ax.set_xlim([0,200])
+		ax.set_ylim([10,20])
+		## err bars/multi rel block
 		bins = []
 		indices = np.argsort(plot_cols_radii)
 		bins_radii_arr = plot_cols_radii[indices]
@@ -1042,23 +1057,6 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 		eagle_data_object = ax.errorbar([x+2. for x in plot_radii], median, yerr=[median-two_sig_bot, two_sig_top-median], color='k', fmt = '.', ecolor = 'r', label='EAGLE (black fit)')
 		plt.hold(True)
 		ax.errorbar([x+2. for x in plot_radii], median, yerr=[median-one_sig_bot, one_sig_top-median], xerr = plot_radii_err, color='k', fmt = '.', ecolor = 'b')
-
-		# ### scatter/single rel block
-		# bins = np.linspace(np.min(radii), np.max(radii),bins_for_median)
-		# plot_x, plot_median, plot_84, plot_16, plot_95, plot_5 = percentile_array(bins, radii, cols)
-		# ax.plot(plot_x, plot_median, color = 'k', linestyle = '-')
-		# ax.plot(plot_x, plot_84,  color = 'k', linestyle = '-.')
-		# ax.plot(plot_x, plot_16,  color = 'k', linestyle = '-.')
-
-		# bins = np.linspace(np.min(plot_cols_radii), np.max(plot_cols_radii),bins_for_median)# 
-		# plot_x, plot_median, plot_84, plot_16, plot_95, plot_5 = percentile_array(bins, plot_cols_radii, plot_cols)
-		# ax.plot(plot_x, plot_median,c='#00FF00', linestyle = '-')
-		# ax.plot(plot_x, plot_84, c='#00FF00', linestyle = '-.')
-		# ax.plot(plot_x, plot_16, c='#00FF00', linestyle = '-.')
-
-		# ### KS test stuff
-		# plt.plot(obs_radius_max, obs_value_max, 'k*', markersize = 15., label = obs_quad)
-		# plt.plot(sim_radius_max, sim_value_max, 'k.', markersize = 15., label = sim_quad)
 
 		### Linear fit stuff
 		eagle_fit_object, = ax.plot(plot_cols_radii, eagle_fit_arr, color='k', label=r'm=%.2e $\pm$ %.0e' % (eagle_params[0], np.sqrt(eagle_errs[0,0])) + '\n' + r'b=%.2e $\pm$ %.0e' % (np.power(10,eagle_params[1]), np.sqrt(np.power(10,eagle_errs[1,1]))))
@@ -1078,7 +1076,7 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 		ax.plot(upper_lim_radii, upper_lim_cols, marker='v', c='#00FF00', linestyle='None', markeredgecolor = 'k', markeredgewidth = 0.5, markersize=8.5)
 		ax.plot(lower_lim_radii, lower_lim_cols, marker='^', c='#00FF00', linestyle='None', markeredgecolor = 'k', markeredgewidth = 0.5, markersize=8.5)
 		plt.hold(False)
-		ax.set_title('All Surveys: N vs b for HI')
+		ax.set_title('COS-Halos: N vs b for HI')
 
 	else:
 		if colorbar == 'smass':
@@ -1107,19 +1105,19 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 		# plt.plot(plot_x, plot_10, 'r')
 		plt.hold(False)
 
-		plt.title('All Surveys: N vs b for HI')
+		plt.title('COS-Halos: N vs b for HI')
 
-	ax.set_xlabel('Impact Parameter (kpc)')
+	ax.set_xlabel('b (kpc)')
 	ax.set_ylabel(r'$log_{10}(N_{HI})$ ${\rm cm}^{-2}$')
 	ax.set_xlim(xlim)
 	ax.set_ylim(ylim)
 
 	data_legend = ax.legend(handles=[eagle_data_object, cos_data_object], loc = 'lower left')
 	plt.rcParams['legend.fontsize'] = 10
-	fit_legend = ax.legend(handles=[eagle_fit_object, cos_fit_object], loc = 'upper right')
+	# fit_legend = ax.legend(handles=[eagle_fit_object, cos_fit_object], loc = 'upper right')
 	plt.rcParams['legend.fontsize'] = 14
 	ax.add_artist(data_legend)
-	ax.add_artist(fit_legend)
+	# ax.add_artist(fit_legend)
 
 
 	if colorbar == 'smass':
@@ -1131,40 +1129,40 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 	plt.close()
 
 
-	if colorbar == 'smass':
-		fig = plt.scatter(virial_radii, cols, s=20., c=np.log10(smasses), cmap='RdBu_r', edgecolor = 'black', linewidth = 0.5)
-		cb = plt.colorbar()
-		cb.set_label(r'$log_{10}(M_{star})$')
-	elif colorbar == 'hmass':
-		fig = plt.scatter(virial_radii, cols, s=20., c=np.log10(masses), cmap='RdBu_r', edgecolor = 'black', linewidth = 0.5)
-		cb = plt.colorbar()
-		cb.set_label(r'$log_{10}(M_{200})$')		
-	elif colorbar == 'ssfr':
-		plt.scatter(virial_radii, cols, c=ssfr, s=20., cmap='RdBu', edgecolor = 'black', linewidth = 0.5)
-		cb = plt.colorbar()
-		cb.set_label(r'$log_{10}(sSFR)$')
+	# if colorbar == 'smass':
+	# 	fig = plt.scatter(virial_radii, cols, s=20., c=np.log10(smasses), cmap='RdBu_r', edgecolor = 'black', linewidth = 0.5)
+	# 	cb = plt.colorbar()
+	# 	cb.set_label(r'$log_{10}(M_{star})$')
+	# elif colorbar == 'hmass':
+	# 	fig = plt.scatter(virial_radii, cols, s=20., c=np.log10(masses), cmap='RdBu_r', edgecolor = 'black', linewidth = 0.5)
+	# 	cb = plt.colorbar()
+	# 	cb.set_label(r'$log_{10}(M_{200})$')		
+	# elif colorbar == 'ssfr':
+	# 	plt.scatter(virial_radii, cols, c=ssfr, s=20., cmap='RdBu', edgecolor = 'black', linewidth = 0.5)
+	# 	cb = plt.colorbar()
+	# 	cb.set_label(r'$log_{10}(sSFR)$')
 
-	bins = np.linspace(np.min(virial_radii), np.max(virial_radii),bins_for_median)
-	plot_x, plot_median, plot_84, plot_16, plot_95, plot_5 = percentile_array(bins, virial_radii, cols)
-	plt.hold(True)
-	plt.plot(plot_x, plot_median,'k')
-	plt.plot(plot_x, plot_84, 'g')
-	plt.plot(plot_x, plot_16, 'g')
-	plt.plot(plot_x, plot_95, 'r')
-	plt.plot(plot_x, plot_5, 'r')
-	plt.hold(False)
+	# bins = np.linspace(np.min(virial_radii), np.max(virial_radii),bins_for_median)
+	# plot_x, plot_median, plot_84, plot_16, plot_95, plot_5 = percentile_array(bins, virial_radii, cols)
+	# plt.hold(True)
+	# plt.plot(plot_x, plot_median,'k')
+	# plt.plot(plot_x, plot_84, 'g')
+	# plt.plot(plot_x, plot_16, 'g')
+	# plt.plot(plot_x, plot_95, 'r')
+	# plt.plot(plot_x, plot_5, 'r')
+	# plt.hold(False)
 
-	plt.title('All Surveys: N vs b for HI')
-	plt.xlabel('Impact Parameter (in virial radii)')
-	plt.ylabel(r'$log_{10}(N_{%s}) cm^{-2}$' % (ion))
-	if colorbar == 'smass':
-		plt.savefig(ion+'col_virial_with_color_smass.pdf', bbox_inches = 'tight')
-	elif colorbar == 'hmass':
-		plt.savefig(ion+'col_virial_with_color_hmass.pdf', bbox_inches = 'tight')
-	elif colorbar == 'ssfr':
-		plt.savefig(ion+'col_virial_with_color_ssfr.pdf', bbox_inches = 'tight')
+	# plt.title('COS-Halos: N vs b for HI')
+	# plt.xlabel('Impact Parameter (in virial radii)')
+	# plt.ylabel(r'$log_{10}(N_{%s}) cm^{-2}$' % (ion))
+	# if colorbar == 'smass':
+	# 	plt.savefig(ion+'col_virial_with_color_smass.pdf', bbox_inches = 'tight')
+	# elif colorbar == 'hmass':
+	# 	plt.savefig(ion+'col_virial_with_color_hmass.pdf', bbox_inches = 'tight')
+	# elif colorbar == 'ssfr':
+	# 	plt.savefig(ion+'col_virial_with_color_ssfr.pdf', bbox_inches = 'tight')
 
-	plt.close()
+	# plt.close()
 
 	# if np.shape(plot_cols) != np.shape(cols):
 	# 	print np.shape(plot_cols)
@@ -1339,7 +1337,7 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 		ax.errorbar(plot_equ_widths_radii[upper_indices], plot_equ_widths[upper_indices], yerr=plot_W_errs[upper_indices], fmt='v', c='#00FF00', markersize = 8.5, markeredgecolor = 'k', markeredgewidth = 0.5)
 		ax.errorbar(plot_equ_widths_radii[lower_indices], plot_equ_widths[lower_indices], yerr=plot_W_errs[lower_indices], fmt='*', c='#00FF00', markersize = 8.5, markeredgecolor = 'k', markeredgewidth = 0.5)
 
-		# data_legend = ax.legend(handles=[eagle_data_object, cos_data_object], loc='upper right')
+		data_legend = ax.legend(handles=[eagle_data_object, cos_data_object], loc='upper right')
 
 		# # KS test stuff
 		# plt.plot(obs_radius_max, obs_value_max, 'k*', markersize = 15., label = obs_quad)
@@ -1356,8 +1354,8 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 		plt.rcParams['legend.fontsize'] = 14
 
 		# plt.title('Red W vs b, Rejection at: %s' % (str(reject_val)))
-		ax.set_title('All Surveys: W vs b for %s' % (ion.upper()))
-		ax.add_artist(fit_legend)
+		ax.set_title('COS-Halos: W vs b for %s' % (ion.upper()))
+		# ax.add_artist(fit_legend)
 		ax.add_artist(data_legend)
 
 
@@ -1394,7 +1392,7 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 		# plt.plot(plot_x, plot_10, 'r')
 		plt.hold(False)
 
-		ax.set_title('EAGLE vs COS-Halos, Dwarfs, & GASS')
+		ax.set_title('COS-Halos: W vs b')
 
 	ax.set_xlabel('Impact Parameter (kpc)')
 
@@ -1446,9 +1444,9 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 	plt.hold(False)
 
 	try:
-		plt.title('EAGLE vs COS-Halos, Dwarfs, & GASS for %s' % (ion.upper()))
+		plt.title('COS-Halos: W vs b for %s' % (ion.upper()))
 	except:
-		plt.title('EAGLE vs COS-Halos, Dwarfs, & GASS for %s' % (ion.upper()))
+		plt.title('COS-Halos: W vs b for %s' % (ion.upper()))
 	plt.xlabel('Impact Parameter (in virial radii)')
 	plt.ylabel(r'Equivalent Width ($\AA{}$)')
 	if colorbar == 'smass':
@@ -1555,7 +1553,7 @@ def make_contour_col_dense_plots(ion, radii, virial_radii, cols, plot_cols, plot
 		# plt.plot(radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0])
 
 	plt.ylabel(r'$log_{10}(N_{%s}) cm^{-2}$' % (ion.upper()), fontsize=14.)
-	plt.title('All Surveys: N vs b for %s' % (ion.upper()), fontsize=16.)
+	plt.title('COS-Halos: N vs b for %s' % (ion.upper()), fontsize=16.)
 
 	#### overplot all data points if testing stuff
 	# plt.hold(True)
@@ -1663,8 +1661,8 @@ def make_equ_width_contour_plots(ion, radii, virial_radii, equ_widths, smasses, 
 		if log_plots:
 			ax.set_yscale('log')
 		cb = plt.colorbar(img, ax=ax)
-		cb.set_label('points per bin', fontsize=16.)
-		ax.set_xlabel(r'Impact Parameter $(b/R_{200})$')
+		cb.set_label('absorbers per bin', fontsize=16.)
+		ax.set_xlabel(r'$b/R_{200}$')
 
 		plt.hold(True)
 		for i in range(0,np.size(upper_mass)):
@@ -1679,7 +1677,7 @@ def make_equ_width_contour_plots(ion, radii, virial_radii, equ_widths, smasses, 
 				eagle_params, eagle_errs = np.polyfit(curr_radii, curr_equ_widths, 1 ,cov=True)
 				eagle_fit_arr = eagle_params[0]*curr_radii+eagle_params[1]
 			# comma means we only keep the first input, plt.plot returns list (length one for this case but you still want just the element)
-			fit_objects[i], = ax.plot(curr_radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0], color=colors[i], label=r'm=%.2f $\pm$ %.2f' %(round(eagle_params[0]*100.)/100., round(100.*np.sqrt(eagle_errs[0,0]))/100.) + '\n' + r'b=%.2f $\pm$ %.2f' % (round(100.*eagle_params[1])/100., round(100.*np.sqrt(eagle_errs[1,1]))/100.))
+			fit_objects[i], = ax.plot(curr_radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0], color=colors[i], label=r'$\mathcal{m}$=%.2f $\pm$ %.2f' %(round(eagle_params[0]*100.)/100., round(100.*np.sqrt(eagle_errs[0,0]))/100.) + '\n' + r'$\mathcal{b}$=%.2f $\pm$ %.2f' % (round(100.*eagle_params[1])/100., round(100.*np.sqrt(eagle_errs[1,1]))/100.))
 
 
 	else:
@@ -1689,8 +1687,8 @@ def make_equ_width_contour_plots(ion, radii, virial_radii, equ_widths, smasses, 
 			ax.set_yscale('log')
 		plt.hold(True)
 		cb = plt.colorbar(img, ax=ax)
-		cb.set_label('points per bin', fontsize=16.)
-		ax.set_xlabel('Impact Parameter (kpc)')
+		cb.set_label('absorbers per bin', fontsize=16.)
+		ax.set_xlabel('b (kpc)')
 
 		for i in range(0,np.size(upper_mass)):
 			curr_radii = radii[((np.log10(smasses) < upper_mass[i]) & (np.log10(smasses) > lower_mass[i]) & (ssfr < upper_ssfr[i]) & (ssfr > lower_ssfr[i]))]
@@ -1702,18 +1700,18 @@ def make_equ_width_contour_plots(ion, radii, virial_radii, equ_widths, smasses, 
 			else:
 				eagle_params, eagle_errs = np.polyfit(curr_radii, curr_equ_widths, 1 ,cov=True)
 				eagle_fit_arr = eagle_params[0]*curr_radii+eagle_params[1]
-			fit_objects[i], = ax.plot(curr_radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0], color=colors[i], label=r'm=%.1e $\pm$ %.0e' %(eagle_params[0], np.sqrt(eagle_errs[0,0])) + '\n' + r'b=%.1e $\pm$ %.0e' % (eagle_params[1], np.sqrt(eagle_errs[1,1])))
+			fit_objects[i], = ax.plot(curr_radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0], color=colors[i], label=r'$\mathcal{m}$=%.1e $\pm$ %.0e' %(eagle_params[0], np.sqrt(eagle_errs[0,0])) + '\n' + r'$\mathcal{b}$=%.1e $\pm$ %.0e' % (eagle_params[1], np.sqrt(eagle_errs[1,1])))
 
 		# ### If using just one
 		# eagle_params, eagle_errs = np.polyfit(radii, equ_widths, 1 ,cov=True)
 		# eagle_fit_arr = eagle_params[0]*radii+eagle_params[1]
 		# plt.plot(radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0])
 
-	ax.set_ylabel(r'$log_{10}(W)$ $\AA{}$')
+	ax.set_ylabel(r'$log_{10}(W_{HI})$ $\AA{}$')
 	ax.set_ylim((ymin, ymax))
 	ax.set_yticks([0.01,0.1,1.0])
 	ax.set_yticklabels(['-2','-1', '0'])
-	ax.set_title('EAGLE vs COS-Halos, Dwarfs, & GASS')
+	ax.set_title(r'COS-Halos: $W_{HI}$ vs b')
 
 
 	### overplot all data points if testing stuff
@@ -1733,11 +1731,11 @@ def make_equ_width_contour_plots(ion, radii, virial_radii, equ_widths, smasses, 
 			curr_upper_indices = np.intersect1d(curr_indices, upper_indices)
 			curr_lower_indices = np.intersect1d(curr_indices, lower_indices)
 
-			cos_fit_objects[i] = ax.errorbar(plot_equ_widths_radii[curr_norm_indices], temp_plot_equ_widths[curr_norm_indices], yerr=plot_W_errs[curr_norm_indices],linestyle='None', marker='*', c=colors[i], markersize=6., label=labels[i])
-			ax.errorbar(plot_equ_widths_radii[curr_upper_indices], temp_plot_equ_widths[curr_upper_indices], yerr=plot_W_errs[curr_upper_indices],linestyle='None', marker='v', c=colors[i], markersize=6.)
-			ax.errorbar(plot_equ_widths_radii[curr_lower_indices], temp_plot_equ_widths[curr_lower_indices], yerr=plot_W_errs[curr_lower_indices],linestyle='None', marker='^', c=colors[i], markersize=6.)
-		data_legned = ax.legend(handles = cos_fit_objects, loc='lower right', title='Binned COS Data')
-		data_legned.set_title('Binned COS Data', prop={'size':15})
+			cos_fit_objects[i] = ax.errorbar(plot_equ_widths_radii[curr_norm_indices], plot_equ_widths[curr_norm_indices], yerr=plot_W_errs[curr_norm_indices],linestyle='None', marker='*', c=colors[i], markersize=6., label=labels[i])
+			ax.errorbar(plot_equ_widths_radii[curr_upper_indices], plot_equ_widths[curr_upper_indices], yerr=plot_W_errs[curr_upper_indices],linestyle='None', marker='v', c=colors[i], markersize=6.)
+			ax.errorbar(plot_equ_widths_radii[curr_lower_indices], plot_equ_widths[curr_lower_indices], yerr=plot_W_errs[curr_lower_indices],linestyle='None', marker='*', c=colors[i], markersize=6.)
+		data_legned = ax.legend(handles = cos_fit_objects, loc='lower right', title='COS Data')
+		data_legned.set_title('COS Data', prop={'size':15})
 		ax.add_artist(data_legned)
 		plt.hold(False)
 
@@ -3264,7 +3262,7 @@ def get_line_kinematics(flux, velocity, temperature, ion_densities, nH, optical_
 		snr_eff = snr*3.**0.38
 	else:
 		snr_eff = snr*3.**0.38
-	depth_tol = 1./snr_eff**0.5 # 0.57
+	depth_tol = 3./snr_eff # 0.24
 	prominence_tol = 2. # how far up a flux must go after min, must raise by prom_tol*f_min/snr**0.5 0.4 at f_min=0.7
 	min_val_limit = 1.0-depth_tol
 	EAGLE_delta_vel = 0.40
@@ -4013,7 +4011,7 @@ def kinematic_plots(num_minima, centroid_vel, depth, FWHM, radii, temps, line_io
 	# 	xlims=[0,250.], ylims=[0.,500.], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 	# make_2d_hist_plot(virial_radii_for_kin, np.abs(centroids_in_vir), hist_bins, 'vir_radius_vir_vel_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-	# 	plot_labels=['Impact Parameter vs Velocity', r'$b/R_{200}$', r'$v_{centroid}$ $(v/v_{200})$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+	# 	plot_labels=['Impact Parameter vs Velocity', r'$b/R_{200}$', r'$v_{centroid}/v_{200}$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
 	# 	xlims=[0,2.1], ylims=[0.,6.], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 	# make_2d_hist_plot(plotting_radii, temps, hist_bins, 'radius_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
@@ -4033,7 +4031,7 @@ def kinematic_plots(num_minima, centroid_vel, depth, FWHM, radii, temps, line_io
 	# 	xlims=[0,500], ylims=[3.5,6.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 	# make_2d_hist_plot(np.abs(centroids_in_vir), temps_in_vir, hist_bins, 'vir_vel_vir_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-	# 	plot_labels=['Centroid Velocity vs Temperature', r'$v_{centroid}$ $(v/v_{200})$', r'$log_{10}(T/T_{200})$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+	# 	plot_labels=['Centroid Velocity vs Temperature', r'$v_{centroid}/v_{200}$', r'$log_{10}(T/T_{200})$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
 	# 	xlims=[0,6.0], ylims=[-3.,0.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 	make_2d_hist_plot(np.log10(halo_masses_for_kin), temps_in_vir, hist_bins, 'mass_vir_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
@@ -4045,11 +4043,11 @@ def kinematic_plots(num_minima, centroid_vel, depth, FWHM, radii, temps, line_io
 		xlims = [10.5,13.6], ylims=[3.5,6.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 	# make_2d_hist_plot(virial_radii_for_kin, line_ion_densities, hist_bins, 'vir_radii_ion_dens_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-	# 	plot_labels=[r'Impact Parameter vs $n_{HI}$', r'$b$ $(b/R_{200})$', r'$log_{10}(n_{HI})$ ${\rm cm}^{-3}$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+	# 	plot_labels=[r'Impact Parameter vs $n_{HI}$', r'$b/R_{200}$', r'$log_{10}(n_{HI})$ ${\rm cm}^{-3}$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
 	# 	xlims=[0,2.1], ylims = [-12.,-1.], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 	make_2d_hist_plot(virial_radii_for_kin, line_nHs, hist_bins, 'vir_radii_n_H_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-		plot_labels=[r'Impact Parameter vs $n_{H}$', r'$b$ $(b/R_{200})$', r'$log_{10}(n_{H})$ ${\rm cm}^{-3}$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+		plot_labels=[r'Impact Parameter vs $n_{H}$', r'$b/R_{200}$', r'$log_{10}(n_{H})$ ${\rm cm}^{-3}$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
 		xlims=[0,2.1], ylims = [-7.,-1.], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 def percentile_array(bins, x_arr, y_arr):
@@ -4224,15 +4222,27 @@ def make_fits_file_for_flux(arrays, file_name):
 
 def handle_single_realization_statistics(spec_output_directory, cos_smass_data, cos_ssfr_data, cos_id_arr, cos_h1_equ_widths, cos_h1_W_flags, cos_h1_equ_widths_radii, cos_h1_cols, cos_h1_cols_flags, cos_h1_cols_radii, equ_widths_bool):
 
-	upper_mass = [9.7, 15., 15.]
-	lower_mass = [5., 9.7, 9.7]
-	upper_ssfr = [-5., -5., -11.]
-	lower_ssfr = [-15., -11., -15.]
+	# upper_mass = [9.7, 15., 15.]
+	# lower_mass = [5., 9.7, 9.7]
+	# upper_ssfr = [-5., -5., -11.]
+	# lower_ssfr = [-15., -11., -15.]
+	# radius_split = 100. # kpc
+	# groups = ['Low Mass', 'Active', 'Passive']
+	# p_vals = [[] for i in range(np.size(upper_mass))]
+	# pvals = []
+	# colors = ['g', 'b', 'r']
+	# bins = np.arange(0,1.1,0.1)
+	# plot_bins = np.arange(0.,1.1,0.1)
+
+	upper_mass = [15.]
+	lower_mass = [5.]
+	upper_ssfr = [-5.]
+	lower_ssfr = [-15.]
 	radius_split = 100. # kpc
-	groups = ['Low Mass', 'Active', 'Passive']
+	groups = ['Halos']
 	p_vals = [[] for i in range(np.size(upper_mass))]
 	pvals = []
-	colors = ['g', 'b', 'r']
+	colors = ['k']
 	bins = np.arange(0,1.1,0.1)
 	plot_bins = np.arange(0.,1.1,0.1)
 	plt.rcParams['axes.labelsize'], plt.rcParams['axes.titlesize'], plt.rcParams['legend.fontsize'], plt.rcParams['xtick.labelsize'], plt.rcParams['ytick.labelsize'] = 15., 16., 14., 14, 14
@@ -4248,14 +4258,6 @@ def handle_single_realization_statistics(spec_output_directory, cos_smass_data, 
 		curr_cos_h1_cols = cos_h1_cols[indices]
 		curr_cos_h1_cols_flags = cos_h1_cols_flags[indices]
 		curr_cos_h1_cols_radii = cos_h1_cols_radii[indices]
-
-		# curr_cos_id_arr = cos_id_arr[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
-		# curr_cos_h1_equ_widths = cos_h1_equ_widths[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
-		# curr_cos_h1_W_flags = cos_h1_W_flags[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
-		# curr_cos_h1_equ_widths_radii = cos_h1_equ_widths_radii[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
-		# curr_cos_h1_cols = cos_h1_cols[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
-		# curr_cos_h1_cols_flags = cos_h1_cols_flags[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
-		# curr_cos_h1_cols_radii = cos_h1_cols_radii[((cos_smass_data<upper_mass[j]) & (cos_smass_data>lower_mass[j]) & (cos_ssfr_data<upper_ssfr[j]) & (cos_ssfr_data>lower_ssfr[j]))]
 
 		print groups[j]
 		print 'num of cos galaxies in this group'
@@ -4293,7 +4295,7 @@ def handle_single_realization_statistics(spec_output_directory, cos_smass_data, 
 
 			# 	fig = plt.figure()
 			# 	ax = fig.add_subplot(111)
-			# 	ax.scatter(sim_radii, sim_Ws, s=100., marker='.', c='k', label="EAGLE Realization")
+			# 	ax.scatter(sim_radii, sim_Ws, s=100., marker='.', c='k', label="EAGLE realization")
 			# 	plt.hold(True)
 			# 	norm_radii = cos_radii[curr_cos_h1_W_flags == 1]
 			# 	norm_Ws = cos_Ws[curr_cos_h1_W_flags == 1]
@@ -4347,6 +4349,14 @@ def handle_single_realization_statistics(spec_output_directory, cos_smass_data, 
 			# 	plt.close(fig)
 	
 
+	print "p-vals"
+	print p_vals
+	print ''
+	for i in range(3):
+		print p_vals[i]
+		print np.sort(p_vals[i])
+		print ''
+
 	p_vals = np.transpose(np.array(p_vals))
 
 	hist_fig = plt.figure()
@@ -4354,8 +4364,8 @@ def handle_single_realization_statistics(spec_output_directory, cos_smass_data, 
 	plt.hold(True)
 	hist_ax.hist(p_vals, bins, color=colors, label=groups)
 	plt.hold(False)
-	hist_ax.set_title('Histograms of Rejection Certainty')
-	hist_ax.set_xlabel(r'p values (bin size = 0.05)')
+	hist_ax.set_title('Histograms p values')
+	hist_ax.set_xlabel(r'p values')
 	hist_ax.set_ylabel('Number')
 	hist_ax.set_xticks(plot_bins)
 	plt.hold(False)
@@ -4418,6 +4428,8 @@ def decompose_multi_rel_into_single(spec_output_directory, curr_cos_id_arr):
 	spec_nums = spec_nums[sorted_indices]
 	directory_arr = directory_arr[sorted_indices]
 		
+	print cos_ids
+	print ''
 	for i in range(0,np.size(cos_ids)):
 		if cos_ids[i] != cos_ids[0]:
 			num_runs = i
