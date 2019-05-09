@@ -8,9 +8,9 @@ import os
 import subprocess
 import itertools
 
-do_cum_mass_plots = False
+do_cum_mass_plots = True
 do_kin_plots = False
-do_r_dot_v_plots = True
+do_r_dot_v_plots = False
 
 if do_cum_mass_plots:
    import spec_cum_data_semi as mock_spectra_data
@@ -65,7 +65,8 @@ if do_cum_mass_plots:
    lower_ssfr = np.array([-15., -11., -15.])
 
    labels = ['Low Mass', 'Active', 'Passive']
-   labels2 = ['Total H', 'Neutral H']
+   mock_labels2 = ['HI traced H', 'Neutral H']
+   sim_labels2 = ['Total H', 'Neutral H']
    temp_labels = ['Total', r'Cool (r$<10^{5}$)']
    colors = ['k', 'b', 'r']
    if to_virial:
@@ -135,9 +136,12 @@ if do_cum_mass_plots:
             # plot_radii = np.arange(2.5, 17.5, 5.)
    plot_cum_masses = np.sum(ann_masses, axis=1)
    plot_neut_cum_mases = np.sum(neut_ann_masses, axis=1)
+   rem_low_halo = np.argwhere(plot_cum_masses >= 3.0e8)[:,0]
+   plot_cum_masses, plot_neut_cum_mases = plot_cum_masses[rem_low_halo], plot_neut_cum_mases[rem_low_halo]
    if cool_bool:
       cool_plot_cum_masses = np.sum(cool_ann_masses, axis=1)
       cool_plot_neut_cum_mases = np.sum(cool_neut_ann_masses, axis=1)
+      cool_plot_cum_masses, cool_plot_neut_cum_mases = cool_plot_cum_masses[rem_low_halo], cool_plot_neut_cum_mases[rem_low_halo]
 
    ann_med_fig, ann_med_ax = plt.subplots()
    ann_med_plotsean_fig, ann_mean_ax = plt.subplots()
@@ -161,30 +165,30 @@ if do_cum_mass_plots:
          cool_neut_curr_ann_masses = cool_neut_ann_masses[curr_indices]
 
       if i == 0:
-         mock_cum_ax.plot(0.,0., color=colors[i], label=labels2[0])
+         mock_cum_ax.plot(0.,0., color=colors[i], label=mock_labels2[0])
       mock_cum_ax.plot(mock_radii[i], mock_cum_mass[i], color=colors[i], label=labels[i], alpha=0.5)
       mock_cum_ax.fill_between(mock_radii[i], mock_cum_mass_bot[i], mock_cum_mass_top[i], color=colors[i], alpha=0.33)
 
       if i == 0:
-         mock_cum_ax.plot(mock_radii[i], mock_neut_cum_mass[i], color=colors[i], linestyle='dotted', label=labels2[1], alpha=0.5)
+         mock_cum_ax.plot(mock_radii[i], mock_neut_cum_mass[i], color=colors[i], linestyle='dotted', label=mock_labels2[1], alpha=0.5)
       else:
          mock_cum_ax.plot(mock_radii[i], mock_neut_cum_mass[i], color=colors[i], linestyle='dotted', alpha=0.5)
-      mock_cum_ax.fill_between(mock_radii[i], mock_neut_cum_mass_bot[i], mock_neut_ann_mass_top[i], color=colors[i], alpha=0.33)
+      mock_cum_ax.fill_between(mock_radii[i], mock_neut_cum_mass_bot[i], mock_neut_cum_mass_top[i], color=colors[i], alpha=0.33)
 
       if i == 0:
-         mock_ann_ax.plot(0.,0., color=colors[i], label=labels2[0])
+         mock_ann_ax.plot(0.,0., color=colors[i], label=mock_labels2[0])
       mock_ann_ax.plot(mock_radii[i], mock_ann_mass[i], color=colors[i], label=labels[i], alpha=0.5)
       mock_ann_ax.fill_between(mock_radii[i], mock_ann_mass_bot[i], mock_ann_mass_top[i], color=colors[i], alpha=0.33)
 
       if i == 0:
-         mock_ann_ax.plot(mock_radii[i], mock_neut_ann_mass[i], color=colors[i], linestyle='dotted', label=labels2[1], alpha=0.5)
+         mock_ann_ax.plot(mock_radii[i], mock_neut_ann_mass[i], color=colors[i], linestyle='dotted', label=mock_labels2[1], alpha=0.5)
       else:
          mock_ann_ax.plot(mock_radii[i], mock_neut_ann_mass[i], color=colors[i], linestyle='dotted', alpha=0.5)
       mock_ann_ax.fill_between(mock_radii[i], mock_neut_ann_mass_bot[i], mock_neut_ann_mass_top[i], color=colors[i], alpha=0.33)
 
       if i == 0:
-         mock_col_ax.plot(mock_radii[i], mock_cols[i], color=colors[i], label=labels2[0], alpha=0.5)
-         mock_col_ax.plot(mock_radii[i], mock_neut_cols[i], color=colors[i], linestyle='dotted', label=labels2[1], alpha=0.5)
+         mock_col_ax.plot(mock_radii[i], mock_cols[i], color=colors[i], label=mock_labels2[0], alpha=0.5)
+         mock_col_ax.plot(mock_radii[i], mock_neut_cols[i], color=colors[i], linestyle='dotted', label=mock_labels2[1], alpha=0.5)
       mock_col_ax.plot(mock_radii[i], mock_cols[i], color=colors[i], alpha=0.5, label=labels[i])
       mock_col_ax.plot(mock_radii[i], mock_neut_cols[i], color=colors[i], linestyle='dotted', alpha=0.5)
       mock_col_ax.fill_between(mock_radii[i], mock_cols_bot[i], mock_cols_top[i], color=colors[i], alpha=0.33)
@@ -263,12 +267,12 @@ if do_cum_mass_plots:
          medians, med_low, med_high, cum_mass_med, cum_mass_bot_err, cum_mass_top_err = (medians), (med_low), (med_high), (cum_mass_med), (cum_mass_med-cum_mass_bot_err), (cum_mass_top_err+cum_mass_med)
 
          if i == 0:
-            ann_med_ax.plot(plot_radii, medians, color=colors[i], label=labels2[0])
+            ann_med_ax.plot(plot_radii, medians, color=colors[i], label=sim_labels2[0])
          ann_med_ax.plot(plot_radii, medians, color=colors[i], label=labels[i])
          ann_med_ax.fill_between(plot_radii, med_low, med_high, color=colors[i],alpha=0.33)
 
          if i == 0:
-            cum_med_ax.plot(plot_radii, cum_mass_med, color=colors[i], label=labels2[0])
+            cum_med_ax.plot(plot_radii, cum_mass_med, color=colors[i], label=sim_labels2[0])
          cum_med_ax.plot(plot_radii, cum_mass_med, color=colors[i], label=labels[i])
          cum_med_ax.fill_between(plot_radii, cum_mass_bot_err, cum_mass_top_err, color=colors[i],alpha=0.33)
 
@@ -279,24 +283,24 @@ if do_cum_mass_plots:
          neut_cum_mass_top_err = neut_cum_mass_med + np.sqrt(np.cumsum(np.power(neut_med_high-neut_medians,2.)))
 
          if i==0:
-            ann_med_ax.plot(plot_radii, neut_medians, color=colors[i], linestyle='dotted', label=labels2[1])
+            ann_med_ax.plot(plot_radii, neut_medians, color=colors[i], linestyle='dotted', label=sim_labels2[1])
          else:
             ann_med_ax.plot(plot_radii, neut_medians, color=colors[i], linestyle='dotted')
          ann_med_ax.fill_between(plot_radii, neut_med_low, neut_med_high, color=colors[i],alpha=0.33)
 
          if i==0:
-            cum_med_ax.plot(plot_radii, neut_cum_mass_med, color=colors[i], linestyle='dotted', label=labels2[1])
+            cum_med_ax.plot(plot_radii, neut_cum_mass_med, color=colors[i], linestyle='dotted', label=sim_labels2[1])
          else:
             cum_med_ax.plot(plot_radii, neut_cum_mass_med, color=colors[i], linestyle='dotted')
          cum_med_ax.fill_between(plot_radii, neut_cum_mass_bot_err, neut_cum_mass_top_err, color=colors[i],alpha=0.33)
 
    mock_cum_ax.errorbar(proch_radii, proch_cum_mass, yerr=proch_cum_mass_err, elinewidth=2, ecolor='k', marker='*', markersize=15., color='limegreen', markeredgecolor='k', label="P")
    mock_cum_ax.plot(proch_radii, proch_cum_mass, marker='*', markersize=15., color='limegreen', markeredgecolor='k', label="Prochaska 2017") # for label. Don't know why
-   mock_cum_ax.plot(145., 2.0e10, linestyle='None', marker='^', markersize=15., color='darkviolet', markeredgecolor='k', label='Werk 2014')
+   mock_cum_ax.plot(155., 2.0e10, linestyle='None', marker='^', markersize=15., color='darkviolet', markeredgecolor='k', label='Werk 2014')
 
    cum_med_ax.errorbar(proch_radii, proch_cum_mass, yerr=proch_cum_mass_err, elinewidth=2, ecolor='k', marker='*', markersize=15., color='limegreen', markeredgecolor='k', label="P")
    cum_med_ax.plot(proch_radii, proch_cum_mass, marker='*', markersize=15., color='limegreen', markeredgecolor='k', label="Prochaska 2017") # for label. Don't know why
-   cum_med_ax.plot(145., 2.0e10, linestyle='None', marker='^', markersize=15., color='darkviolet', markeredgecolor='k', label='Werk 2014')
+   cum_med_ax.plot(155., 2.0e10, linestyle='None', marker='^', markersize=15., color='darkviolet', markeredgecolor='k', label='Werk 2014')
 
    mock_ann_ax.errorbar(proch_radii, proch_ann_mass, yerr=proch_mass_err, linestyle='', elinewidth=2, ecolor='k', marker='*', markersize=15., color='limegreen', markeredgecolor='k')
    mock_ann_ax.plot(proch_radii, proch_ann_mass, marker='*', linestyle='', markersize=15., color='limegreen', markeredgecolor='k', label="Prochaska 2017") # for label. Don't know why
@@ -354,9 +358,9 @@ if do_cum_mass_plots:
    mock_cum_ax.add_artist(leg1)
    mock_cum_ax.add_artist(leg2)
    mock_cum_ax.add_artist(leg3)
-   mock_cum_ax.set_xlabel('Radius (kpc)')
-   mock_cum_ax.set_ylabel(r'$M_{cum}$ $(M_{\odot})$')
-   mock_cum_ax.set_title('Cumulative H Mass vs Radius')
+   mock_cum_ax.set_xlabel('b (kpc)')
+   mock_cum_ax.set_ylabel(r'${\rm log_{10}}(M_{cum})$ $M_{\odot}$')
+   mock_cum_ax.set_title('Cumulative H mass using spectra')
    mock_cum_ax.set_yscale('log')
    mock_cum_ax.set_ylim([10**4.0,10**13.])
    mock_cum_ax.set_xlim([20.,160.])
@@ -372,9 +376,9 @@ if do_cum_mass_plots:
    mock_ann_ax.add_artist(leg1)
    mock_ann_ax.add_artist(leg2)
    mock_ann_ax.add_artist(leg3)
-   mock_ann_ax.set_xlabel('Radius (kpc)')
-   mock_ann_ax.set_ylabel(r'$M_{ann}$ $(M_{\odot})$')
-   mock_ann_ax.set_title('Annular H Mass vs Radius')
+   mock_ann_ax.set_xlabel('b (kpc)')
+   mock_ann_ax.set_ylabel(r'${\rm log_{10}}(M_{ann})$ $M_{\odot}$')
+   mock_ann_ax.set_title('Annular H mass using spectra')
    mock_ann_ax.set_yscale('log')
    mock_ann_ax.set_ylim([10**2.5,10**12.8])
    mock_ann_ax.set_xlim([20.,160.])
@@ -387,9 +391,9 @@ if do_cum_mass_plots:
    leg2 = mock_col_ax.legend([lines[i] for i in [0,1]], [lines[i].get_label() for i in [0,1]], loc=[0.35,0.02])
    mock_col_ax.add_artist(leg1)
    mock_col_ax.add_artist(leg2)
-   mock_col_ax.set_xlabel('Radius (kpc)')
-   mock_col_ax.set_ylabel(r'${\rm log_{10}}(N)$ $({\rm cm^{-2}})$')
-   mock_col_ax.set_title('Column Density vs Radius')
+   mock_col_ax.set_xlabel('b (kpc)')
+   mock_col_ax.set_ylabel(r'${\rm log_{10}}(N)$ ${\rm cm^{-2}}$')
+   mock_col_ax.set_title('Hydrogen column density')
    mock_col_ax.set_yscale('log')
    mock_col_ax.set_ylim([10.**12,10.**21])
    mock_col_ax.set_xlim([20.,160.])
@@ -400,7 +404,7 @@ if do_cum_mass_plots:
    if mean_bool:
       if cool_bool == False:
          ann_mean_ax.set_xlabel('Radius (kpc)')
-         ann_mean_ax.set_ylabel(r'$M_{ann}$ $(M_{\odot})$')
+         ann_mean_ax.set_ylabel(r'${\rm log_{10}}(M_{ann})$ $M_{\odot}$')
          ann_mean_ax.set_title('H Mass in Each Annulus vs Radius')
          ann_mean_ax.set_yscale('log')
          ann_mean_ax.set_ylim([10**3.0,10**12.1])
@@ -410,7 +414,7 @@ if do_cum_mass_plots:
          plt.close(ann_mean_fig)
 
          cum_mean_ax.set_xlabel('Radius (kpc)')
-         cum_mean_ax.set_ylabel(r'$M_{cum}$ $(M_{\odot})$')
+         cum_mean_ax.set_ylabel(r'${\rm log_{10}}(M_{cum})$ $M_{\odot}$')
          cum_mean_ax.set_title('Cumulative H Mass vs Radius')
          cum_mean_ax.set_yscale('log')
          cum_mean_ax.set_ylim([10**4.0,10**12.1])
@@ -422,7 +426,7 @@ if do_cum_mass_plots:
       ### cool
       else:
          ann_mean_ax.set_xlabel('Radius (kpc)')
-         ann_mean_ax.set_ylabel(r'$M_{ann}$ $(M_{\odot})$')
+         ann_mean_ax.set_ylabel(r'${\rm log_{10}}(M_{ann})$ $M_{\odot}$')
          ann_mean_ax.set_title('Cool H Mass in Each Annulus vs Radius')
          ann_mean_ax.set_ylim([6.0,12.1])
          ann_meanax.set_xlim([20.,160.])
@@ -431,7 +435,7 @@ if do_cum_mass_plots:
          plt.close(ann_mean_fig)
 
          cum_mean_ax.set_xlabel('Radius (kpc)')
-         cum_mean_ax.set_ylabel(r'$M_{cum}$ $(M_{\odot})$')
+         cum_mean_ax.set_ylabel(r'${\rm log_{10}}(M_{cum})$ $M_{\odot}$')
          cum_mean_ax.set_title('Cool Cumulative H Mass vs Radius')
          cum_mean_ax.set_yscale('log')
          cum_mean_ax.set_ylim([10**8.0,10**12.1])
@@ -443,7 +447,7 @@ if do_cum_mass_plots:
    else:
       if cool_bool:
          ann_med_ax.set_xlabel('Radius (kpc)')
-         ann_med_ax.set_ylabel(r'$M_{ann}$ $(M_{\odot})$')
+         ann_med_ax.set_ylabel(r'${\rm log_{10}}(M_{ann})$ $M_{\odot}$')
          ann_med_ax.set_title('Cool H Mass in Each Annulus vs Radius')
          ann_med_ax.set_ylim([6.0,12.1])
          ann_med_ax.set_xlim([20.,160.])
@@ -452,7 +456,7 @@ if do_cum_mass_plots:
          plt.close(ann_med_fig)
 
          cum_med_ax.set_xlabel('Radius (kpc)')
-         cum_med_ax.set_ylabel(r'$M_{cum}$ $(M_{\odot})$')
+         cum_med_ax.set_ylabel(r'${\rm log_{10}}(M_{cum})$ $M_{\odot}$')
          cum_med_ax.set_title('Cool Cumulative H Mass vs Radius')
          cum_med_ax.set_ylim([6.0,12.1])
          cum_med_ax.set_xlim([20.,160.])
@@ -470,16 +474,16 @@ if do_cum_mass_plots:
          ann_med_ax.add_artist(leg3)
          if normalized_units:
             ann_med_ax.set_xlabel('Radius (kpc)')
-            ann_med_ax.set_ylabel(r'$M_{ann}$ $(M_{\odot})$')
+            ann_med_ax.set_ylabel(r'${\rm log_{10}}(M_{ann})$ $M_{\odot}$')
             ann_med_ax.set_ylim([10**-4.,10**0.5])
             ann_med_ax.set_xlim([0.,1.])
          else:
             ann_med_ax.set_xlabel('Radius (kpc)')
-            ann_med_ax.set_ylabel(r'$M_{ann}$ $(M_{\odot})$')
+            ann_med_ax.set_ylabel(r'${\rm log_{10}}(M_{ann})$ $M_{\odot}$')
             ann_med_ax.set_ylim([10**2.5,10**12.8])
             ann_med_ax.set_xlim([20.,160.])
 
-         ann_med_ax.set_title('H Mass in Each Annulus vs Radius')
+         ann_med_ax.set_title('Annular H mass using gas particles')
          ann_med_ax.set_yscale('log')
          ann_med_ax.yaxis.set_major_formatter(log_fmt)
          ann_med_fig.savefig('ann_masses_median.pdf')
@@ -500,10 +504,10 @@ if do_cum_mass_plots:
             cum_med_ax.set_xlim([0.,1.])
          else:
             cum_med_ax.set_xlabel('Radius (kpc)')
-            cum_med_ax.set_ylabel(r'$M_{cum}$ $(M_{\odot})$')
+            cum_med_ax.set_ylabel(r'${\rm log_{10}}(M_{cum})$ $M_{\odot}$')
             cum_med_ax.set_ylim([10**4.,10**13.])
             cum_med_ax.set_xlim([20.,160.])
-         cum_med_ax.set_title('Cumulative H Mass vs Radius')
+         cum_med_ax.set_title('Cumulative H mass using gas particles')
          cum_med_ax.set_yscale('log')
          cum_med_ax.yaxis.set_major_formatter(log_fmt)
          cum_med_fig.savefig('cum_masses_median.pdf')
@@ -511,7 +515,7 @@ if do_cum_mass_plots:
 
    if (to_virial & cool_bool):
       fig, ax = plt.subplots()
-      plot_hmass = np.power(np.ones(np.size(halo_masses))*10.,halo_masses)
+      plot_hmass = np.power(np.ones(np.size(halo_masses[rem_low_halo]))*10.,halo_masses[rem_low_halo])
       baryonically_closed = plot_hmass*(omega_b/omega_m*0.752)
       ax.scatter(plot_hmass , plot_cum_masses, color='darkgreen', marker='o', edgecolors='k', linewidth=0.75, s=30., label='Total H')
       ax.scatter(plot_hmass , cool_plot_cum_masses, color='fuchsia', marker='s', edgecolors='k', linewidth=0.75, s=30., label='Cool H')
@@ -533,9 +537,9 @@ if do_cum_mass_plots:
       ax.set_xscale('log')
       ax.set_ylim([10**5, 10**14.])
       ax.set_xlim([10**10.5,10**14.0])
-      ax.set_xlabel(r'$M_{halo}$ $(M_{\odot})$',fontsize=18.)
-      ax.set_ylabel(r'$M_{<R_{vir}}$ $(M_{\odot})$', fontsize=18.)
-      ax.set_title(r'Hydrogen Masses Within $R_{vir}$', fontsize=20.)
+      ax.set_xlabel(r'${\rm log_{10}}(M_{200})$ $M_{\odot}$',fontsize=18.)
+      ax.set_ylabel(r'${\rm log_{10}}(M_{<R_{200}})$ $M_{\odot}$', fontsize=18.)
+      ax.set_title(r'Hydrogen masses Within $R_{200}$', fontsize=20.)
       fig.set_tight_layout(True)
       fig.savefig('cum_H_vs_halo.pdf')
       plt.close(fig)
@@ -550,7 +554,7 @@ if do_cum_mass_plots:
       ax.set_xlim([10**10.5,10**14.0])
       ax.set_xlabel(r'$M_{halo}$ $(M_{\odot})$',fontsize=18.)
       ax.set_ylabel(r'$M_{x}/M_{H}$ $(M_{\odot})$', fontsize=18.)
-      ax.set_title(r'$M_{x}/M_{H}$ in $R_{vir}$', fontsize=20.)
+      ax.set_title(r'$M_{x}/M_{H}$ in $R_{200}$', fontsize=20.)
       fig.set_tight_layout(True)
       fig.savefig('frac_cum_H_vs_halo.pdf')
       plt.close(fig)

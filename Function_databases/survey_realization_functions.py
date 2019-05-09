@@ -934,7 +934,7 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 	print "radii"
 	print np.sort(radii)
 	print ''
-	print np.sort(cos_h1_cols_radii)
+	print np.sort(plot_cols_radii)
 	print ''
 	inner_ind, outer_ind = np.argwhere(radii < 80.)[:,0], np.argwhere(radii >=80.)[:,0]
 	inner_cols, inner_radii, outer_cols, outer_radii = cols[inner_ind], radii[inner_ind], cols[outer_ind], radii[outer_ind]
@@ -1054,20 +1054,20 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 		bins.append(int(round(bins_radii_arr[-1]))+0.5)
 		plot_x, plot_median, plot_84, plot_16, plot_95, plot_5 = percentile_array(bins, radii, cols)
 
-		eagle_data_object = ax.errorbar([x+2. for x in plot_radii], median, yerr=[median-two_sig_bot, two_sig_top-median], color='k', fmt = '.', ecolor = 'r', label='EAGLE (black fit)')
+		eagle_data_object = ax.errorbar([x+2. for x in plot_radii], median, yerr=[median-two_sig_bot, two_sig_top-median], color='k', fmt = '.', ecolor = 'r', label='EAGLE')
 		plt.hold(True)
 		ax.errorbar([x+2. for x in plot_radii], median, yerr=[median-one_sig_bot, one_sig_top-median], xerr = plot_radii_err, color='k', fmt = '.', ecolor = 'b')
 
-		### Linear fit stuff
-		eagle_fit_object, = ax.plot(plot_cols_radii, eagle_fit_arr, color='k', label=r'm=%.2e $\pm$ %.0e' % (eagle_params[0], np.sqrt(eagle_errs[0,0])) + '\n' + r'b=%.2e $\pm$ %.0e' % (np.power(10,eagle_params[1]), np.sqrt(np.power(10,eagle_errs[1,1]))))
-		cos_fit_object, = ax.plot(plot_cols_radii, cos_fit_arr, color='#00FF00', label=r'm=%.2e $\pm$ %.0e' % (cos_params[0], cos_errs[0,0]) + '\n' + r'b=%.2e $\pm$ %.0e' % (np.power(10,cos_params[1]), np.sqrt(np.power(10,cos_errs[1,1]))))
+		# ### Linear fit stuff
+		# eagle_fit_object, = ax.plot(plot_cols_radii, eagle_fit_arr, color='k', label=r'm=%.2e $\pm$ %.0e' % (eagle_params[0], np.sqrt(eagle_errs[0,0])) + '\n' + r'b=%.2e $\pm$ %.0e' % (np.power(10,eagle_params[1]), np.sqrt(np.power(10,eagle_errs[1,1]))))
+		# cos_fit_object, = ax.plot(plot_cols_radii, cos_fit_arr, color='#00FF00', label=r'm=%.2e $\pm$ %.0e' % (cos_params[0], cos_errs[0,0]) + '\n' + r'b=%.2e $\pm$ %.0e' % (np.power(10,cos_params[1]), np.sqrt(np.power(10,cos_errs[1,1]))))
 
 		### COS data
 
 		norm_radii = plot_cols_radii[plot_cols_flags == 1.]
 		norm_cols = plot_cols[plot_cols_flags == 1.]
 		norm_err = plot_cols_err[plot_cols_flags == 1.]
-		cos_data_object = ax.errorbar(norm_radii, norm_cols, yerr=norm_err, fmt='*', c='#00FF00', markersize = 8.5, markeredgecolor = 'k', markeredgewidth = 0.5, label = 'COS (green fit)\n high=%.2f, low=%.2f' % (high_frac, low_frac))
+		cos_data_object = ax.errorbar(norm_radii, norm_cols, yerr=norm_err, fmt='*', c='#00FF00', markersize = 8.5, markeredgecolor = 'k', markeredgewidth = 0.5, label = 'COS: high=%.2f, low=%.2f' % (high_frac, low_frac))
 		
 		upper_lim_cols = plot_cols[plot_cols_flags == 3]
 		upper_lim_radii = plot_cols_radii[plot_cols_flags == 3]
@@ -1076,7 +1076,7 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 		ax.plot(upper_lim_radii, upper_lim_cols, marker='v', c='#00FF00', linestyle='None', markeredgecolor = 'k', markeredgewidth = 0.5, markersize=8.5)
 		ax.plot(lower_lim_radii, lower_lim_cols, marker='^', c='#00FF00', linestyle='None', markeredgecolor = 'k', markeredgewidth = 0.5, markersize=8.5)
 		plt.hold(False)
-		ax.set_title('COS-Halos: N vs b for HI')
+		ax.set_title('COS-Halos Passive: N vs b for HI')
 
 	else:
 		if colorbar == 'smass':
@@ -1105,7 +1105,7 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 		# plt.plot(plot_x, plot_10, 'r')
 		plt.hold(False)
 
-		plt.title('COS-Halos: N vs b for HI')
+		plt.title('COS-Halos Passive: N vs b for HI')
 
 	ax.set_xlabel('b (kpc)')
 	ax.set_ylabel(r'$log_{10}(N_{HI})$ ${\rm cm}^{-2}$')
@@ -1113,11 +1113,11 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 	ax.set_ylim(ylim)
 
 	data_legend = ax.legend(handles=[eagle_data_object, cos_data_object], loc = 'lower left')
-	plt.rcParams['legend.fontsize'] = 10
-	# fit_legend = ax.legend(handles=[eagle_fit_object, cos_fit_object], loc = 'upper right')
-	plt.rcParams['legend.fontsize'] = 14
+	# plt.rcParams['legend.fontsize'] = 10
+	# # fit_legend = ax.legend(handles=[eagle_fit_object, cos_fit_object], loc = 'upper right')
+	# plt.rcParams['legend.fontsize'] = 14
 	ax.add_artist(data_legend)
-	# ax.add_artist(fit_legend)
+	# # ax.add_artist(fit_legend)
 
 
 	if colorbar == 'smass':
@@ -1152,7 +1152,7 @@ def make_col_dense_plots(ion, covered, total, ssfr, masses, smasses, radii, viri
 	# plt.plot(plot_x, plot_5, 'r')
 	# plt.hold(False)
 
-	# plt.title('COS-Halos: N vs b for HI')
+	# plt.title('COS-Halos Passive: N vs b for HI')
 	# plt.xlabel('Impact Parameter (in virial radii)')
 	# plt.ylabel(r'$log_{10}(N_{%s}) cm^{-2}$' % (ion))
 	# if colorbar == 'smass':
@@ -1354,7 +1354,7 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 		plt.rcParams['legend.fontsize'] = 14
 
 		# plt.title('Red W vs b, Rejection at: %s' % (str(reject_val)))
-		ax.set_title('COS-Halos: W vs b for %s' % (ion.upper()))
+		ax.set_title('COS-Halos Passive: W vs b for %s' % (ion.upper()))
 		# ax.add_artist(fit_legend)
 		ax.add_artist(data_legend)
 
@@ -1392,7 +1392,7 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 		# plt.plot(plot_x, plot_10, 'r')
 		plt.hold(False)
 
-		ax.set_title('COS-Halos: W vs b')
+		ax.set_title('COS-Halos Passive: W vs b')
 
 	ax.set_xlabel('Impact Parameter (kpc)')
 
@@ -1444,9 +1444,9 @@ def make_equ_width_plots(ion, ssfr, masses, smasses, radii, virial_radii, equ_wi
 	plt.hold(False)
 
 	try:
-		plt.title('COS-Halos: W vs b for %s' % (ion.upper()))
+		plt.title('COS-Halos Passive: W vs b for %s' % (ion.upper()))
 	except:
-		plt.title('COS-Halos: W vs b for %s' % (ion.upper()))
+		plt.title('COS-Halos Passive: W vs b for %s' % (ion.upper()))
 	plt.xlabel('Impact Parameter (in virial radii)')
 	plt.ylabel(r'Equivalent Width ($\AA{}$)')
 	if colorbar == 'smass':
@@ -1553,7 +1553,7 @@ def make_contour_col_dense_plots(ion, radii, virial_radii, cols, plot_cols, plot
 		# plt.plot(radii[eagle_fit_arr >=0.0], eagle_fit_arr[eagle_fit_arr >=0.0])
 
 	plt.ylabel(r'$log_{10}(N_{%s}) cm^{-2}$' % (ion.upper()), fontsize=14.)
-	plt.title('COS-Halos: N vs b for %s' % (ion.upper()), fontsize=16.)
+	plt.title('COS-Halos Passive: N vs b for %s' % (ion.upper()), fontsize=16.)
 
 	#### overplot all data points if testing stuff
 	# plt.hold(True)
@@ -1711,7 +1711,7 @@ def make_equ_width_contour_plots(ion, radii, virial_radii, equ_widths, smasses, 
 	ax.set_ylim((ymin, ymax))
 	ax.set_yticks([0.01,0.1,1.0])
 	ax.set_yticklabels(['-2','-1', '0'])
-	ax.set_title(r'COS-Halos: $W_{HI}$ vs b')
+	ax.set_title(r'COS-Halos Passive: $W_{HI}$ vs b')
 
 
 	### overplot all data points if testing stuff
@@ -4010,9 +4010,9 @@ def kinematic_plots(num_minima, centroid_vel, depth, FWHM, radii, temps, line_io
 	# 	plot_labels=['Impact Parameter vs Velocity', 'b (kpc)', 'v (km/s)', r'$log_{10}(N_{components})$'], median=True, median_along='x',
 	# 	xlims=[0,250.], ylims=[0.,500.], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
-	# make_2d_hist_plot(virial_radii_for_kin, np.abs(centroids_in_vir), hist_bins, 'vir_radius_vir_vel_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-	# 	plot_labels=['Impact Parameter vs Velocity', r'$b/R_{200}$', r'$v_{centroid}/v_{200}$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
-	# 	xlims=[0,2.1], ylims=[0.,6.], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
+	make_2d_hist_plot(virial_radii_for_kin, np.abs(centroids_in_vir), hist_bins, 'vir_radius_vir_vel_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
+		plot_labels=['Impact Parameter vs Velocity', r'$b/R_{200}$', r'$v_{centroid}/v_{200}$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+		xlims=[0,2.1], ylims=[0.,6.], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 	# make_2d_hist_plot(plotting_radii, temps, hist_bins, 'radius_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
 	# 	plot_labels=['Impact Prameter vs Temperature', 'b (kpc)', r'$log_{10}(T)$ K', r'$log_{10}(N_{components})$'], median=True, median_along='x',
@@ -4022,9 +4022,9 @@ def kinematic_plots(num_minima, centroid_vel, depth, FWHM, radii, temps, line_io
 	# 	plot_labels=['Impact Prameter vs Temperature', r'$b/R_{200}$', r'$log_{10}(T/T_{200})$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
 	# 	xlims=[0,2.1], ylims=[-3.,0.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
-	# make_2d_hist_plot(virial_radii_for_kin, temps, hist_bins, 'vir_radius_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-	# 	plot_labels=['Impact Prameter vs Temperature', r'$b/R_{200}$', r'$log_{10}(T)$ K', r'$log_{10}(N_{components})$'], median=True, median_along='x',
-	# 	xlims=[0,2.1], ylims=[3.5,6.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
+	make_2d_hist_plot(virial_radii_for_kin, temps, hist_bins, 'vir_radius_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
+		plot_labels=['Impact Prameter vs Temperature', r'$b/R_{200}$', r'$log_{10}(T)$ K', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+		xlims=[0,2.1], ylims=[3.5,6.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 	# make_2d_hist_plot(np.abs(centroid_vel), temps, hist_bins, 'vel_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
 	# 	plot_labels=['Centroid Velocity vs Temperature', r'$v_{centroid}$ (km/s)', r'$log_{10}(T)$ K', r'$log_{10}(N_{components})$'], median=True, median_along='x',
@@ -4035,20 +4035,20 @@ def kinematic_plots(num_minima, centroid_vel, depth, FWHM, radii, temps, line_io
 	# 	xlims=[0,6.0], ylims=[-3.,0.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 	make_2d_hist_plot(np.log10(halo_masses_for_kin), temps_in_vir, hist_bins, 'mass_vir_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-		plot_labels=[r'$M_{200}$ vs Temperature', r'$log_{10}(M_{200}/M_{\odot})$', r'$log_{10}(T/T_{200})$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+		plot_labels=[r'$M_{200}$ vs Temperature', r'${\rm log_{10}}(M_{200})$ $M_{\odot}$', r'$log_{10}(T/T_{200})$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
 		xlims = [10.5,13.6], ylims=[-3.,0.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 	make_2d_hist_plot(np.log10(halo_masses_for_kin), temps, hist_bins, 'mass_temp_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-		plot_labels=[r'$M_{200}$ vs Temperature', r'$log_{10}(M_{200}/M_{\odot})$', r'$log_{10}(T)$ K', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+		plot_labels=[r'$M_{200}$ vs Temperature', r'${\rm log_{10}}(M_{200})$ $M_{\odot}$', r'$log_{10}(T)$ K', r'$log_{10}(N_{components})$'], median=True, median_along='x',
 		xlims = [10.5,13.6], ylims=[3.5,6.5], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 	# make_2d_hist_plot(virial_radii_for_kin, line_ion_densities, hist_bins, 'vir_radii_ion_dens_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
 	# 	plot_labels=[r'Impact Parameter vs $n_{HI}$', r'$b/R_{200}$', r'$log_{10}(n_{HI})$ ${\rm cm}^{-3}$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
 	# 	xlims=[0,2.1], ylims = [-12.,-1.], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
-	make_2d_hist_plot(virial_radii_for_kin, line_nHs, hist_bins, 'vir_radii_n_H_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
-		plot_labels=[r'Impact Parameter vs $n_{H}$', r'$b/R_{200}$', r'$log_{10}(n_{H})$ ${\rm cm}^{-3}$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
-		xlims=[0,2.1], ylims = [-7.,-1.], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
+	# make_2d_hist_plot(virial_radii_for_kin, line_nHs, hist_bins, 'vir_radii_n_H_hist_%s.pdf' % ('all'), stellar_masses_for_kin, ssfr_for_kin, log_y=False, \
+	# 	plot_labels=[r'Impact Parameter vs $n_{H}$', r'$b/R_{200}$', r'$log_{10}(n_{H})$ ${\rm cm}^{-3}$', r'$log_{10}(N_{components})$'], median=True, median_along='x',
+	# 	xlims=[0,2.1], ylims = [-7.,-1.], clims=[0,2.5], populations_data = [upper_mass, lower_mass, upper_ssfr, lower_ssfr, colors, labels])
 
 def percentile_array(bins, x_arr, y_arr):
 	plot_median = np.zeros(np.size(bins)-1)
@@ -4078,6 +4078,7 @@ def make_2d_hist_plot(xvals, yvals, hist_bins, name, smass, ssfr, plot_labels = 
 	if log_y:
 		yvals = np.log10(yvals)
 
+	labels = ["Low Mass", "Active", "Passive"]
 	# definitions for the axes
 	left, width = 0.1, 0.61
 	bottom, height = 0.1, 0.61
@@ -4102,6 +4103,7 @@ def make_2d_hist_plot(xvals, yvals, hist_bins, name, smass, ssfr, plot_labels = 
 		for i in range(0,np.size(upper_mass)):
 			indices = np.where(((np.log10(smass) < upper_mass[i]) & (np.log10(smass) > lower_mass[i]) & (ssfr < upper_ssfr[i]) & (ssfr > lower_ssfr[i])))
 			esc_indices = np.where(((np.log10(smass) < upper_mass[i]) & (np.log10(smass) > lower_mass[i]) & (ssfr < upper_ssfr[i]) & (ssfr > lower_ssfr[i]) & (yvals >= 1.5)))
+			# axHistx.hist(xvals[indices], bins=hist_bins, alpha=0.33, color=colors[i], normed=True, range=(xlims[0],xlims[1]), label=labels[i])
 			axHistx.hist(xvals[indices], bins=hist_bins, alpha=0.33, color=colors[i], normed=True, range=(xlims[0],xlims[1]))
 			axHisty.hist(yvals[indices], bins=hist_bins, orientation='horizontal', alpha=0.33, color=colors[i], normed=True, range=(ylims[0],ylims[1]))
 	else:
@@ -4173,6 +4175,7 @@ def make_2d_hist_plot(xvals, yvals, hist_bins, name, smass, ssfr, plot_labels = 
 		cb.set_clim(clims)
 		cb.ax.set_yticklabels(np.linspace(clims[0],clims[1],6))
 
+	# axHistx.legend(loc=(0.45,-1.3))
 	axHistx.tick_params(labelbottom=False)
 	axHistx.tick_params(labelleft=False)
 	axHisty.tick_params(labelbottom=False)

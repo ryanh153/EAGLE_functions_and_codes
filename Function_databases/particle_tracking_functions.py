@@ -26,6 +26,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 import matplotlib.patches as mpatches
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import bisect
 from matplotlib.colors import LogNorm
 import gen_lsf
@@ -203,8 +204,10 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 					curr_z0_particle_radii = np.sqrt(np.sum(np.power(curr_z0_coords-z0_gal_coords,2), axis=1))
 
 					with h5py.File(curr_spec_output, 'r') as hf2:
+						spec_vel = np.array(hf2.get("VHubble_KMpS"))
 						curr_spec = hf2.get('Spectrum%s' % (str(k)))
 						curr_ion = curr_spec.get('h1') # replace that soon
+						spec_flux = np.array(curr_ion.get("Flux"))
 						col_dense = np.array(curr_ion.get('LogTotalIonColumnDensity'))
 
 					### Possible filters
@@ -213,7 +216,8 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 
 					# plots_for_each_line(ions, gal_mass, col_dense, i, j, k, curr_particle_radii, impact_param, curr_ion_fracs, curr_lookup_ion_fracs, list_for_all_id_data, curr_density, \
 					# curr_temperature, element_masses, elements, curr_element_fracs, curr_time_since_ISM, curr_z0_time_since_ISM, redshift, indices_recent_SF, \
-					# frac_currently_SF, frac_never_SF, num_particles_hit, curr_z0_particle_radii, z0_frac_never_SF, z0_frac_currently_SF, frac_SF_recently)
+					# frac_currently_SF, frac_never_SF, num_particles_hit, curr_z0_particle_radii, z0_frac_never_SF, z0_frac_currently_SF, frac_SF_recently, spec_vel, spec_flux)
+
 
 					curr_group, curr_radius_bin = get_bins_for_line(gal_smass, gal_sSFR, gal_R200, impact_param)
 
@@ -717,7 +721,7 @@ def read_in_matched_particle_data(particles_hit_file, file_keyword, ions, elemen
 
 def plots_for_each_line(ions, gal_mass, col_dense, i, j, k, curr_particle_radii, impact_param, curr_ion_fracs, curr_lookup_ion_fracs, list_for_all_id_data, curr_density, curr_temperature, element_masses, elements, curr_element_fracs, \
 	curr_time_since_ISM, curr_z0_time_since_ISM, redshift, indices_recent_SF, frac_currently_SF, frac_never_SF, num_particles_hit, curr_z0_particle_radii, z0_frac_never_SF, \
-	z0_frac_currently_SF, frac_SF_recently):
+	z0_frac_currently_SF, frac_SF_recently, spec_vel, spec_flux):
 	close_indices = np.where(curr_particle_radii < 500)
 	max_plot_radius = 400.
 	rvir_frac = 3.
@@ -762,6 +766,9 @@ def plots_for_each_line(ions, gal_mass, col_dense, i, j, k, curr_particle_radii,
 	ax.set(ylabel=r'l$og_{10}(T) \, {\rm K}$')
 	ax.legend(loc='upper left', borderpad=0.1, handletextpad=0.01)
 	plt.hold(False)
+
+	subax = inset_axes(ax, height="20%", width="90%", borderpad=1.2)
+	subax.plot(spec_vel, spec_flux)
 	subprocess.call('mkdir particle_id_files_%s' % (list_for_all_id_data[i][2*(j+1)-1]),shell=True)
 	fig.savefig('particle_id_files_%s/n_H_T_H_weight_%s.pdf' % (list_for_all_id_data[i][2*(j+1)-1], k), bbox_inches='tight')
 	plt.close(fig)
@@ -926,7 +933,8 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	colors = np.array(['g','b','r'])
 	color_labels = ['Low Mass', 'Active', 'Passive']
 	edge_styles = np.array(['-', '--', ':'])
-	edge_labels = [r'$r/R_{vir}$ $\leq$ 0.5', r'0.5 < $r/R_{vir}$ $\leq$ 1.0', r'$r/R_{vir}$ > 1.0']
+	alphas = np.array([1.,0.6, 0.3])
+	edge_labels = [r'$r/R_{200}$ $\leq$ 0.5', r'0.5 < $r/R_{200}$ $\leq$ 1.0', r'$r/R_{200}$ > 1.0']
 	filename_edgle_labels = ['low_r', 'mid_r', 'high_r']
 	patches_list1 = [mpatches.Patch(color='k', label = 'All')]
 	patches_list2 = []
@@ -934,10 +942,10 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 		patches_list1.append(mpatches.Patch(color=colors[i], label = color_labels[i]))
 
 	for i in range(3):
-		patches_list2.append(mpatches.Patch(facecolor = 'w', edgecolor = 'k', linestyle = edge_styles[i], label = edge_labels[i]))
+		patches_list2.append(mpatches.Patch(facecolor = 'k', edgecolor = 'k', linestyle = edge_styles[i], alpha=alphas[i], label = edge_labels[i]))
 
 	
-	# ### gas mass traced
+	# ### gas mass traced, but can make the rho-T diagrams for HI weighted here as well by uncommeting weights on the 2d hist
 
 	print "Overall H Fracs: Will %.2e, were %.2e, both %.2e" % (frac_will_be_ISM, frac_were_ISM, frac_both)
 	print ""
@@ -950,8 +958,6 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 		for radius_bin_identifier in range(3): # this is within 0.5, 0.5-1, and >1. R_vir
 			curr_radius_indices = np.where(overall_radius_bins == radius_bin_identifier)
 			curr_indices = np.intersect1d(curr_group_indices, curr_radius_indices)
-			print "curr size"
-			print np.size(curr_indices)
 			curr_num_parts = float(np.size(curr_indices))
 			curr_LLS_indices = np.where((overall_col_dense >= 16.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
 			curr_LLS_parts = float(np.size(curr_LLS_indices))
@@ -965,19 +971,21 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 			curr_LLS_will, curr_LLS_new, curr_LLS_recycled, curr_LLS_were, curr_LLS_both = track_ISM( overall_z0_time_since_ISM[curr_LLS_indices], overall_time_since_ISM[curr_LLS_indices])
 			curr_mid_will, curr_mid_new, curr_mid_recycled, curr_mid_were, curr_mid_both = track_ISM( overall_z0_time_since_ISM[curr_mid_indices], overall_time_since_ISM[curr_mid_indices])
 			curr_weak_will, curr_weak_new, curr_weak_recycled, curr_weak_were, curr_weak_both = track_ISM( overall_z0_time_since_ISM[curr_weak_indices], overall_time_since_ISM[curr_weak_indices])
-			print np.size(curr_will)
-			print np.size(curr_were)
-			print np.size(curr_both)
-			print ''
 
 			curr_frac_will, curr_frac_new, curr_frac_recycled, curr_frac_were, curr_frac_both = np.array([np.size(curr_will), np.size(curr_new), np.size(curr_recycled), np.size(curr_were), np.size(curr_both)])/curr_num_parts
 			curr_LLS_H_frac_will, curr_LLS_H_frac_new, curr_LLS_H_frac_recycled, curr_LLS_H_frac_were, curr_LLS_H_frac_both = np.array([np.size(curr_LLS_will), np.size(curr_LLS_new), np.size(curr_LLS_recycled), np.size(curr_LLS_were), np.size(curr_LLS_both)])/curr_LLS_parts
 			curr_mid_H_frac_will, curr_mid_H_frac_new, curr_mid_H_frac_recycled, curr_mid_H_frac_were, curr_mid_H_frac_both = np.array([np.size(curr_mid_will), np.size(curr_mid_new), np.size(curr_mid_recycled), np.size(curr_mid_were), np.size(curr_mid_both)])/curr_mid_parts
 			curr_weak_H_frac_will, curr_weak_H_frac_new, curr_weak_H_frac_recycled, curr_weak_H_frac_were, curr_weak_H_frac_both = np.array([np.size(curr_weak_will), np.size(curr_weak_new), np.size(curr_weak_recycled), np.size(curr_weak_were), np.size(curr_weak_both)])/curr_weak_parts
+			
+			print "H breakdowns"
+			print np.size(curr_indices)
 			print curr_frac_will
+			print curr_frac_new
+			print curr_frac_recycled
 			print curr_frac_were
 			print curr_frac_both
 			print ''
+
 			if curr_num_parts != 0.0:
 				curr_nH, curr_T = [overall_nH[curr_indices], overall_temperature[curr_indices]]
 				height, xedges, yedges = np.histogram2d(np.log10(curr_nH), np.log10(curr_T), range=[[nH_min, nH_max], [T_min, T_max]], bins=hist_bins) #, weights = overall_lookup_ion_fracs['HydrogenI'][curr_indices])
@@ -1003,11 +1011,11 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 
 				cb = n_t_fig.colorbar(image)
 				cb.set_label(r'$log_{10}(N_{particles})$') # \times f_{HI})$')
-				n_t_ax.set_title(r'$n_{H}$ vs T: %s %s' % (color_labels[group_identifier], edge_labels[radius_bin_identifier]))
+				n_t_ax.set_title(r'%s %s' % (color_labels[group_identifier], edge_labels[radius_bin_identifier]))
 				n_t_ax.set_xlabel(r'$log_{10}(n_H)$ $cm^{-3}$')
 				n_t_ax.set_ylabel(r'$log_{10}(T)$ K')
 				plt.tight_layout()
-				# n_t_fig.savefig('n_t_hist_%s_%s.pdf' % (color_labels[group_identifier], filename_edgle_labels[radius_bin_identifier]))
+				n_t_fig.savefig('n_t_hist_%s_%s.pdf' % (color_labels[group_identifier], filename_edgle_labels[radius_bin_identifier]))
 				plt.close(n_t_fig)
 				if ((group_identifier == 0) & (radius_bin_identifier == 0)):
 					### just inside R_vir numbers
@@ -1015,27 +1023,27 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 					rvir_parts = np.size(rvir_ind)
 					rvir_will, rvir_new, rvir_recycled, rvir_were, rvir_both = track_ISM(overall_z0_time_since_ISM[rvir_ind], overall_time_since_ISM[rvir_ind])
 					rvir_frac_will, rvir_frac_new, rvir_frac_recycled, rvir_frac_were, rvir_frac_both = np.array([np.size(rvir_will), np.size(rvir_new), np.size(rvir_recycled), np.size(rvir_were), np.size(rvir_both)])/float(rvir_parts)
-					print "fracs inside rvir H"
-					print rvir_frac_will
-					print rvir_frac_were
-					print rvir_frac_new
-					print rvir_frac_recycled
-					print rvir_frac_both
-					print ''
+					# print "fracs inside rvir H"
+					# print rvir_frac_will
+					# print rvir_frac_were
+					# print rvir_frac_new
+					# print rvir_frac_recycled
+					# print rvir_frac_both
+					# print ''
 
 			curr_bar_xvals = all_bar_x_vals + radius_bin_identifier+1 + (group_identifier)*3
 			curr_bar_xvals = np.concatenate((curr_bar_xvals, [curr_bar_xvals[0]]))
 			curr_bar_heights = np.array([curr_frac_will, curr_frac_were, curr_frac_both])
 			curr_bar_heights = np.concatenate((curr_bar_heights, [curr_frac_new]))
-			print curr_bar_heights 
-			print ''
-			curr_bar_heights = np.where(curr_bar_heights <= 1.0e-3, 1.0e-3, curr_bar_heights)
-
-			ax.bar(curr_bar_xvals, curr_bar_heights, color=colors[group_identifier], edgecolor = 'k', linestyle=edge_styles[radius_bin_identifier])
+			# print curr_bar_heights 
+			# print ''
+			curr_bar_heights = np.where(curr_bar_heights <= 1.0e-5, 1.0e-5, curr_bar_heights)
+			ax.bar(curr_bar_xvals[0:-1], curr_bar_heights[0:-1], color=colors[group_identifier], edgecolor = 'k', linestyle=edge_styles[radius_bin_identifier], alpha = alphas[radius_bin_identifier])
+			ax.bar(curr_bar_xvals[-1], curr_bar_heights[-1], color=colors[group_identifier], edgecolor = 'k', linestyle=edge_styles[radius_bin_identifier], facecolor="None")
 
 	plt.hold(False)
-	ax.set_title(r'Origin and Fate of Gas') #: ${\rm log}_{10}(N_{HI})$ $<$ 16.5')
-	ax.set_ylim(ymin = 1.e-3,ymax=500.0)
+	ax.set_title(r'Origin and Fate of Gas')#: ${\rm log}_{10}(N_{HI})$ $>$ 16.5')
+	ax.set_ylim(ymin = 1.e-5,ymax=500.0)
 	ax.set_ylabel(r'${\rm log}_{10}(f)$')
 	plt.xticks([0.5, 5, 10.5, 15, 20.5, 25, 30.5], ['','Future Accretion','', 'Previous ISM','', 'Recycling Gas',''])
 	ax.axvline(0.5, color='k', linewidth=0.5)
@@ -1048,6 +1056,7 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	ax.add_artist(legend2)
 	ax.set_yscale('log')
 	ax.set_yticklabels(np.log10(ax.get_yticks()).astype(int))
+	ax.axhline(1.0, color='k')
 	fig.savefig('ISM_hists.pdf')
 	plt.close(fig)
 
@@ -1055,8 +1064,8 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 
 	overall_HI_masses = overall_particle_mass*overall_lookup_ion_fracs["HydrogenI"]
 	total_HI_mass = np.sum(overall_HI_masses)
-	frac_HI_will_be_ISM, frac_HI_were_ISM, frac_HI_both = np.array([np.sum(overall_HI_masses[overall_will_be_ISM]), np.sum(overall_HI_masses[overall_were_ISM]), np.sum(overall_HI_masses[overall_were_and_will_be_ISM])])/total_HI_mass
-	print "Overall HI Fracs: Will %.2e, were %.2e, both %.2e" % (frac_HI_will_be_ISM, frac_HI_were_ISM, frac_HI_both)
+	frac_HI_will_be_ISM, frac_HI_new_ISM, frac_HI_old_ISM, frac_HI_were_ISM, frac_HI_both = np.array([np.sum(overall_HI_masses[overall_will_be_ISM]), np.sum(overall_HI_masses[overall_new_accretion]), np.sum(overall_HI_masses[overall_recycled_accretion]), np.sum(overall_HI_masses[overall_were_ISM]), np.sum(overall_HI_masses[overall_were_and_will_be_ISM])])/total_HI_mass
+	print "Overall HI Fracs: Will %.2e (new %.2e, not %.2e), were %.2e, both %.2e" % (frac_HI_will_be_ISM, frac_HI_were_ISM, frac_HI_both)
 	print ""
 	all_HI_bar_heights = np.array([frac_HI_will_be_ISM, frac_HI_were_ISM, frac_HI_both])
 	all_HI_bar_heights = np.where(all_HI_bar_heights <= 1.0e-3, 1.0e-3, all_HI_bar_heights)
@@ -1095,6 +1104,60 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 			curr_weak_HI_frac_will, curr_weak_HI_frac_new, curr_weak_HI_frac_recycled, curr_weak_HI_frac_were, curr_weak_HI_frac_both = np.array([np.sum(curr_weak_HI_masses[curr_weak_will]),
 				np.sum(curr_weak_HI_masses[curr_weak_new]), np.sum(curr_weak_HI_masses[curr_weak_recycled]), np.sum(curr_weak_HI_masses[curr_weak_were]), np.sum(curr_weak_HI_masses[curr_weak_both])])/curr_weak_total_HI_mass
 
+			print "HI %d, %d" % (group_identifier, radius_bin_identifier)
+			print np.size(curr_indices)
+			print curr_HI_mass_frac_will
+			print curr_HI_mass_frac_new
+			print curr_HI_mass_frac_recycled
+			print curr_HI_mass_frac_were
+			print curr_HI_mass_frac_both
+			print ''
+
+			if np.size(curr_indices) != 0:
+				curr_nH, curr_T = [overall_nH[curr_indices], overall_temperature[curr_indices]]
+				height, xedges, yedges = np.histogram2d(np.log10(curr_nH), np.log10(curr_T), range=[[nH_min, nH_max], [T_min, T_max]], bins=hist_bins, weights = overall_lookup_ion_fracs['HydrogenI'][curr_indices])
+				height = np.log10(height)
+				if curr_frac_were != 0.0:
+					height_were, xedges_were, yedges_were = np.histogram2d(np.log10(curr_nH[curr_were]), np.log10(curr_T[curr_were]), range=[[nH_min, nH_max], [T_min, T_max]], bins=hist_bins)
+					height_will, xedges_will, yedges_will = np.histogram2d(np.log10(curr_nH[curr_will]), np.log10(curr_T[curr_will]), range=[[nH_min, nH_max], [T_min, T_max]], bins=hist_bins)
+					# replace zeros with ones, one goes to zero when we take the log and enough particles that making the floor value 1 is fine
+					height_were, height_will = [np.where(height_were==0, 1, height_were), np.where(height_will==0, 1, height_will)]
+					height_were, height_will = [np.log10(height_were), np.log10(height_will)] # move to log space
+					were_max, will_max = [np.max(np.max(height_were)), np.max(np.max(height_will))] # Get the max height, if not > 10 pts this will cause issues for levels in plot
+					were_bool, will_bool = [True if were_max > -10. else False, True if will_max > -10. else False] # so we don't contour if this is <= 1 (log10(10)=1)
+
+				n_t_fig = plt.figure()
+				n_t_ax = plt.gca()
+				image = n_t_ax.imshow(height.transpose(), origin='lower', aspect = 'auto', cmap = 'gray_r', extent = (nH_min, nH_max, T_min, T_max))
+
+				if curr_frac_were != 0.0:
+					if were_bool:
+						n_t_ax.contour(height_were.transpose(), levels = [were_max-1.0, were_max-0.5], extent=(np.min(xedges), np.max(xedges), np.min(yedges), np.max(yedges)), colors='r', linestyles=edge_styles[-2::-1])
+					if will_bool:
+						n_t_ax.contour(height_will.transpose(), levels = [will_max-1.0, will_max-0.5], extent=(np.min(xedges), np.max(xedges), np.min(yedges), np.max(yedges)), colors='b', linestyles=edge_styles[-2::-1])
+
+				cb = n_t_fig.colorbar(image)
+				cb.set_label(r'$log_{10}(N_{particles} \times f_{HI})$')
+				n_t_ax.set_title(r'%s %s' % (color_labels[group_identifier], edge_labels[radius_bin_identifier]))
+				n_t_ax.set_xlabel(r'$log_{10}(n_H)$ $cm^{-3}$')
+				n_t_ax.set_ylabel(r'$log_{10}(T)$ K')
+				plt.tight_layout()
+				n_t_fig.savefig('n_t_hist_%s_%s_HI_weighted.pdf' % (color_labels[group_identifier], filename_edgle_labels[radius_bin_identifier]))
+				plt.close(n_t_fig)
+				if ((group_identifier == 0) & (radius_bin_identifier == 0)):
+					### just inside R_vir numbers
+					rvir_ind = np.where(overall_radius_bins != 2)
+					rvir_parts = np.size(rvir_ind)
+					rvir_will, rvir_new, rvir_recycled, rvir_were, rvir_both = track_ISM(overall_z0_time_since_ISM[rvir_ind], overall_time_since_ISM[rvir_ind])
+					rvir_frac_will, rvir_frac_new, rvir_frac_recycled, rvir_frac_were, rvir_frac_both = np.array([np.size(rvir_will), np.size(rvir_new), np.size(rvir_recycled), np.size(rvir_were), np.size(rvir_both)])/float(rvir_parts)
+					# print "fracs inside rvir H"
+					# print rvir_frac_will
+					# print rvir_frac_were
+					# print rvir_frac_new
+					# print rvir_frac_recycled
+					# print rvir_frac_both
+					# print ''
+
 			if ((group_identifier == 0) & (radius_bin_identifier == 0)):
 				### just inside rvir stuff
 				rvir_ind = np.where(overall_radius_bins != 2)
@@ -1106,24 +1169,24 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 				rvir_HI_mass_frac_will, rvir_HI_mass_frac_new, rvir_HI_mass_frac_recycled, rvir_HI_mass_frac_were, rvir_HI_mass_frac_both = np.array([np.sum(rvir_HI_masses[rvir_will]),
 					np.sum(rvir_HI_masses[rvir_new]), np.sum(rvir_HI_masses[rvir_recycled]), np.sum(rvir_HI_masses[rvir_were]), np.sum(rvir_HI_masses[rvir_both])])/rvir_total_HI_mass
 
-				print "fracs inside rvir, HI weighted"
-				print rvir_HI_mass_frac_will
-				print rvir_HI_mass_frac_were
-				print rvir_HI_mass_frac_both
-				print ''
+				# print "fracs inside rvir, HI weighted"
+				# print rvir_HI_mass_frac_will
+				# print rvir_HI_mass_frac_were
+				# print rvir_HI_mass_frac_both
+				# print ''
 
 			curr_bar_xvals = all_bar_x_vals + radius_bin_identifier+1 + (group_identifier)*3
 			curr_bar_xvals = np.concatenate((curr_bar_xvals, [curr_bar_xvals[0]]))
 			curr_HI_mass_bar_heights = np.array([curr_HI_mass_frac_will, curr_HI_mass_frac_were, curr_HI_mass_frac_both])
 			curr_HI_mass_bar_heights = np.concatenate((curr_HI_mass_bar_heights, [curr_HI_mass_frac_new]))
-			print curr_HI_mass_bar_heights
-			curr_HI_mass_bar_heights = np.where(curr_HI_mass_bar_heights <= 1.0e-3, 1.0e-3, curr_HI_mass_bar_heights)
+			curr_HI_mass_bar_heights = np.where(curr_HI_mass_bar_heights <= 1.0e-5, 1.0e-5, curr_HI_mass_bar_heights)
 
-			HI_ax.bar(curr_bar_xvals, curr_HI_mass_bar_heights, color=colors[group_identifier], edgecolor = 'k', linestyle=edge_styles[radius_bin_identifier])
+			HI_ax.bar(curr_bar_xvals[0:-1], curr_HI_mass_bar_heights[0:-1], color=colors[group_identifier], edgecolor = 'k', linestyle=edge_styles[radius_bin_identifier], alpha=alphas[radius_bin_identifier])
+			HI_ax.bar(curr_bar_xvals[-1], curr_HI_mass_bar_heights[-1], color=colors[group_identifier], edgecolor = 'k', linestyle=edge_styles[radius_bin_identifier], facecolor="None")
 
 	plt.hold(False)
 	HI_ax.set_title(r'Origin and Fate of HI Gas') #: ${\rm log}_{10}(N_{HI})$ $<$ 16.5')
-	HI_ax.set_ylim(ymin = 1.e-3,ymax=500.0)
+	HI_ax.set_ylim(ymin = 1.e-5,ymax=500.0)
 	HI_ax.set_ylabel(r'${\rm log}_{10}(f_{M_{HI}})$')
 	plt.xticks([0.5, 5, 10.5, 15, 20.5, 25, 30.5], ['','Future Accretion','', 'Previous ISM','', 'Recycling Gas',''])
 	HI_ax.axvline(0.5, color='k', linewidth=0.5)
@@ -1136,98 +1199,99 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	HI_ax.add_artist(legend2)
 	HI_ax.set_yscale('log')
 	HI_ax.set_yticklabels(np.log10(HI_ax.get_yticks()).astype(int))
+	HI_ax.axhline(1.0, color='k')
 	HI_fig.savefig('ISM_HI_hists.pdf')
 	plt.close(HI_fig)
 
-	# ### Column density contribution based
-	print "did we fuck up adding col cons? "
-	print np.shape(overall_col_contributions)
-	print np.shape(overall_HI_masses)
-	print ''
-	all_lines_col = np.sum(overall_col_contributions)
-	frac_col_con_will_be_ISM, frac_col_con_were_ISM, frac_col_con_both = np.array([np.sum(overall_col_contributions[overall_will_be_ISM]), np.sum(overall_col_contributions[overall_were_ISM]), np.sum(overall_col_contributions[overall_were_and_will_be_ISM])])/all_lines_col
-	print "Overall Col Con Fracs: Will %.2e, were %.2e, both %.2e" % (frac_col_con_will_be_ISM, frac_col_con_were_ISM, frac_col_con_both)
-	print ""
-	all_col_con_bar_heights = np.array([frac_col_con_will_be_ISM, frac_col_con_were_ISM, frac_col_con_both])
-	all_col_con_bar_heights = np.where(all_col_con_bar_heights <= 1.0e-3, 1.0e-3, all_col_con_bar_heights)
+	# # ### Column density contribution based
+	# print "did we fuck up adding col cons? "
+	# print np.shape(overall_col_contributions)
+	# print np.shape(overall_HI_masses)
+	# print ''
+	# all_lines_col = np.sum(overall_col_contributions)
+	# frac_col_con_will_be_ISM, frac_col_con_were_ISM, frac_col_con_both = np.array([np.sum(overall_col_contributions[overall_will_be_ISM]), np.sum(overall_col_contributions[overall_were_ISM]), np.sum(overall_col_contributions[overall_were_and_will_be_ISM])])/all_lines_col
+	# print "Overall Col Con Fracs: Will %.2e, were %.2e, both %.2e" % (frac_col_con_will_be_ISM, frac_col_con_were_ISM, frac_col_con_both)
+	# print ""
+	# all_col_con_bar_heights = np.array([frac_col_con_will_be_ISM, frac_col_con_were_ISM, frac_col_con_both])
+	# all_col_con_bar_heights = np.where(all_col_con_bar_heights <= 1.0e-3, 1.0e-3, all_col_con_bar_heights)
 
-	col_con_fig, col_con_ax = plt.subplots(1)
-	col_con_ax.bar(all_bar_x_vals, all_col_con_bar_heights, color='k')
-	plt.hold(True)
+	# col_con_fig, col_con_ax = plt.subplots(1)
+	# col_con_ax.bar(all_bar_x_vals, all_col_con_bar_heights, color='k')
+	# plt.hold(True)
 
-	for group_identifier in range(3): # this is low mass, active, passive
-		curr_group_indices = np.where(overall_groups == group_identifier)
-		for radius_bin_identifier in range(3): # this is within 0.5, 0.5-1, and >1. R_vir
-			curr_radius_indices = np.where(overall_radius_bins == radius_bin_identifier)
-			curr_indices = np.intersect1d(curr_group_indices, curr_radius_indices)
-			curr_col_cons = overall_col_contributions[curr_indices]
-			curr_total_col = np.sum(curr_col_cons)
-			curr_LLS_indices = np.where((overall_col_dense >= 16.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
-			curr_LLS_col_con = overall_col_contributions[curr_LLS_indices]
-			curr_LLS_total_col = np.sum(curr_LLS_col_con)
-			curr_mid_indices = np.where((overall_col_dense < 16.5) & (overall_col_dense >= 14.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
-			curr_mid_col_con = overall_col_contributions[curr_mid_indices]
-			curr_mid_total_col = np.sum(curr_mid_col_con)
-			curr_weak_indices = np.where((overall_col_dense < 14.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
-			curr_weak_col_con = overall_col_contributions[curr_weak_indices]
-			curr_weak_total_col = np.sum(curr_weak_col_con)
+	# for group_identifier in range(3): # this is low mass, active, passive
+	# 	curr_group_indices = np.where(overall_groups == group_identifier)
+	# 	for radius_bin_identifier in range(3): # this is within 0.5, 0.5-1, and >1. R_vir
+	# 		curr_radius_indices = np.where(overall_radius_bins == radius_bin_identifier)
+	# 		curr_indices = np.intersect1d(curr_group_indices, curr_radius_indices)
+	# 		curr_col_cons = overall_col_contributions[curr_indices]
+	# 		curr_total_col = np.sum(curr_col_cons)
+	# 		curr_LLS_indices = np.where((overall_col_dense >= 16.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
+	# 		curr_LLS_col_con = overall_col_contributions[curr_LLS_indices]
+	# 		curr_LLS_total_col = np.sum(curr_LLS_col_con)
+	# 		curr_mid_indices = np.where((overall_col_dense < 16.5) & (overall_col_dense >= 14.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
+	# 		curr_mid_col_con = overall_col_contributions[curr_mid_indices]
+	# 		curr_mid_total_col = np.sum(curr_mid_col_con)
+	# 		curr_weak_indices = np.where((overall_col_dense < 14.5) & (overall_groups == group_identifier) & (overall_radius_bins == radius_bin_identifier))
+	# 		curr_weak_col_con = overall_col_contributions[curr_weak_indices]
+	# 		curr_weak_total_col = np.sum(curr_weak_col_con)
 
-			curr_will, curr_new, curr_recycled, curr_were, curr_both = track_ISM(overall_z0_time_since_ISM[curr_indices], overall_time_since_ISM[curr_indices])
-			curr_LLS_will, curr_LLS_new, curr_LLS_recycled, curr_LLS_were, curr_LLS_both = track_ISM( overall_z0_time_since_ISM[curr_LLS_indices], overall_time_since_ISM[curr_LLS_indices])
-			curr_mid_will, curr_mid_new, curr_mid_recycled, curr_mid_were, curr_mid_both = track_ISM( overall_z0_time_since_ISM[curr_mid_indices], overall_time_since_ISM[curr_mid_indices])
-			curr_weak_will, curr_weak_new, curr_weak_recycled, curr_weak_were, curr_weak_both = track_ISM( overall_z0_time_since_ISM[curr_weak_indices], overall_time_since_ISM[curr_weak_indices])
+	# 		curr_will, curr_new, curr_recycled, curr_were, curr_both = track_ISM(overall_z0_time_since_ISM[curr_indices], overall_time_since_ISM[curr_indices])
+	# 		curr_LLS_will, curr_LLS_new, curr_LLS_recycled, curr_LLS_were, curr_LLS_both = track_ISM( overall_z0_time_since_ISM[curr_LLS_indices], overall_time_since_ISM[curr_LLS_indices])
+	# 		curr_mid_will, curr_mid_new, curr_mid_recycled, curr_mid_were, curr_mid_both = track_ISM( overall_z0_time_since_ISM[curr_mid_indices], overall_time_since_ISM[curr_mid_indices])
+	# 		curr_weak_will, curr_weak_new, curr_weak_recycled, curr_weak_were, curr_weak_both = track_ISM( overall_z0_time_since_ISM[curr_weak_indices], overall_time_since_ISM[curr_weak_indices])
 
-			curr_col_con_mass_frac_will, curr_col_con_mass_frac_new, curr_col_con_mass_frac_recycled, curr_col_con_mass_frac_were, curr_col_con_mass_frac_both = np.array([np.sum(curr_col_cons[curr_will]),
-				np.sum(curr_col_cons[curr_new]), np.sum(curr_col_cons[curr_recycled]), np.sum(curr_col_cons[curr_were]), np.sum(curr_col_cons[curr_both])])/curr_total_col
-			curr_LLS_col_con_frac_will, curr_LLS_col_con_frac_new, curr_LLS_col_con_frac_recycled, curr_LLS_col_con_frac_were, curr_LLS_col_con_frac_both = np.array([np.sum(curr_LLS_col_con[curr_LLS_will]),
-				np.sum(curr_LLS_col_con[curr_LLS_new]), np.sum(curr_LLS_col_con[curr_LLS_recycled]), np.sum(curr_LLS_col_con[curr_LLS_were]), np.sum(curr_LLS_col_con[curr_LLS_both])])/curr_LLS_total_col
-			curr_mid_col_con_frac_will, curr_mid_col_con_frac_new, curr_mid_col_con_frac_recycled, curr_mid_col_con_frac_were, curr_mid_col_con_frac_both = np.array([np.sum(curr_mid_col_con[curr_mid_will]),
-				np.sum(curr_mid_col_con[curr_mid_new]), np.sum(curr_mid_col_con[curr_mid_recycled]), np.sum(curr_mid_col_con[curr_mid_were]), np.sum(curr_mid_col_con[curr_mid_both])])/curr_mid_total_col
-			curr_weak_col_con_frac_will, curr_weak_col_con_frac_new, curr_weak_col_con_frac_recycled, curr_weak_col_con_frac_were, curr_weak_col_con_frac_both = np.array([np.sum(curr_weak_col_con[curr_weak_will]),
-				np.sum(curr_weak_col_con[curr_weak_new]), np.sum(curr_weak_col_con[curr_weak_recycled]), np.sum(curr_weak_col_con[curr_weak_were]), np.sum(curr_weak_col_con[curr_weak_both])])/curr_weak_total_col
+	# 		curr_col_con_mass_frac_will, curr_col_con_mass_frac_new, curr_col_con_mass_frac_recycled, curr_col_con_mass_frac_were, curr_col_con_mass_frac_both = np.array([np.sum(curr_col_cons[curr_will]),
+	# 			np.sum(curr_col_cons[curr_new]), np.sum(curr_col_cons[curr_recycled]), np.sum(curr_col_cons[curr_were]), np.sum(curr_col_cons[curr_both])])/curr_total_col
+	# 		curr_LLS_col_con_frac_will, curr_LLS_col_con_frac_new, curr_LLS_col_con_frac_recycled, curr_LLS_col_con_frac_were, curr_LLS_col_con_frac_both = np.array([np.sum(curr_LLS_col_con[curr_LLS_will]),
+	# 			np.sum(curr_LLS_col_con[curr_LLS_new]), np.sum(curr_LLS_col_con[curr_LLS_recycled]), np.sum(curr_LLS_col_con[curr_LLS_were]), np.sum(curr_LLS_col_con[curr_LLS_both])])/curr_LLS_total_col
+	# 		curr_mid_col_con_frac_will, curr_mid_col_con_frac_new, curr_mid_col_con_frac_recycled, curr_mid_col_con_frac_were, curr_mid_col_con_frac_both = np.array([np.sum(curr_mid_col_con[curr_mid_will]),
+	# 			np.sum(curr_mid_col_con[curr_mid_new]), np.sum(curr_mid_col_con[curr_mid_recycled]), np.sum(curr_mid_col_con[curr_mid_were]), np.sum(curr_mid_col_con[curr_mid_both])])/curr_mid_total_col
+	# 		curr_weak_col_con_frac_will, curr_weak_col_con_frac_new, curr_weak_col_con_frac_recycled, curr_weak_col_con_frac_were, curr_weak_col_con_frac_both = np.array([np.sum(curr_weak_col_con[curr_weak_will]),
+	# 			np.sum(curr_weak_col_con[curr_weak_new]), np.sum(curr_weak_col_con[curr_weak_recycled]), np.sum(curr_weak_col_con[curr_weak_were]), np.sum(curr_weak_col_con[curr_weak_both])])/curr_weak_total_col
 
-			if ((group_identifier == 0) & (radius_bin_identifier == 0)):
-				### just inside rvir stuff
-				rvir_ind = np.where(overall_radius_bins != 2)
-				rvir_col_con = overall_col_contributions[rvir_ind]
-				rvir_total_col = np.sum(rvir_col_con)
+	# 		if ((group_identifier == 0) & (radius_bin_identifier == 0)):
+	# 			### just inside rvir stuff
+	# 			rvir_ind = np.where(overall_radius_bins != 2)
+	# 			rvir_col_con = overall_col_contributions[rvir_ind]
+	# 			rvir_total_col = np.sum(rvir_col_con)
 
-				rvir_will, rvir_new, rvir_recycled, rvir_were, rvir_both = track_ISM(overall_z0_time_since_ISM[rvir_ind], overall_time_since_ISM[rvir_ind])
+	# 			rvir_will, rvir_new, rvir_recycled, rvir_were, rvir_both = track_ISM(overall_z0_time_since_ISM[rvir_ind], overall_time_since_ISM[rvir_ind])
 
-				rvir_col_con_mass_frac_will, rvir_col_con_mass_frac_new, rvir_col_con_mass_frac_recycled, rvir_col_con_mass_frac_were, rvir_col_con_mass_frac_both = np.array([np.sum(rvir_col_con[rvir_will]),
-					np.sum(rvir_col_con[rvir_new]), np.sum(rvir_col_con[rvir_recycled]), np.sum(rvir_col_con[rvir_were]), np.sum(rvir_col_con[rvir_both])])/rvir_total_col
+	# 			rvir_col_con_mass_frac_will, rvir_col_con_mass_frac_new, rvir_col_con_mass_frac_recycled, rvir_col_con_mass_frac_were, rvir_col_con_mass_frac_both = np.array([np.sum(rvir_col_con[rvir_will]),
+	# 				np.sum(rvir_col_con[rvir_new]), np.sum(rvir_col_con[rvir_recycled]), np.sum(rvir_col_con[rvir_were]), np.sum(rvir_col_con[rvir_both])])/rvir_total_col
 
-				print "fracs inside rvir, column density weighted"
-				print rvir_col_con_mass_frac_will
-				print rvir_col_con_mass_frac_were
-				print rvir_col_con_mass_frac_both
-				print ''
+	# 			print "fracs inside rvir, column density weighted"
+	# 			print rvir_col_con_mass_frac_will
+	# 			print rvir_col_con_mass_frac_were
+	# 			print rvir_col_con_mass_frac_both
+	# 			print ''
 
-			curr_bar_xvals = all_bar_x_vals + radius_bin_identifier+1 + (group_identifier)*3
-			curr_bar_xvals = np.concatenate((curr_bar_xvals, [curr_bar_xvals[0]]))
-			curr_col_con_mass_bar_heights = np.array([curr_col_con_mass_frac_will, curr_col_con_mass_frac_were, curr_col_con_mass_frac_both])
-			curr_col_con_mass_bar_heights = np.concatenate((curr_col_con_mass_bar_heights, [curr_col_con_mass_frac_new]))
-			curr_col_con_mass_bar_heights = np.where(curr_col_con_mass_bar_heights <= 1.0e-3, 1.0e-3, curr_col_con_mass_bar_heights)
+	# 		curr_bar_xvals = all_bar_x_vals + radius_bin_identifier+1 + (group_identifier)*3
+	# 		curr_bar_xvals = np.concatenate((curr_bar_xvals, [curr_bar_xvals[0]]))
+	# 		curr_col_con_mass_bar_heights = np.array([curr_col_con_mass_frac_will, curr_col_con_mass_frac_were, curr_col_con_mass_frac_both])
+	# 		curr_col_con_mass_bar_heights = np.concatenate((curr_col_con_mass_bar_heights, [curr_col_con_mass_frac_new]))
+	# 		curr_col_con_mass_bar_heights = np.where(curr_col_con_mass_bar_heights <= 1.0e-3, 1.0e-3, curr_col_con_mass_bar_heights)
 
-			col_con_ax.bar(curr_bar_xvals, curr_col_con_mass_bar_heights, color=colors[group_identifier], edgecolor = 'k', linestyle=edge_styles[radius_bin_identifier])
+	# 		col_con_ax.bar(curr_bar_xvals, curr_col_con_mass_bar_heights, color=colors[group_identifier], edgecolor = 'k', linestyle=edge_styles[radius_bin_identifier])
 
-	plt.hold(False)
-	col_con_ax.set_title(r'Origin and Fate of HI Gas') #: ${\rm log}_{10}(N_{HI})$ $<$ 16.5')
-	col_con_ax.set_ylim(ymin = 1.e-3,ymax=500.0)
-	col_con_ax.set_ylabel(r'${\rm log}_{10}(f_{N_{HI}})$')
-	plt.xticks([0.5, 5, 10.5, 15, 20.5, 25, 30.5], ['','Future Accretion','', 'Previous ISM','', 'Recycling Gas',''])
-	col_con_ax.axvline(0.5, color='k', linewidth=0.5)
-	col_con_ax.axvline(10.5, color='k', linewidth=0.5)
-	col_con_ax.axvline(20.5, color='k', linewidth=0.5)
-	col_con_ax.axvline(30.5, color='k', linewidth=0.5)
-	legend1 = col_con_ax.legend(ncol=1,loc='upper left', handles = patches_list1) # [0.05,0.68]
-	legend2 = col_con_ax.legend(loc='upper right', handles = patches_list2) # [0.53,0.76]
-	col_con_ax.add_artist(legend1)
-	col_con_ax.add_artist(legend2)
-	col_con_ax.set_yscale('log')
-	col_con_ax.set_yticklabels(np.log10(col_con_ax.get_yticks()).astype(int))
-	col_con_fig.savefig('ISM_col_con_hists.pdf')
-	plt.close(col_con_fig)
+	# plt.hold(False)
+	# col_con_ax.set_title(r'Origin and Fate of HI Gas') #: ${\rm log}_{10}(N_{HI})$ $<$ 16.5')
+	# col_con_ax.set_ylim(ymin = 1.e-3,ymax=500.0)
+	# col_con_ax.set_ylabel(r'${\rm log}_{10}(f_{N_{HI}})$')
+	# plt.xticks([0.5, 5, 10.5, 15, 20.5, 25, 30.5], ['','Future Accretion','', 'Previous ISM','', 'Recycling Gas',''])
+	# col_con_ax.axvline(0.5, color='k', linewidth=0.5)
+	# col_con_ax.axvline(10.5, color='k', linewidth=0.5)
+	# col_con_ax.axvline(20.5, color='k', linewidth=0.5)
+	# col_con_ax.axvline(30.5, color='k', linewidth=0.5)
+	# legend1 = col_con_ax.legend(ncol=1,loc='upper left', handles = patches_list1) # [0.05,0.68]
+	# legend2 = col_con_ax.legend(loc='upper right', handles = patches_list2) # [0.53,0.76]
+	# col_con_ax.add_artist(legend1)
+	# col_con_ax.add_artist(legend2)
+	# col_con_ax.set_yscale('log')
+	# col_con_ax.set_yticklabels(np.log10(col_con_ax.get_yticks()).astype(int))
+	# col_con_fig.savefig('ISM_col_con_hists.pdf')
+	# plt.close(col_con_fig)
 
 	### FINESST Figure
 
