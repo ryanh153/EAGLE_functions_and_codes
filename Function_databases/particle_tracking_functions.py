@@ -1064,8 +1064,8 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 
 	overall_HI_masses = overall_particle_mass*overall_lookup_ion_fracs["HydrogenI"]
 	total_HI_mass = np.sum(overall_HI_masses)
-	frac_HI_will_be_ISM, frac_HI_new_ISM, frac_HI_old_ISM, frac_HI_were_ISM, frac_HI_both = np.array([np.sum(overall_HI_masses[overall_will_be_ISM]), np.sum(overall_HI_masses[overall_new_accretion]), np.sum(overall_HI_masses[overall_recycled_accretion]), np.sum(overall_HI_masses[overall_were_ISM]), np.sum(overall_HI_masses[overall_were_and_will_be_ISM])])/total_HI_mass
-	print "Overall HI Fracs: Will %.2e (new %.2e, not %.2e), were %.2e, both %.2e" % (frac_HI_will_be_ISM, frac_HI_were_ISM, frac_HI_both)
+	frac_HI_will_be_ISM, frac_HI_new_ISM, frac_HI_not_new_ISM, frac_HI_were_ISM, frac_HI_both = np.array([np.sum(overall_HI_masses[overall_will_be_ISM]), np.sum(overall_HI_masses[overall_new_accretion]), np.sum(overall_HI_masses[overall_recycled_accretion]), np.sum(overall_HI_masses[overall_were_ISM]), np.sum(overall_HI_masses[overall_were_and_will_be_ISM])])/total_HI_mass
+	print "Overall HI Fracs: Will %.2e (new %.2e, not %.2e), were %.2e, both %.2e" % (frac_HI_will_be_ISM, frac_HI_new_ISM, frac_HI_not_new_ISM, frac_HI_were_ISM, frac_HI_both)
 	print ""
 	all_HI_bar_heights = np.array([frac_HI_will_be_ISM, frac_HI_were_ISM, frac_HI_both])
 	all_HI_bar_heights = np.where(all_HI_bar_heights <= 1.0e-3, 1.0e-3, all_HI_bar_heights)
@@ -1425,6 +1425,8 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	# ax.set(xlabel='particle index in array (meaningless', ylabel='eagle/lookup ratio', title='Eagle to Lookup Table Ratio For Oxygen')
 	# fig.savefig('oxygen_eagle_lookup_ratio.pdf')
 
+# Uses OnEquationOfState to group particles by ISM interaction. Descriton is
+# VarDescription: 'Star-formation flag. 0 if has never been star-forming, +ve if currently sf, -ve if not currently sf, value indicates aexp at which it obtained its current state'
 def track_ISM(z0_time_since_ISM, time_since_ISM):
 	will_be_ISM = np.where(((z0_time_since_ISM <= -0.830) & (z0_time_since_ISM < 0.)))[0] 
 	is_a_star_indices = np.where((z0_time_since_ISM > 0.))[0]
