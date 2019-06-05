@@ -1503,7 +1503,7 @@ def edit_text(file, new_file_name, keywords, replacements):
 						output.write(line)
 
 def gas_mass_in_annular_rings(gal_directory, group_number, radii, virial_radii_bool, R200, particles_included_keyword, subfind_included_keyword):
-	cool_bool = False
+	cool_bool = True
 	mass_in_ann = np.zeros(np.size(radii)-1)
 	neut_mass_in_ann = np.zeros(np.size(radii)-1)
 	cum_mass = np.zeros(np.size(radii)-1)
@@ -1531,9 +1531,10 @@ def gas_mass_in_annular_rings(gal_directory, group_number, radii, virial_radii_b
 		gas_coords /= R200*1.e3*parsec_in_cm
 	if cool_bool:
 		temp_cut_indices = np.argwhere(temperature<=1.e5)[:,0]
-	else:
-		temp_cut_indices = np.arange(np.size(temperature))
-
+		H_frac = H_frac[temp_cut_indices]
+		HI = HI[temp_cut_indices]
+		part_mass = part_mass[temp_cut_indices]
+		gas_coords = gas_coords[temp_cut_indices, :]
 	# get distances ourselves so we don't calculate it every time
 	distances = np.sqrt(gas_coords[:,0]**2. + gas_coords[:,1]**2. + gas_coords[:,2]**2.)
 
@@ -1628,8 +1629,8 @@ def actual_cumulative_mass_for_EAGLE_gals(directory_with_sim_gals, virial_radii_
 
 	var_prefaces = ["ann_masses", "neut_ann_masses", "radii", "halo_masses", "stellar_masses", "sSFRs", "R200s"]
 
-	opening_lines = 'import numpy as np \n # All sim gals used for COS realizations. normalized units \n'
-	filename = "/cosma/home/analyse/rhorton/snapshots/sim_ann_masses_normed.py"
+	opening_lines = 'import numpy as np \n # All sim gals used for COS realizations. 20-170 (10) kpc cool only \n'
+	filename = "/cosma/home/analyse/rhorton/snapshots/sim_ann_masses_t_cut.py"
 	survey_realization_functions.print_data(filename, opening_lines, arrays_to_print, var_prefaces)
 	np.set_printoptions(threshold=1000)
 

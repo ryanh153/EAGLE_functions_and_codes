@@ -54,8 +54,8 @@ if do_cum_mass_plots:
    ### data analysis
 
    mean_bool = False
-   cool_bool = False
-   to_virial = False
+   cool_bool = True
+   to_virial = True
    normalized_units = False
 
    upper_mass = np.array([9.7, 15., 15.])
@@ -81,22 +81,22 @@ if do_cum_mass_plots:
       import sim_ann_mass_data_vir as sim_data
    else:
       if cool_bool:
-         import sim_annular_mass_data_t_cut as cool_sim_data
-      else:
-         import sim_annular_mass_data as sim_data
+         import sim_ann_masses_t_cut as cool_sim_data
+      import sim_annular_mass_data as sim_data
 
    ### remove wierdly low halo mass halo and halo with no chem array (so no simulated HI data)
    ann_masses, neut_ann_masses, halo_masses, stellar_masses, sSFRs, R200s = sim_data.ann_masses, sim_data.neut_ann_masses, sim_data.halo_masses, sim_data.stellar_masses, sim_data.sSFRs, sim_data.R200s
-   
+
    mask = np.ones(np.size(halo_masses),dtype=bool)
    low_indices = np.argwhere(ann_masses[:,0]==0.0)[:,0]
    mask[low_indices] = 0
    low_indices =np.argwhere(neut_ann_masses[:,0] == 0.)[:,0]
    mask[low_indices] = 0
 
-   ann_masses, neut_ann_masses, halo_masses, stellar_masses, sSFRs, R200s = ann_masses[mask,:], neut_ann_masses[mask,:], halo_masses[mask], stellar_masses[mask], sSFRs[mask], R200s[mask]
    if cool_bool:
-      cool_ann_masses, cool_neut_ann_masses, cool_halo_masses, cool_stellar_masses, cool_sSFRs = cool_sim_data.ann_masses[mask,:], cool_sim_data.neut_ann_masses[mask,:], cool_sim_data.halo_masses[mask], cool_sim_data.stellar_masses[mask], cool_sim_data.sSFRs[mask]
+      cool_ann_masses, cool_neut_ann_masses, cool_halo_masses, cool_stellar_masses, cool_sSFRs, cool_R200s = cool_sim_data.ann_masses[mask,:], cool_sim_data.neut_ann_masses[mask,:], cool_sim_data.halo_masses[mask], cool_sim_data.stellar_masses[mask], cool_sim_data.sSFRs[mask], cool_sim_data.R200s[mask]
+
+   ann_masses, neut_ann_masses, halo_masses, stellar_masses, sSFRs, R200s = ann_masses[mask,:], neut_ann_masses[mask,:], halo_masses[mask], stellar_masses[mask], sSFRs[mask], R200s[mask]
 
    ### mock survey results
    mock_cum_mass, mock_cum_mass_top, mock_cum_mass_bot, mock_neut_cum_mass, mock_neut_cum_mass_top, mock_neut_cum_mass_bot, mock_radii = mock_spectra_data.cum_mass_jack, mock_spectra_data.cum_mass_jack_top, \
@@ -134,6 +134,7 @@ if do_cum_mass_plots:
          else:
             plot_radii = np.arange(25., 160., 10.)
             # plot_radii = np.arange(2.5, 17.5, 5.)
+
    plot_cum_masses = np.sum(ann_masses, axis=1)
    plot_neut_cum_mases = np.sum(neut_ann_masses, axis=1)
    rem_low_halo = np.argwhere(plot_cum_masses >= 3.0e8)[:,0]
@@ -168,6 +169,11 @@ if do_cum_mass_plots:
          mock_cum_ax.plot(0.,0., color=colors[i], label=mock_labels2[0])
       mock_cum_ax.plot(mock_radii[i], mock_cum_mass[i], color=colors[i], label=labels[i], alpha=0.5)
       mock_cum_ax.fill_between(mock_radii[i], mock_cum_mass_bot[i], mock_cum_mass_top[i], color=colors[i], alpha=0.33)
+      # print "Mock"
+      # print np.log10(mock_cum_mass[i][-1])
+      # print np.log10(mock_cum_mass_top[i][-1])
+      # print np.log10(mock_cum_mass_bot[i][-1])
+      # print ''
 
       if i == 0:
          mock_cum_ax.plot(mock_radii[i], mock_neut_cum_mass[i], color=colors[i], linestyle='dotted', label=mock_labels2[1], alpha=0.5)
@@ -275,6 +281,11 @@ if do_cum_mass_plots:
             cum_med_ax.plot(plot_radii, cum_mass_med, color=colors[i], label=sim_labels2[0])
          cum_med_ax.plot(plot_radii, cum_mass_med, color=colors[i], label=labels[i])
          cum_med_ax.fill_between(plot_radii, cum_mass_bot_err, cum_mass_top_err, color=colors[i],alpha=0.33)
+         # print "sim"
+         # print np.log10(cum_mass_med[-1])
+         # print np.log10(cum_mass_top_err[-1])
+         # print np.log10(cum_mass_bot_err[-1])
+         # print ''
 
          neut_medians = np.median(neut_curr_ann_masses, axis=0)
          neut_med_low, neut_med_high = np.percentile(neut_curr_ann_masses, 14., axis=0), np.percentile(neut_curr_ann_masses, 86., axis=0)
@@ -522,19 +533,22 @@ if do_cum_mass_plots:
       ax.scatter(plot_hmass , plot_neut_cum_mases, color='gold', marker='^', edgecolors='k', linewidth=0.75, s=30., label='Neutral H')
       ax.plot(plot_hmass, baryonically_closed, color='k', label=r'$M_{H}$ For Closure')
 
-      subax = inset_axes(ax, width="30%", height="30%", loc="lower right", borderpad=1.)
+      subax = inset_axes(ax, width="30%", height="30%", loc="lower right", borderpad=1.15)
       subax.scatter(plot_hmass , cool_plot_cum_masses/plot_cum_masses, color='fuchsia', marker='s', edgecolors='k', linewidth=0.75, s=15., label='Cool H')
       subax.scatter(plot_hmass , plot_neut_cum_mases/plot_cum_masses, color='gold', marker='^', edgecolors='k', linewidth=0.75, s=15., label='Neutral H')
       # subax.set_yscale('log')
       # subax.set_ylim([10**-3, 10**0.5])
       subax.set_ylim([0., 1.])
       subax.set_xscale('log')
+      subax.xaxis.set_major_formatter(log_fmt)
       subax.set_xlim([10**10.5,10**14.0])
-      subax.set_ylabel(r'$M_{x}/M_{H}$ $(M_{\odot})$', fontsize=12.)
+      subax.set_ylabel(r'$M_{x}/M_{Total\: H}$ $(M_{\odot})$', fontsize=12.)
 
       ax.legend(loc='upper left',fontsize=14., ncol=2)
       ax.set_yscale('log')
       ax.set_xscale('log')
+      ax.xaxis.set_major_formatter(log_fmt)
+      ax.yaxis.set_major_formatter(log_fmt)
       ax.set_ylim([10**5, 10**14.])
       ax.set_xlim([10**10.5,10**14.0])
       ax.set_xlabel(r'${\rm log_{10}}(M_{200})$ $M_{\odot}$',fontsize=18.)
@@ -550,6 +564,8 @@ if do_cum_mass_plots:
       ax.legend(loc='upper left',fontsize=16., ncol=3)
       ax.set_yscale('log')
       ax.set_xscale('log')
+      ax.xaxis.set_major_formatter(log_fmt)
+      ax.yaxis.set_major_formatter(log_fmt)
       ax.set_ylim([10**-4.5, 10**0.])
       ax.set_xlim([10**10.5,10**14.0])
       ax.set_xlabel(r'$M_{halo}$ $(M_{\odot})$',fontsize=18.)

@@ -248,6 +248,9 @@ def get_particle_properties(list_for_all_id_data, ions, ions_short, elements, lo
 	print ''
 	if new_lines == False:
 
+		print "Ids"
+		print overall_gas_ids
+
 		plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_vel, overall_metallicity, overall_particle_mass, overall_smoothing_length, overall_temperature, \
 			   			overall_time_since_ISM, overall_eagle_ion_fracs, overall_lookup_ion_fracs, overall_element_fracs, overall_z0_particle_radii, overall_z0_time_since_ISM, \
 			   			overall_groups, overall_radius_bins, overall_col_dense, overall_col_contributions, col_con_bool)
@@ -922,7 +925,7 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	### get number of particles and extract nH
 	num_parts = float(np.size(overall_particle_radii))
 	overall_nH = overall_density*overall_element_fracs['hydrogen']/m_H
-	frac_will_be_ISM, frac_were_ISM, frac_both = np.array([np.size(overall_will_be_ISM), np.size(overall_were_ISM), np.size(overall_were_and_will_be_ISM)])/num_parts
+	frac_will_be_ISM, frac_new_ISM, frac_recycled_ISM, frac_were_ISM, frac_both = np.array([np.size(overall_will_be_ISM), np.size(overall_new_accretion), np.size(overall_recycled_accretion), np.size(overall_were_ISM), np.size(overall_were_and_will_be_ISM)])/num_parts
 
 	num_levels = 2 # really number of levels minus one becuase of how contour handles this value
 	hist_bins = 50 # for the 2d hists this is the number of bins PER AXIS (ex: hist_bins=10 -> 10 x 10 grid)
@@ -947,7 +950,7 @@ def plots_with_all_lines(overall_particle_radii, overall_density, overall_gas_ve
 	
 	# ### gas mass traced, but can make the rho-T diagrams for HI weighted here as well by uncommeting weights on the 2d hist
 
-	print "Overall H Fracs: Will %.2e, were %.2e, both %.2e" % (frac_will_be_ISM, frac_were_ISM, frac_both)
+	print "Overall H Fracs: Will %.2e (new %.2e, not %.2e), were %.2e, both %.2e" % (frac_will_be_ISM, frac_new_ISM, frac_recycled_ISM, frac_were_ISM, frac_both)
 	print ""
 	fig, ax = plt.subplots(1)
 	ax.bar(all_bar_x_vals, all_bar_heights, color='k')
@@ -1432,8 +1435,40 @@ def track_ISM(z0_time_since_ISM, time_since_ISM):
 	is_a_star_indices = np.where((z0_time_since_ISM > 0.))[0]
 	will_be_ISM = np.concatenate((will_be_ISM, is_a_star_indices))
 
+	# print "tracking"
+	# print np.size(time_since_ISM)
+	# print np.size(z0_time_since_ISM)
+	# print np.size(time_since_ISM[will_be_ISM])
+	# print ''
+	# print will_be_ISM
+	# print z0_time_since_ISM[will_be_ISM]
+	# print "weird?"
+	# print np.max(z0_time_since_ISM[will_be_ISM])
+	# print np.max(z0_time_since_ISM[np.where(((z0_time_since_ISM <= -0.830) & (z0_time_since_ISM < 0.)))[0]])
+	# print np.max(z0_time_since_ISM[np.where(z0_time_since_ISM <= -0.830)[0]])
+	# print ''
+	# print np.size(np.where(time_since_ISM[will_be_ISM] == 0))
+	# print np.size(np.where(time_since_ISM[will_be_ISM] < 0))
+	# print np.size(np.where(time_since_ISM[will_be_ISM] > 0))
+	# print ''
+	# print time_since_ISM
+	# print ''
+	# print time_since_ISM[will_be_ISM]
+	# print ''
+	# raise ValueError("looking at one")
 	new_accretion = np.where(time_since_ISM[will_be_ISM] == 0)
 	recycled_accretion = np.where(time_since_ISM[will_be_ISM] < 0)
+	is_star = np.where(time_since_ISM[will_be_ISM] > 0)
+
+	try:
+		print "fracs"
+		print float(np.size(new_accretion))/np.size(time_since_ISM[:])
+		print float(np.size(recycled_accretion))/np.size(time_since_ISM[:])
+		print float(np.size(is_star))/np.size(time_since_ISM[:])
+		print (float(np.size(new_accretion)) + float(np.size(recycled_accretion)) + float(np.size(is_star)))/np.size(time_since_ISM[:])
+		print ''
+	except:
+		print "nada"
 
 	were_ISM_recently = np.where(((time_since_ISM <= -0.672) & (time_since_ISM > -0.830) & (time_since_ISM < 0.)))[0] 
 
